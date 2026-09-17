@@ -4,7 +4,6 @@ dist/
 dist-ssr/
 *.local
 
-# env — nilai asli HANYA di file lokal ini, jangan commit
 .env
 .env.*
 !.env.example
