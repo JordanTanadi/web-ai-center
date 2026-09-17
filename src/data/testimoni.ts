@@ -1,0 +1,27 @@
+// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/testimoni).
+export interface Testimoni {
+  nama: string;
+  peran: string;
+  kutipan: string;
+}
+
+export const testimoniDummy: Testimoni[] = [
+  {
+    nama: 'Peserta Pelatihan ML',
+    peran: 'Mahasiswa',
+    kutipan:
+      'Materi pelatihan runtut dan langsung praktik. Akses GPU lab membuat eksperimen tugas akhir jauh lebih cepat.',
+  },
+  {
+    nama: 'Mitra Industri',
+    peran: 'Pengguna Inference Solution',
+    kutipan:
+      'Proses deployment model didampingi sampai jalan di infrastruktur kami. Komunikasi tim responsif dan dokumentasinya jelas.',
+  },
+  {
+    nama: 'Dosen Peneliti',
+    peran: 'Peneliti',
+    kutipan:
+      'Fasilitas GPU rental sangat membantu riset. Antrean terjadwal rapi dan ada dukungan teknis saat kendala.',
+  },
+];

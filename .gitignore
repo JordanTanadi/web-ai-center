@@ -1,0 +1,22 @@
+# deps / build
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# env — nilai asli HANYA di file lokal ini, jangan commit
+.env
+.env.*
+!.env.example
+
+# logs / editor
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# test / coverage
+coverage/

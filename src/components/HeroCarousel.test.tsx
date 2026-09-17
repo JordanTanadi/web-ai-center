@@ -1,0 +1,106 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, render, screen, within } from '@testing-library/react';
+import { fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import HeroCarousel from './HeroCarousel.tsx';
+import type { HeroSlide } from '../data/hero.ts';
+
+const slides: HeroSlide[] = [
+  {
+    eyebrow: 'Eyebrow 1',
+    judul: 'Judul Satu',
+    judulAksen: 'Aksen Satu',
+    sub: 'Sub satu',
+    ctaPrimer: { label: 'Primer 1', to: '/tentang-kami' },
+    ctaSekunder: { label: 'Sekunder 1', to: '/berita' },
+    badgeJudul: 'Badge 1',
+    badgeSub: 'Sub badge 1',
+  },
+  {
+    eyebrow: 'Eyebrow 2',
+    judul: 'Judul Dua',
+    judulAksen: 'Aksen Dua',
+    sub: 'Sub dua',
+    ctaPrimer: { label: 'Primer 2', to: '/dokumentasi' },
+    ctaSekunder: { label: 'Sekunder 2', to: '/tim' },
+    badgeJudul: 'Badge 2',
+    badgeSub: 'Sub badge 2',
+  },
+];
+
+function renderHero(list: HeroSlide[] = slides, intervalMs = 7000) {
+  return render(
+    <MemoryRouter>
+      <HeroCarousel slides={list} intervalMs={intervalMs} />
+    </MemoryRouter>,
+  );
+}
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.stubGlobal(
+    'matchMedia',
+    vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+  );
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.unstubAllGlobals();
+});
+
+describe('HeroCarousel', () => {
+  it('render slide pertama + dots ala referensi', () => {
+    renderHero();
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Judul Satu');
+    const tabs = screen.getByRole('tablist', { name: /pilih slide/i });
+    expect(within(tabs).getAllByRole('tab')).toHaveLength(2);
+  });
+
+  it('meneruskan srcset/sizes responsif ke img bila tersedia', () => {
+    renderHero([{ ...slides[0], image: '/hero-1.jpg', srcSet: '/hero-1-800.webp 800w', sizes: '100vw' }]);
+    const img = document.querySelector('section img');
+    expect(img?.getAttribute('srcset')).toBe('/hero-1-800.webp 800w');
+    expect(img?.getAttribute('sizes')).toBe('100vw');
+  });
+
+  it('slide berganti sendiri tiap interval dan wrap-around', () => {
+    renderHero(slides, 1000);
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Judul Dua');
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Judul Satu');
+  });
+
+  it('klik dot melompat ke slide terkait', () => {
+    renderHero();
+    fireEvent.click(screen.getByRole('tab', { name: 'Tampilkan slide 2' }));
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Judul Dua');
+  });
+
+  it('edge case: prefers-reduced-motion mematikan autoplay', () => {
+    vi.stubGlobal(
+      'matchMedia',
+      vi.fn().mockReturnValue({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
+    );
+    renderHero(slides, 1000);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Judul Satu');
+  });
+
+  it('edge case: tanpa slide tidak render apa-apa', () => {
+    const { container } = renderHero([]);
+    expect(container.querySelector('section')).toBeNull();
+  });
+
+  it('edge case: satu slide tanpa dots', () => {
+    renderHero(slides.slice(0, 1));
+    expect(screen.queryByRole('tablist')).toBeNull();
+  });
+});

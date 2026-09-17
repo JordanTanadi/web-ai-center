@@ -1,0 +1,3 @@
+# TODO_BACKEND: sesuaikan Sitemap/exact rules saat domain produksi sudah fix.
+User-agent: *
+Allow: /
