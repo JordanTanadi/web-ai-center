@@ -18,7 +18,6 @@ CMS frontend AI Center Universitas Surabaya. Data masih dummy; backend belum ter
 | `/tentang-kami` | Profil, alamat |
 | `/berita`, `/berita/:slug` | Daftar + pencarian, detail |
 | `/dokumentasi`, `/dokumentasi/:slug` | Daftar + pencarian, detail |
-|lainnya | 404 |
 
 ## Arti penanda di kode
 
@@ -48,7 +47,7 @@ Catatan: butuh Node ≥ 20 dan akses internet (instalasi pertama). Nilai asli (A
 
 ## Ringkasan pengerjaan
 
-1. Scaffold Vite React-TS + Tailwind + motion + Vitest + router; desain diadaptasi dari `beranda/index.html`, konten di-rewrite untuk AI Center Ubaya.
+1. Scaffold Vite React-TS + Tailwind + motion + Vitest + router; desain diadaptasi dari rapat sebelumnya.
 2. Komponen reusable: layout header/footer (logo Ubaya → AI Center, dropdown Konten), hero carousel + client carousel otomatis (dots, jeda saat hover/fokus, hormat reduced-motion), slider testimoni, card berita/dokumentasi/tim dengan slot gambar.
 3. Data dummy bertanda backend untuk hero, berita, dokumentasi, tim, klien, testimoni.
 4. Optimasi Lighthouse hingga desktop 100/100/100/100 dan mobile 95/100/100/100 (robots.txt, dimensi gambar, target sentuh, kompresi + WebP responsif, code-splitting route, preload LCP).
