@@ -1,4 +1,5 @@
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 import SectionHeading from '../components/SectionHeading.tsx';
 import HeroCarousel from '../components/HeroCarousel.tsx';
 import NewsCard from '../components/NewsCard.tsx';
@@ -6,6 +7,8 @@ import DokumentasiCard from '../components/DokumentasiCard.tsx';
 import ClientCarousel from '../components/ClientCarousel.tsx';
 import TestimoniSlider from '../components/TestimoniSlider.tsx';
 import { heroSlidesDummy } from '../data/hero.ts';
+import { layananDummy } from '../data/layanan.ts';
+import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
 import { klienDummy } from '../data/klien.ts';
@@ -47,6 +50,15 @@ function SectionBar({
 // dokumentasi → our client carousel → testimoni → berita), konten di-rewrite
 // untuk AI Center Ubaya. File lama tetap ada sebagai referensi di ./beranda/index.html.
 export default function Beranda() {
+  const location = useLocation();
+
+  // Klik "Layanan" di navbar/footer (/beranda#layanan) scroll ke section layanan.
+  useEffect(() => {
+    if (!location.hash) return;
+    const el = document.querySelector(location.hash);
+    el?.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+  }, [location]);
+
   return (
     <div>
       {/* TODO_BACKEND: slide hero dari GET /api/hero-slides */}
@@ -56,14 +68,16 @@ export default function Beranda() {
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading kicker="Layanan" title="Pilih Jalur Kolaborasimu" sub="Pelatihan, GPU rental, dan inference solution." />
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {[
-              { t: 'Pelatihan', d: 'Pelatihan AI/ML untuk mahasiswa, dosen, dan umum.' },
-              { t: 'GPU Rental', d: 'Sewa akses GPU lab untuk riset dan tugas akhir.' },
-              { t: 'Inference Solution', d: 'Solusi deployment model untuk kebutuhan industri.' },
-            ].map((c) => (
-              <article key={c.t} className="rounded-2xl border border-line bg-white p-6 text-center">
-                <h3 className="font-display font-bold">{c.t}</h3>
-                <p className="mt-2 text-sm text-muted">{c.d}</p>
+            {layananDummy.map((c) => (
+              <article key={c.slug} className="flex flex-col rounded-2xl border border-line bg-white p-6 text-center">
+                <h3 className="font-display font-bold">{c.nama}</h3>
+                <p className="mt-2 flex-1 text-sm text-muted">{c.tagline}</p>
+                <Link
+                  to={`/layanan/${c.slug}`}
+                  className="mx-auto mt-4 inline-block rounded-lg border border-brand px-5 py-2 text-sm font-bold text-brand hover:bg-brand hover:text-white"
+                >
+                  Detail Layanan →
+                </Link>
               </article>
             ))}
           </div>
