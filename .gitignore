@@ -19,3 +19,8 @@ Thumbs.db
 
 # test / coverage
 coverage/
+
+# laporan lighthouse + unit test hanya lokal, tidak ikut repo
+lighthouse_report/
+*.test.ts
+*.test.tsx
