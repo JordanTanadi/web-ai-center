@@ -22,7 +22,7 @@ export function CardImage({ src, alt }: { src?: string; alt: string }) {
       aria-hidden="true"
       className="flex aspect-video w-full items-center justify-center bg-gradient-to-br from-soft to-line"
     >
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#5a608a" strokeWidth="1.5" aria-hidden="true">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#4a5878" strokeWidth="1.5" aria-hidden="true">
         <rect x="3" y="3" width="18" height="18" rx="2" />
         <circle cx="9" cy="9" r="2" />
         <path d="m21 15-3.5-3.5a1.5 1.5 0 0 0-2 0L6 21" />

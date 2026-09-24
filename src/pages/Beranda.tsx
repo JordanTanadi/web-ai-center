@@ -35,7 +35,7 @@ function SectionBar({
         className={`shrink-0 rounded-lg px-5 py-2.5 font-display text-sm font-bold ${
           dark
             ? 'border border-white text-white hover:bg-white hover:text-brand'
-            : 'bg-brand text-white hover:bg-brand-dark'
+            : 'btn-primary text-white'
         }`}
       >
         {actionLabel}

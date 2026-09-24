@@ -33,7 +33,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
     <section
       aria-roledescription="carousel"
       aria-label="Sorotan AI Center"
-      className="relative overflow-hidden bg-[#101330] text-white"
+      className="relative overflow-hidden bg-navy text-white"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onFocus={() => setPaused(true)}
@@ -68,7 +68,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
             )}
             {/* Overlay gelap agar kontras teks ≥ 4.5:1 di atas foto */}
             <div
-              className="absolute inset-0 bg-gradient-to-r from-[#0a0c23]/90 via-[#0a0c23]/60 to-[#1025ac]/40"
+              className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/60 to-brand-bright/40"
               aria-hidden="true"
             />
             {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}

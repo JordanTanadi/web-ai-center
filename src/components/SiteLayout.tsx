@@ -114,7 +114,7 @@ export function Header() {
           <NavLink to="/tentang-kami" className={navLinkCls}>
             Tentang Kami
           </NavLink>
-          <NavLink to="/tentang-kami" className="rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white hover:bg-brand-dark">
+          <NavLink to="/tentang-kami" className="btn-primary rounded-lg px-4 py-2 text-sm font-bold text-white">
             Kontak
           </NavLink>
         </nav>
@@ -169,7 +169,7 @@ export function Header() {
           <NavLink
             to="/tentang-kami"
             onClick={() => setOpen(false)}
-            className="mt-1 rounded-lg bg-brand px-4 py-2 text-center text-sm font-bold text-white"
+            className="btn-primary mt-1 rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
           >
             Kontak
           </NavLink>
@@ -181,7 +181,7 @@ export function Header() {
 
 export function Footer() {
   return (
-    <footer id="kontak" className="bg-[#14173a] text-sm text-[#c9cde6]">
+    <footer id="kontak" className="bg-navy text-sm text-[#c9cde6]">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-2 lg:grid-cols-[1.25fr_1.15fr_0.8fr_0.8fr]">
         <div>
           <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-white px-4 py-2 lg:flex-nowrap">

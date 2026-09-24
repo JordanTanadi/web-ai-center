@@ -34,7 +34,7 @@ export default function TestimoniSlider({ items, dark = true }: { items: Testimo
           >
             ← Sebelumnya
           </button>
-          <p className={`text-sm tabular-nums ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>
+          <p className={`font-mono text-sm tabular-nums ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>
             {idx + 1} / {items.length}
           </p>
           <button

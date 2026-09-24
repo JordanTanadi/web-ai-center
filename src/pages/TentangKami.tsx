@@ -14,15 +14,15 @@ export default function TentangKami({ profil = profilDummy }: { profil?: Profil 
 
       {/* Visi & Misi — layout mengikuti referensi "Arah Kami": kartu visi gelap + daftar misi bernomor */}
       <section aria-labelledby="visi-misi-heading" className="mt-12">
-        <span className="font-display text-xs font-bold uppercase tracking-[0.16em] text-brand">Arah Kami</span>
+        <span className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-brand">Arah Kami</span>
         <h2 id="visi-misi-heading" className="mt-2 font-display text-2xl font-bold md:text-3xl">
           Visi &amp; Misi
         </h2>
         <p className="mt-2 max-w-3xl text-muted">{profil.introVisiMisi}</p>
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
-          <article className="rounded-2xl bg-[#14173a] p-6 text-white md:p-8">
-            <h3 className="font-display text-xs font-bold uppercase tracking-[0.16em] text-[#93a3ff]">
+          <article className="rounded-2xl bg-navy p-6 text-white md:p-8">
+            <h3 className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-[#93a3ff]">
               <span aria-hidden="true">// </span>Visi
             </h3>
             <p className="mt-3 font-display text-xl font-bold">{profil.visi.judul}</p>
@@ -37,7 +37,7 @@ export default function TentangKami({ profil = profilDummy }: { profil?: Profil 
               <ol className="mt-2 divide-y divide-line">
                 {profil.misi.map((poin, i) => (
                   <li key={poin} className="flex gap-4 py-3">
-                    <span className="font-display font-bold text-brand" aria-hidden="true">
+                    <span className="font-mono font-bold text-brand" aria-hidden="true">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span className="text-sm">{poin}</span>

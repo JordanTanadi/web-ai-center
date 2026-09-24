@@ -1,15 +1,21 @@
 @import 'tailwindcss';
 
 @theme {
-  --color-brand: #1025ac;
-  --color-brand-dark: #0b1c82;
-  --color-ink: #2a2f4f;
-  --color-muted: #5a608a;
-  --color-soft: #f6f7fb;
-  --color-line: #e7e9f2;
-  --color-gold: #f5b301;
-  --font-display: 'Poppins', 'Open Sans', system-ui, sans-serif;
-  --font-body: 'Open Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  /* Identitas visual Figma "Nuansa Biru" (Modern/Tech/Blue/Clean/Gradient).
+     Hex biru ≈ estimasi dari screenshot — dikoreksi cepat bila ada yang meleset. */
+  --color-brand: #3a31e5; /* biru indigo: teks link, section gelap, dasar gradient */
+  --color-brand-bright: #0d7bf5; /* biru terang: gradient hero & aksen */
+  --color-brand-dark: #2b23c4; /* indigo gelap: hover/pressed tombol */
+  --color-navy: #0a1526; /* navy: footer, kartu gelap, latar hero */
+  --color-ink: #0f1a2e; /* teks utama */
+  --color-muted: #4a5878; /* teks sekunder */
+  --color-soft: #d5e7f7; /* background section biru muda */
+  --color-line: #dbe7f4; /* border */
+  --color-cream: #f4efe9; /* off-white krem (netral hangat) */
+  --color-gold: #f5b301; /* cadangan aksen */
+  --font-display: 'Cabinet Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-body: 'General Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 body {
@@ -27,13 +33,29 @@ body {
 
 /* Sentuh: cegah highlight bawaan & delay zoom ganda di mobile */
 html {
-  -webkit-tap-highlight-color: rgb(16 37 172 / 0.15);
+  -webkit-tap-highlight-color: rgb(58 49 229 / 0.15);
 }
 
 a,
 button,
 input {
   touch-action: manipulation;
+}
+
+/* Tombol utama: gradient indigo sesuai identitas visual Figma (model Gradient).
+   Ujung terang memakai indigo (bukan biru terang #0d7bf5) agar teks putih
+   tetap lolos kontras WCAG AA ≥4.5:1 di seluruh lebar tombol. */
+.btn-primary {
+  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%);
+  transition: filter 150ms ease;
+}
+
+.btn-primary:hover {
+  filter: brightness(1.15);
+}
+
+.btn-primary:active {
+  filter: brightness(0.92);
 }
 
 /* Heading: rapikan sisa kata terakhir (widow) di baris baru */
