@@ -4,14 +4,12 @@ import SectionHeading from '../components/SectionHeading.tsx';
 import HeroCarousel from '../components/HeroCarousel.tsx';
 import NewsCard from '../components/NewsCard.tsx';
 import DokumentasiCard from '../components/DokumentasiCard.tsx';
-import ClientCarousel from '../components/ClientCarousel.tsx';
 import TestimoniSlider from '../components/TestimoniSlider.tsx';
 import { heroSlidesDummy } from '../data/hero.ts';
 import { layananDummy } from '../data/layanan.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
-import { klienDummy } from '../data/klien.ts';
 import { testimoniDummy } from '../data/testimoni.ts';
 
 function SectionBar({
@@ -47,7 +45,7 @@ function SectionBar({
 }
 
 // Struktur section mengikuti beranda/index.html (hero carousel → layanan →
-// dokumentasi → our client carousel → testimoni → berita), konten di-rewrite
+// dokumentasi → testimoni → berita), konten di-rewrite
 // untuk AI Center Ubaya. File lama tetap ada sebagai referensi di ./beranda/index.html.
 export default function Beranda() {
   const location = useLocation();
@@ -66,8 +64,8 @@ export default function Beranda() {
 
       <section id="layanan" className="scroll-mt-20 bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6">
-          <SectionHeading kicker="Layanan" title="Pilih Jalur Kolaborasimu" sub="Pelatihan, GPU rental, dan inference solution." />
-          <div className="mt-8 grid gap-5 md:grid-cols-3">
+          <SectionHeading kicker="Layanan" title="Pilih Jalur Kolaborasimu" sub="Pelatihan dan inference solution untuk kebutuhan nyata." />
+          <div className="mt-8 grid gap-5 md:grid-cols-2">
             {layananDummy.map((c) => (
               <article key={c.slug} className="flex flex-col rounded-2xl border border-line bg-white p-6 text-center">
                 <h3 className="font-display font-bold">{c.nama}</h3>
@@ -105,23 +103,26 @@ export default function Beranda() {
         </div>
       </section>
 
+      {/* Our Client sementara dikomentari; komponen dan data dipertahankan untuk diaktifkan kembali. */}
+      {/*
       <section aria-labelledby="klien-heading" className="py-16">
         <div className="mx-auto max-w-6xl px-6">
           <div id="klien-heading">
             <SectionHeading kicker="Dipercaya" title="Our Client" sub="Mitra yang berkolaborasi dengan AI Center (data dummy)." />
           </div>
-          {/* TODO_BACKEND: daftar klien dari GET /api/klien */}
+          // TODO_BACKEND: daftar klien dari GET /api/klien
           <ClientCarousel items={klienDummy} perPage={3} />
         </div>
       </section>
+      */}
 
-      <section aria-labelledby="testi-heading" className="bg-brand py-16 text-white">
+      <section aria-labelledby="testi-heading" className="bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <div id="testi-heading">
-            <SectionHeading kicker="Testimoni" title="Apa Kata Mereka?" sub="Cerita peserta dan mitra AI Center." tone="dark" />
+            <SectionHeading kicker="Testimoni" title="Apa Kata Mereka?" sub="Cerita peserta dan mitra AI Center." />
           </div>
           {/* TODO_BACKEND: testimoni dari GET /api/testimoni */}
-          <TestimoniSlider items={testimoniDummy} />
+          <TestimoniSlider items={testimoniDummy} dark={false} />
         </div>
       </section>
 

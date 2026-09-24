@@ -2,11 +2,11 @@ import { useState } from 'react';
 import type { Testimoni } from '../data/testimoni.ts';
 
 // Slider testimoni satu kutipan (diadaptasi dari section testimoni di beranda/index.html).
-export default function TestimoniSlider({ items }: { items: Testimoni[] }) {
+export default function TestimoniSlider({ items, dark = true }: { items: Testimoni[]; dark?: boolean }) {
   const [idx, setIdx] = useState(0);
 
   if (items.length === 0) {
-    return <p className="mt-8 text-center text-[#dbe3ff]">Belum ada testimoni.</p>;
+    return <p className={`mt-8 text-center ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>Belum ada testimoni.</p>;
   }
 
   const current = items[idx % items.length];
@@ -25,18 +25,26 @@ export default function TestimoniSlider({ items }: { items: Testimoni[] }) {
             type="button"
             onClick={() => setIdx((i) => (i + items.length - 1) % items.length)}
             aria-label="Testimoni sebelumnya"
-            className="rounded-lg border border-white bg-white/10 px-4 py-2 font-display text-sm font-bold text-white hover:bg-white hover:text-brand"
+            className={`rounded-lg border px-4 py-2 font-display text-sm font-bold ${
+              dark
+                ? 'border-white bg-white/10 text-white hover:bg-white hover:text-brand'
+                : 'border-brand bg-white text-brand hover:bg-brand hover:text-white'
+            }`}
           >
             ← Sebelumnya
           </button>
-          <p className="text-sm text-[#dbe3ff]">
+          <p className={`text-sm ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>
             {idx + 1} / {items.length}
           </p>
           <button
             type="button"
             onClick={() => setIdx((i) => (i + 1) % items.length)}
             aria-label="Testimoni berikutnya"
-            className="rounded-lg border border-white bg-white/10 px-4 py-2 font-display text-sm font-bold text-white hover:bg-white hover:text-brand"
+            className={`rounded-lg border px-4 py-2 font-display text-sm font-bold ${
+              dark
+                ? 'border-white bg-white/10 text-white hover:bg-white hover:text-brand'
+                : 'border-brand bg-white text-brand hover:bg-brand hover:text-white'
+            }`}
           >
             Berikutnya →
           </button>

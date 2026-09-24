@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
+import { kontakDummy, waLinkKontak } from '../data/kontak.ts';
 
 const kontenLinks = [
   { to: '/berita', label: 'Berita' },
@@ -16,7 +17,6 @@ const populerLinks = [
 
 const layananLinks = [
   { to: '/beranda#layanan', label: 'Pelatihan' },
-  { to: '/beranda#layanan', label: 'GPU Rental' },
   { to: '/beranda#layanan', label: 'Inference Solution' },
 ];
 
@@ -196,22 +196,36 @@ export function Footer() {
             />
           </div>
           <p className="font-display font-bold text-white">Tentang AI Center</p>
-          <p className="mt-2 text-[13px]">
-            Pusat riset dan layanan kecerdasan artifisial Universitas Surabaya.
-          </p>
+          <p className="mt-2 text-[13px]">{kontakDummy.deskripsiFooter}</p>
         </div>
         <div>
           <p className="font-display font-bold text-white">AI Center Universitas Surabaya</p>
           <address className="mt-2 text-[13px] not-italic">
-            Jl. Tenggilis Mejoyo, Kali Rungkut, Kec. Rungkut, Surabaya, Jawa Timur 60293
+            {kontakDummy.alamat.join(', ')}
             <br />
-            {/* TODO_BACKEND: email & telepon resmi diganti dari data backend/CMS */}
-            <a href="mailto:info@ai-center.ubaya.ac.id" className="inline-block min-h-6 py-1 hover:text-white hover:underline">
-              info@ai-center.ubaya.ac.id
+            <a
+              href={`mailto:${kontakDummy.email}`}
+              className="inline-block min-h-6 py-1 hover:text-white hover:underline"
+            >
+              {kontakDummy.email}
             </a>
             <br />
-            <a href="tel:+62312981000" className="inline-block min-h-6 py-1 hover:text-white hover:underline">
-              +62 31 298 1000
+            <a
+              href={waLinkKontak(kontakDummy)}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block min-h-6 py-1 hover:text-white hover:underline"
+            >
+              WhatsApp {kontakDummy.whatsappDisplay} ↗
+            </a>
+            <br />
+            <a
+              href={kontakDummy.websiteUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-block min-h-6 py-1 hover:text-white hover:underline"
+            >
+              {kontakDummy.websiteLabel} ↗
             </a>
           </address>
         </div>

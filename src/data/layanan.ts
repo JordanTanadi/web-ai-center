@@ -11,29 +11,15 @@ export const layananDummy: Layanan[] = [
   {
     slug: 'pelatihan',
     nama: 'Pelatihan',
-    tagline: 'Pelatihan AI/ML untuk mahasiswa, dosen, dan umum.',
+    tagline: 'Kursus AI/ML terstruktur untuk belajar mandiri dan bertahap.',
     deskripsi:
-      'Program pelatihan kecerdasan artifisial dan machine learning dari tingkat dasar hingga lanjut, ' +
-      'diselenggarakan reguler oleh AI Center Universitas Surabaya untuk sivitas akademika dan umum.',
+      'Platform pembelajaran AI dan machine learning dengan kursus bertingkat, materi video, latihan praktik, ' +
+      'evaluasi, dan sertifikat penyelesaian untuk sivitas akademika serta umum.',
     fitur: [
-      'Kurikulum dasar hingga lanjut (Python, ML, deep learning)',
-      'Praktik langsung dengan akses GPU lab',
-      'Sertifikat penyelesaian',
-      'Jadwal reguler tiap angkatan',
-    ],
-  },
-  {
-    slug: 'gpu-rental',
-    nama: 'GPU Rental',
-    tagline: 'Sewa akses GPU lab untuk riset dan tugas akhir.',
-    deskripsi:
-      'Layanan penyewaan akses GPU lab AI Center untuk kebutuhan riset tugas akhir, skripsi, ' +
-      'penelitian dosen, dan proyek mitra industri dengan sistem antrean terjadwal.',
-    fitur: [
-      'Slot GPU terjadwal dan transparan',
-      'Dukungan teknis selama pemakaian',
-      'Cocok untuk tugas akhir dan riset',
-      'Pendaftaran dan verifikasi admin',
+      'Katalog kursus dari dasar hingga lanjut',
+      'Modul video, materi bacaan, dan latihan praktik',
+      'Kuis dan evaluasi di setiap tahap pembelajaran',
+      'Progress belajar dan sertifikat penyelesaian',
     ],
   },
   {

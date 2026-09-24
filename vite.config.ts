@@ -9,5 +9,9 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     globals: true,
+    // Batasi ke frontend saja — test backend memakai bun:test (di-server/),
+    // jangan dijalankan vitest.
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['node_modules/**', 'server/**', 'dist/**'],
   },
 });

@@ -22,6 +22,6 @@ export const testimoniDummy: Testimoni[] = [
     nama: 'Dosen Peneliti',
     peran: 'Peneliti',
     kutipan:
-      'Fasilitas GPU rental sangat membantu riset. Antrean terjadwal rapi dan ada dukungan teknis saat kendala.',
+      'Pendampingan AI Center sangat membantu riset. Tim responsif dan memberi dukungan teknis saat ada kendala.',
   },
 ];

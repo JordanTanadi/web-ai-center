@@ -20,6 +20,9 @@ Thumbs.db
 # test / coverage
 coverage/
 
+# data DB dev (PGlite) — lokal saja
+.pglite/
+
 # laporan lighthouse + unit test hanya lokal, tidak ikut repo
 lighthouse_report/
 *.test.ts
