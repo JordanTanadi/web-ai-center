@@ -7,18 +7,15 @@ export default function TentangKami({ profil = profilDummy }: { profil?: Profil 
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
       <SectionHeading kicker="Tentang" title="Tentang Kami" sub="AI Center Universitas Surabaya." level="h1" />
-      <div className="mt-6 max-w-3xl space-y-4">
+      {/* Paragraf pembuka dipusatkan agar sejajar heading (bukan menempel tepi kiri) */}
+      <div className="mx-auto mt-6 max-w-3xl space-y-4 text-center">
         <p>{kontakDummy.deskripsiSingkat}</p>
         <p>Layanan utama kami adalah pelatihan AI/ML dan inference solution untuk sivitas akademika serta mitra industri.</p>
       </div>
 
       {/* Visi & Misi — layout mengikuti referensi "Arah Kami": kartu visi gelap + daftar misi bernomor */}
-      <section aria-labelledby="visi-misi-heading" className="mt-12">
-        <span className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-brand">Arah Kami</span>
-        <h2 id="visi-misi-heading" className="mt-2 font-display text-2xl font-bold md:text-3xl">
-          Visi &amp; Misi
-        </h2>
-        <p className="mt-2 max-w-3xl text-muted">{profil.introVisiMisi}</p>
+      <section aria-label="Visi & Misi" className="mt-14">
+        <SectionHeading kicker="Arah Kami" title="Visi & Misi" sub={profil.introVisiMisi} />
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <article className="rounded-2xl bg-navy p-6 text-white md:p-8">
@@ -49,7 +46,8 @@ export default function TentangKami({ profil = profilDummy }: { profil?: Profil 
         </div>
       </section>
 
-      <address className="mt-10 block max-w-3xl not-italic text-sm text-muted">
+      {/* Kontak dipusatkan mengikuti ritme halaman; tetap elemen <address> semantik */}
+      <address className="mx-auto mt-12 block max-w-3xl text-center not-italic text-sm text-muted">
         {kontakDummy.alamat.join(', ')}
         <br />
         <a href={`mailto:${kontakDummy.email}`} className="text-brand hover:underline">
