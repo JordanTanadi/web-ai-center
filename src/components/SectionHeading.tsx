@@ -26,7 +26,7 @@ export default function SectionHeading({
   const Heading = level;
   return (
     <div className={`max-w-2xl ${alignCls}`}>
-      <span className={`font-mono text-xs font-bold uppercase tracking-[0.16em] ${kickerCls}`}>{kicker}</span>
+      <span className={`font-body text-xs font-bold uppercase tracking-[0.16em] ${kickerCls}`}>{kicker}</span>
       <Heading className={`mt-2 font-display text-2xl font-bold md:text-3xl ${titleCls}`}>{title}</Heading>
       {sub ? <p className={`mt-2 ${subCls}`}>{sub}</p> : null}
     </div>

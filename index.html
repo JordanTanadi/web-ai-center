@@ -5,18 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#ffffff" />
     <link rel="icon" type="image/png" href="/AI-Center_Logo.png" />
-    <!-- Font identitas visual: Cabinet Grotesk (judul) + General Sans (isi) via Fontshare
-         (lisensi gratis); Geist Mono (label/angka) via Google Fonts.
-         preconnect + display=swap agar teks tampil cepat dengan fallback Helvetica. -->
-    <link rel="preconnect" href="https://api.fontshare.com" />
-    <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
-    <link
-      href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&amp;f[]=general-sans@400,500,600,700&amp;display=swap"
-      rel="stylesheet"
-    />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;600;700&display=swap" rel="stylesheet" />
+    <!-- Font identitas di-self-host di public/fonts (@font-face di src/index.css):
+         General Sans (isi) + Cabinet Grotesk (judul); dipreload agar tampil cepat. -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/GeneralSans-Regular.woff2" crossorigin />
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/CabinetGrotesk-Bold.woff2" crossorigin />
     <meta
       name="description"
       content="AI Center Universitas Surabaya — riset AI, pelatihan, inference solution, dan publikasi."

@@ -1,5 +1,51 @@
 @import 'tailwindcss';
 
+/* Font identitas di-self-host di public/fonts (sumber: Fontshare, lisensi gratis)
+   supaya pasti termuat tanpa CDN eksternal — sebelumnya API Fontshare membalas
+   Satoshi untuk permintaan gabungan sehingga General Sans gagal & jatuh ke Helvetica. */
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Cabinet Grotesk';
+  src: url('/fonts/CabinetGrotesk-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   /* Warna primer — persis daftar dari Figma (visual identity "Nuansa Biru") */
   --color-brand: #2547F4; /* biru royal: link, tombol, section menonjol */
@@ -18,7 +64,6 @@
   --color-line: #E3EAF3; /* hairline border/divider */
   --font-display: 'Cabinet Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-body: 'General Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 body {
@@ -26,6 +71,12 @@ body {
   color: var(--color-ink);
   background: #fff;
   line-height: 1.65;
+}
+
+/* Footer gelap: teks isi dipertahankan memakai font lama (Helvetica sistem)
+   sementara waktu sesuai permintaan; judul kolom di dalamnya tetap font-display. */
+.footer-legacy-font {
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
 }
 
 /* Fokus keyboard konsisten & terlihat (Web Interface Guidelines) */

@@ -19,7 +19,7 @@ export default function TentangKami({ profil = profilDummy }: { profil?: Profil 
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <article className="rounded-2xl bg-navy p-6 text-white md:p-8">
-            <h3 className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-yellow">
+            <h3 className="font-body text-xs font-bold uppercase tracking-[0.16em] text-yellow">
               <span aria-hidden="true">// </span>Visi
             </h3>
             <p className="mt-3 font-display text-xl font-bold">{profil.visi.judul}</p>
@@ -34,7 +34,7 @@ export default function TentangKami({ profil = profilDummy }: { profil?: Profil 
               <ol className="mt-2 divide-y divide-line">
                 {profil.misi.map((poin, i) => (
                   <li key={poin} className="flex gap-4 py-3">
-                    <span className="font-mono font-bold text-brand" aria-hidden="true">
+                    <span className="font-body font-bold text-brand" aria-hidden="true">
                       {String(i + 1).padStart(2, '0')}
                     </span>
                     <span className="text-sm">{poin}</span>

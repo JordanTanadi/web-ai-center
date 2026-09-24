@@ -22,7 +22,7 @@ export default function LayananDetail() {
       {/* Header + deskripsi dipusatkan (ritme halaman lain); daftar fitur & CTA
           ditata rapi di bawahnya. */}
       <header className="text-center">
-        <p className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-brand">Layanan</p>
+        <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">Layanan</p>
         <h1 className="mt-2 font-display text-3xl font-bold">{item.nama}</h1>
         <p className="mt-2 font-medium text-muted">{item.tagline}</p>
       </header>
