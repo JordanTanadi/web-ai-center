@@ -48,7 +48,8 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
           transition={{ duration: 0.6, ease: 'easeOut' }}
           aria-roledescription="slide"
           aria-label={`Slide ${index + 1} dari ${slides.length}`}
-          className="absolute inset-0"
+          /* flex items-center: konten teks vertikal-centered di dalam min-height hero */
+          className="absolute inset-0 flex items-center"
         >
             {current.image && imgOk[index] !== false && (
               <div className="absolute inset-0" aria-hidden="true">
@@ -57,6 +58,8 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                   srcSet={current.srcSet}
                   sizes={current.sizes}
                   alt=""
+                  width="1600"
+                  height="900"
                   className="h-full w-full object-cover"
                   fetchPriority="high"
                   onError={() => setImgOk((m) => ({ ...m, [index]: false }))}
@@ -68,7 +71,8 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
               className="absolute inset-0 bg-gradient-to-r from-[#0a0c23]/90 via-[#0a0c23]/60 to-[#1025ac]/40"
               aria-hidden="true"
             />
-            <div className="relative z-10 mx-auto max-w-6xl px-6 py-20 md:py-24">
+            {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}
+            <div className="relative z-10 w-full mx-auto max-w-6xl px-6 py-20 md:py-24">
               <motion.div
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}

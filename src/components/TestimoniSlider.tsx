@@ -20,7 +20,8 @@ export default function TestimoniSlider({ items, dark = true }: { items: Testimo
         </figcaption>
       </figure>
       {items.length > 1 && (
-        <div className="mt-6 flex items-center justify-center gap-3">
+        /* flex-wrap: baris nav tidak overflow di layar ~360px */
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <button
             type="button"
             onClick={() => setIdx((i) => (i + items.length - 1) % items.length)}
@@ -33,7 +34,7 @@ export default function TestimoniSlider({ items, dark = true }: { items: Testimo
           >
             ← Sebelumnya
           </button>
-          <p className={`text-sm ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>
+          <p className={`text-sm tabular-nums ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>
             {idx + 1} / {items.length}
           </p>
           <button

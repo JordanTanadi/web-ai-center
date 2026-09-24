@@ -16,8 +16,8 @@ const populerLinks = [
 ];
 
 const layananLinks = [
-  { to: '/beranda#layanan', label: 'Pelatihan' },
-  { to: '/beranda#layanan', label: 'Inference Solution' },
+  { to: '/layanan/pelatihan', label: 'Pelatihan' },
+  { to: '/layanan/inference-solution', label: 'Inference Solution' },
 ];
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
@@ -59,9 +59,10 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b border-line bg-white">
       <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
         <NavLink to="/beranda" className="flex items-center gap-3" aria-label="AI Center Ubaya beranda">
-          <img src="/ubaya_logo.png" alt="Logo Ubaya" width="200" height="67" className="h-9 w-auto" />
+          {/* Ukuran logo mengecil di layar sempit (≤640px) agar header tidak overflow */}
+          <img src="/ubaya_logo.png" alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto sm:h-9" />
           <span className="hidden h-8 w-px bg-line sm:block" aria-hidden="true" />
-          <img src="/AI-Center_Logo.png" alt="Logo AI Center" width="440" height="116" className="h-10 w-auto" />
+          <img src="/AI-Center_Logo.png" alt="Logo AI Center" width="440" height="116" className="h-8 w-auto sm:h-10" />
         </NavLink>
         <nav aria-label="Navigasi utama" className="ml-auto hidden items-center gap-5 md:flex">
           <NavLink to="/beranda" className={navLinkCls}>

@@ -82,19 +82,18 @@ export default function Beranda() {
         </div>
       </section>
 
-      <section aria-labelledby="dok-heading" className="bg-brand py-16 text-white">
+      {/* aria-label langsung pada <section> (jadi region bernama); tanpa wrapper div. */}
+      <section aria-label="Dokumentasi Kegiatan" className="bg-brand py-16 text-white">
         <div className="mx-auto max-w-6xl px-6">
           {/* 3 card penampung highlight; TODO_BACKEND: backend yang menentukan limit/isi 3 highlight */}
-          <div id="dok-heading">
-            <SectionBar
-              kicker="Kegiatan"
-              title="Dokumentasi Kegiatan"
-              sub="Sorotan kegiatan terbaru AI Center."
-              actionTo="/dokumentasi"
-              actionLabel="Lihat Semua →"
-              dark
-            />
-          </div>
+          <SectionBar
+            kicker="Kegiatan"
+            title="Dokumentasi Kegiatan"
+            sub="Sorotan kegiatan terbaru AI Center."
+            actionTo="/dokumentasi"
+            actionLabel="Lihat Semua →"
+            dark
+          />
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {dokumentasiDummy.slice(0, 3).map((d) => (
               <DokumentasiCard key={d.slug} item={d} showLink={false} />
@@ -105,39 +104,33 @@ export default function Beranda() {
 
       {/* Our Client sementara dikomentari; komponen dan data dipertahankan untuk diaktifkan kembali. */}
       {/*
-      <section aria-labelledby="klien-heading" className="py-16">
+      <section aria-label="Our Client" className="py-16">
         <div className="mx-auto max-w-6xl px-6">
-          <div id="klien-heading">
-            <SectionHeading kicker="Dipercaya" title="Our Client" sub="Mitra yang berkolaborasi dengan AI Center (data dummy)." />
-          </div>
+          <SectionHeading kicker="Dipercaya" title="Our Client" sub="Mitra yang berkolaborasi dengan AI Center." />
           // TODO_BACKEND: daftar klien dari GET /api/klien
           <ClientCarousel items={klienDummy} perPage={3} />
         </div>
       </section>
       */}
 
-      <section aria-labelledby="testi-heading" className="bg-soft py-16">
+      <section aria-label="Testimoni" className="bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
-          <div id="testi-heading">
-            <SectionHeading kicker="Testimoni" title="Apa Kata Mereka?" sub="Cerita peserta dan mitra AI Center." />
-          </div>
+          <SectionHeading kicker="Testimoni" title="Apa Kata Mereka?" sub="Cerita peserta dan mitra AI Center." />
           {/* TODO_BACKEND: testimoni dari GET /api/testimoni */}
           <TestimoniSlider items={testimoniDummy} dark={false} />
         </div>
       </section>
 
-      <section aria-labelledby="berita-heading" className="py-16">
+      <section aria-label="Berita Terkini" className="py-16">
         <div className="mx-auto max-w-6xl px-6">
           {/* 3 card penampung highlight; TODO_BACKEND: backend yang menentukan limit/isi 3 highlight */}
-          <div id="berita-heading">
-            <SectionBar
-              kicker="Berita"
-              title="Berita Terkini"
-              sub="Kabar terbaru AI Center."
-              actionTo="/berita"
-              actionLabel="Lihat Semua →"
-            />
-          </div>
+          <SectionBar
+            kicker="Berita"
+            title="Berita Terkini"
+            sub="Kabar terbaru AI Center."
+            actionTo="/berita"
+            actionLabel="Lihat Semua →"
+          />
           <div className="mt-8 grid gap-5 md:grid-cols-3">
             {beritaDummy.slice(0, 3).map((b) => (
               <NewsCard key={b.slug} item={b} showLink={false} />

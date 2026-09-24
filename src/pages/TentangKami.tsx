@@ -6,7 +6,7 @@ import { profilDummy, type Profil } from '../data/profil.ts';
 export default function TentangKami({ profil = profilDummy }: { profil?: Profil }) {
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
-      <SectionHeading kicker="Tentang" title="Tentang Kami" sub="AI Center Universitas Surabaya." />
+      <SectionHeading kicker="Tentang" title="Tentang Kami" sub="AI Center Universitas Surabaya." level="h1" />
       <div className="mt-6 max-w-3xl space-y-4">
         <p>{kontakDummy.deskripsiSingkat}</p>
         <p>Layanan utama kami adalah pelatihan AI/ML dan inference solution untuk sivitas akademika serta mitra industri.</p>

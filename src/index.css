@@ -18,3 +18,27 @@ body {
   background: #fff;
   line-height: 1.65;
 }
+
+/* Fokus keyboard konsisten & terlihat (Web Interface Guidelines) */
+:focus-visible {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 2px;
+}
+
+/* Sentuh: cegah highlight bawaan & delay zoom ganda di mobile */
+html {
+  -webkit-tap-highlight-color: rgb(16 37 172 / 0.15);
+}
+
+a,
+button,
+input {
+  touch-action: manipulation;
+}
+
+/* Heading: rapikan sisa kata terakhir (widow) di baris baru */
+h1,
+h2,
+h3 {
+  text-wrap: balance;
+}
