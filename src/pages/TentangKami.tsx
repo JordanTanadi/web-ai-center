@@ -19,7 +19,7 @@ export default function TentangKami({ profil = profilDummy }: { profil?: Profil 
 
         <div className="mt-6 grid gap-5 md:grid-cols-2">
           <article className="rounded-2xl bg-navy p-6 text-white md:p-8">
-            <h3 className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-[#93a3ff]">
+            <h3 className="font-mono text-xs font-bold uppercase tracking-[0.16em] text-yellow">
               <span aria-hidden="true">// </span>Visi
             </h3>
             <p className="mt-3 font-display text-xl font-bold">{profil.visi.judul}</p>

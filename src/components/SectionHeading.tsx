@@ -20,7 +20,7 @@ export default function SectionHeading({
   level = 'h2',
 }: Props) {
   const alignCls = align === 'center' ? 'text-center mx-auto' : 'text-left';
-  const kickerCls = tone === 'dark' ? 'text-[#ccd7ff]' : 'text-brand';
+  const kickerCls = tone === 'dark' ? 'text-[#dbe3ff]' : 'text-brand';
   const titleCls = tone === 'dark' ? 'text-white' : 'text-ink';
   const subCls = tone === 'dark' ? 'text-[#dbe3ff]' : 'text-muted';
   const Heading = level;

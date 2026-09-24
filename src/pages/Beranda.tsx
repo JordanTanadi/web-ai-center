@@ -62,7 +62,7 @@ export default function Beranda() {
       {/* TODO_BACKEND: slide hero dari GET /api/hero-slides */}
       <HeroCarousel slides={heroSlidesDummy} />
 
-      <section id="layanan" className="scroll-mt-20 bg-soft py-16">
+      <section id="layanan" className="scroll-mt-20 bg-sky py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading kicker="Layanan" title="Pilih Jalur Kolaborasimu" sub="Pelatihan dan inference solution untuk kebutuhan nyata." />
           <div className="mt-8 grid gap-5 md:grid-cols-2">

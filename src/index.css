@@ -1,18 +1,21 @@
 @import 'tailwindcss';
 
 @theme {
-  /* Identitas visual Figma "Nuansa Biru" (Modern/Tech/Blue/Clean/Gradient).
-     Hex biru ≈ estimasi dari screenshot — dikoreksi cepat bila ada yang meleset. */
-  --color-brand: #3a31e5; /* biru indigo: teks link, section gelap, dasar gradient */
-  --color-brand-bright: #0d7bf5; /* biru terang: gradient hero & aksen */
-  --color-brand-dark: #2b23c4; /* indigo gelap: hover/pressed tombol */
-  --color-navy: #0a1526; /* navy: footer, kartu gelap, latar hero */
-  --color-ink: #0f1a2e; /* teks utama */
-  --color-muted: #4a5878; /* teks sekunder */
-  --color-soft: #d5e7f7; /* background section biru muda */
-  --color-line: #dbe7f4; /* border */
-  --color-cream: #f4efe9; /* off-white krem (netral hangat) */
-  --color-gold: #f5b301; /* cadangan aksen */
+  /* Warna primer — persis daftar dari Figma (visual identity "Nuansa Biru") */
+  --color-brand: #2547F4; /* biru royal: link, tombol, section menonjol */
+  --color-brand-bright: #0674FD; /* biru terang: gradient hero & aksen */
+  --color-navy: #0A2240; /* navy: surface gelap (footer, hero, kartu visi) */
+  --color-ink: #0A2240; /* teks utama (peran teks; nilai sama dengan navy) */
+  --color-soft: #FAF7F0; /* krem: background section netral hangat */
+  --color-sky: #D8EBF8; /* biru muda: background section & aksen */
+  /* Warna pelengkap — aksen sesekali (kuning dipakai di hero & kartu visi) */
+  --color-mint: #3CFBC5;
+  --color-yellow: #F3D502;
+  --color-teal: #0C7C6C;
+  --color-orange: #FF6B2C;
+  /* Turunan (tidak ada di daftar Figma; dibuat agar kontras WCAG terpenuhi) */
+  --color-muted: #526275; /* teks sekunder: ~6.2:1 di putih */
+  --color-line: #E3EAF3; /* hairline border/divider */
   --font-display: 'Cabinet Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-body: 'General Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -33,7 +36,7 @@ body {
 
 /* Sentuh: cegah highlight bawaan & delay zoom ganda di mobile */
 html {
-  -webkit-tap-highlight-color: rgb(58 49 229 / 0.15);
+  -webkit-tap-highlight-color: rgb(37 71 244 / 0.15);
 }
 
 a,
@@ -42,11 +45,11 @@ input {
   touch-action: manipulation;
 }
 
-/* Tombol utama: gradient indigo sesuai identitas visual Figma (model Gradient).
-   Ujung terang memakai indigo (bukan biru terang #0d7bf5) agar teks putih
-   tetap lolos kontras WCAG AA ≥4.5:1 di seluruh lebar tombol. */
+/* Tombol utama: gradient biru royal → navy sesuai model design "Gradient".
+   Kedua ujung lolos kontras teks putih ≥4.5:1; biru terang #0674FD hanya ~4.3:1,
+   jadi dipakai di gradient hero (area lebih besar, teks besar) sebagai gantinya. */
 .btn-primary {
-  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-brand-dark) 100%);
+  background-image: linear-gradient(135deg, var(--color-brand) 0%, var(--color-navy) 100%);
   transition: filter 150ms ease;
 }
 

@@ -82,7 +82,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                   {current.eyebrow}
                 </span>
                 <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold text-white md:text-5xl">
-                  {current.judul} <span className="text-[#93a3ff]">{current.judulAksen}</span>
+                  {current.judul} <span className="text-yellow">{current.judulAksen}</span>
                 </h1>
                 <p className="mt-4 max-w-xl text-[#e8eaf6]">{current.sub}</p>
                 <div className="mt-6 flex flex-wrap gap-3">
@@ -100,7 +100,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                   </Link>
                 </div>
                 <p className="mt-8 flex items-center gap-3 text-sm">
-                  <span aria-hidden="true" className="text-2xl text-[#93a3ff]">
+                  <span aria-hidden="true" className="text-2xl text-yellow">
                     ❖
                   </span>
                   <span className="border-l-[3px] border-brand pl-3">
