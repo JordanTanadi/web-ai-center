@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+/* Deteksi device untuk navigasi: fine-pointer = desktop/laptop (pointer presisi).
+   HP/tablet (pointer kasar) di bawah lg tetap memakai burger walau lebar jendelanya
+   menyerupai desktop — sehingga mobile = burger, desktop = navbar. */
+@custom-variant fine-pointer (@media (pointer: fine));
+
 /* Font identitas di-self-host di public/fonts (sumber: Fontshare, lisensi gratis)
    supaya pasti termuat tanpa CDN eksternal — sebelumnya API Fontshare membalas
    Satoshi untuk permintaan gabungan sehingga General Sans gagal & jatuh ke Helvetica. */

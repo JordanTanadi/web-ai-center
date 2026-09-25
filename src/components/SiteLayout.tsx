@@ -57,16 +57,22 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b border-line bg-white">
-      <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3">
+      <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3 md:fine-pointer:max-lg:gap-4">
         <NavLink to="/beranda" className="flex items-center gap-3" aria-label="AI Center Ubaya beranda">
-          {/* Ukuran logo mengecil di layar sempit (≤640px) agar header tidak overflow */}
-          <img src="/ubaya_logo.png" alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto sm:h-9" />
+          {/* Logo kompak: besar di <640px & ≥1024px; mengecil di 640–767px (header burger)
+              dan 768–1023px (navbar desktop mode kompak) agar tidak overflow */}
+          <img src="/ubaya_logo.png" alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto sm:max-md:h-9 lg:h-9" />
           <span className="hidden h-8 w-px bg-line sm:block" aria-hidden="true" />
-          <img src="/AI-Center_Logo.png" alt="Logo AI Center" width="440" height="116" className="h-8 w-auto sm:h-10" />
+          <img src="/AI-Center_Logo.png" alt="Logo AI Center" width="440" height="116" className="h-8 w-auto sm:max-md:h-10 lg:h-10" />
         </NavLink>
-        {/* Nav desktop baru tampil di ≥1024px; di 768–1023px item menumpuk/tabrakan,
-            jadi rentang itu memakai menu hamburger (lg:hidden) seperti layar kecil. */}
-        <nav aria-label="Navigasi utama" className="ml-auto hidden items-center gap-5 lg:flex">
+        {/* Navbar vs burger ditentukan DEVICE (pointer), bukan hanya lebar jendela:
+            desktop/laptop = selalu navbar — kompak di 768–1023px agar tetap muat;
+            layar sentuh (HP/tablet) <1024px = burger; di bawah 768px navbar tidak
+            muat untuk siapa pun, jadi semua perangkat memakai burger. */}
+        <nav
+          aria-label="Navigasi utama"
+          className="ml-auto hidden items-center gap-5 md:fine-pointer:max-lg:flex md:fine-pointer:max-lg:gap-3 lg:flex"
+        >
           <NavLink to="/beranda" className={navLinkCls}>
             Beranda
           </NavLink>
@@ -119,12 +125,12 @@ export function Header() {
           <NavLink to="/tentang-kami" className={navLinkCls}>
             Tentang Kami
           </NavLink>
-          <NavLink to="/tentang-kami" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white">
+          <NavLink to="/tentang-kami" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white md:fine-pointer:max-lg:px-3 lg:px-4">
             Kontak
           </NavLink>
         </nav>
         <button
-          className="ml-auto rounded-lg border border-line px-3 py-2 lg:hidden"
+          className="ml-auto rounded-lg border border-line px-3 py-2 md:fine-pointer:hidden lg:hidden"
           aria-label={open ? 'Tutup menu' : 'Buka menu'}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
@@ -133,7 +139,7 @@ export function Header() {
         </button>
       </div>
       {open && (
-        <nav aria-label="Navigasi seluler" className="flex flex-col gap-1 border-t border-line px-6 py-3 lg:hidden">
+        <nav aria-label="Navigasi seluler" className="flex flex-col gap-1 border-t border-line px-6 py-3 md:fine-pointer:hidden lg:hidden">
           <NavLink to="/beranda" onClick={() => setOpen(false)} className="rounded px-1 py-2 text-sm font-medium">
             Beranda
           </NavLink>
