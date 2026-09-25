@@ -1,4 +1,5 @@
 // TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/layanan dan GET /api/layanan/:slug).
+// Teks "pelatihan" disalin dari situs lama (pelatihan.html + pillar "Pelatihan & Talenta" di index.html).
 export interface Layanan {
   slug: string;
   nama: string;
@@ -11,15 +12,16 @@ export const layananDummy: Layanan[] = [
   {
     slug: 'pelatihan',
     nama: 'Pelatihan',
-    tagline: 'Kursus AI/ML terstruktur untuk belajar mandiri dan bertahap.',
+    tagline: 'Belajar AI untuk membuat dampak nyata.',
     deskripsi:
-      'Platform pembelajaran AI dan machine learning dengan kursus bertingkat, materi video, latihan praktik, ' +
-      'evaluasi, dan sertifikat penyelesaian untuk sivitas akademika serta umum.',
+      'Program praktis dari Ubaya AI Center untuk mahasiswa, dosen, guru, profesional, dan masyarakat umum ' +
+      'yang ingin menggunakan AI secara kritis, produktif, dan bertanggung jawab.',
     fitur: [
-      'Katalog kursus dari dasar hingga lanjut',
-      'Modul video, materi bacaan, dan latihan praktik',
-      'Kuis dan evaluasi di setiap tahap pembelajaran',
-      'Progress belajar dan sertifikat penyelesaian',
+      'Workshop & bootcamp terjadwal',
+      'Pelatihan kustom sesuai kebutuhan',
+      'Materi terstruktur dan mudah diikuti',
+      'Studi kasus akademik dan profesional',
+      'Sertifikat setelah menyelesaikan program',
     ],
   },
   {

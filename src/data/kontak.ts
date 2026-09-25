@@ -1,6 +1,6 @@
 // Info kontak resmi AI Center — satu sumber kebenaran untuk Footer dan Tentang Kami.
 // TODO_BACKEND: ganti dengan GET /api/profil (field kontak) ketika backend terintegrasi.
-// Sumber: kontak yang tercantum di web AI Center (lppm.ubaya.ac.id/aicenter).
+// Sumber: section Kontak + deskripsi "AI Solution Factory" di situs lama (index.html).
 
 export interface Kontak {
   /** Email resmi AI Center. */
@@ -30,11 +30,10 @@ export const kontakDummy: Kontak = {
   whatsappGreeting: 'Halo Ubaya AI Center, saya ingin berdiskusi mengenai layanan AI Center.',
   websiteUrl: 'https://lppm.ubaya.ac.id/aicenter',
   websiteLabel: 'lppm.ubaya.ac.id/aicenter',
-  alamat: ['Gedung Perpustakaan LT.4', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
+  alamat: ['Gedung Fakultas Teknik · TA 1.2', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
   deskripsiSingkat:
-    'AI Center Universitas Surabaya adalah pusat riset dan layanan kecerdasan artifisial ' +
-    'yang mendukung pendidikan, penelitian, dan pengabdian masyarakat dalam ekosistem ' +
-    'LPPM Universitas Surabaya.',
+    'Ubaya AI Center adalah AI Solution Factory — ruang di mana riset, talenta, dan komputasi performa tinggi ' +
+    'bertemu untuk menghasilkan produk dan dampak nyata bagi akademik, industri, dan masyarakat.',
   deskripsiFooter: 'Pusat riset dan layanan kecerdasan artifisial Universitas Surabaya.',
 };
 
