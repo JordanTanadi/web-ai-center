@@ -21,7 +21,7 @@ const layananLinks = [
 ];
 
 const navLinkCls = ({ isActive }: { isActive: boolean }) =>
-  `rounded px-1 py-2 text-sm font-medium ${isActive ? 'text-brand' : 'text-ink hover:text-brand'}`;
+  `whitespace-nowrap rounded px-1 py-2 text-sm font-medium ${isActive ? 'text-brand' : 'text-ink hover:text-brand'}`;
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -64,11 +64,16 @@ export function Header() {
           <span className="hidden h-8 w-px bg-line sm:block" aria-hidden="true" />
           <img src="/AI-Center_Logo.png" alt="Logo AI Center" width="440" height="116" className="h-8 w-auto sm:h-10" />
         </NavLink>
-        <nav aria-label="Navigasi utama" className="ml-auto hidden items-center gap-5 md:flex">
+        {/* Nav desktop baru tampil di ≥1024px; di 768–1023px item menumpuk/tabrakan,
+            jadi rentang itu memakai menu hamburger (lg:hidden) seperti layar kecil. */}
+        <nav aria-label="Navigasi utama" className="ml-auto hidden items-center gap-5 lg:flex">
           <NavLink to="/beranda" className={navLinkCls}>
             Beranda
           </NavLink>
-          <Link to="/beranda#layanan" className="rounded px-1 py-2 text-sm font-medium text-ink hover:text-brand">
+          <Link
+            to="/beranda#layanan"
+            className="whitespace-nowrap rounded px-1 py-2 text-sm font-medium text-ink hover:text-brand"
+          >
             Layanan
           </Link>
           <div ref={kontenRef} className="relative">
@@ -77,7 +82,7 @@ export function Header() {
               aria-haspopup="true"
               aria-expanded={kontenOpen}
               onClick={() => setKontenOpen((v) => !v)}
-              className={`flex items-center gap-1 rounded px-1 py-2 text-sm font-medium ${
+              className={`flex items-center gap-1 whitespace-nowrap rounded px-1 py-2 text-sm font-medium ${
                 kontenActive ? 'text-brand' : 'text-ink hover:text-brand'
               }`}
             >
@@ -114,12 +119,12 @@ export function Header() {
           <NavLink to="/tentang-kami" className={navLinkCls}>
             Tentang Kami
           </NavLink>
-          <NavLink to="/tentang-kami" className="btn-primary rounded-lg px-4 py-2 text-sm font-bold text-white">
+          <NavLink to="/tentang-kami" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white">
             Kontak
           </NavLink>
         </nav>
         <button
-          className="ml-auto rounded-lg border border-line px-3 py-2 md:hidden"
+          className="ml-auto rounded-lg border border-line px-3 py-2 lg:hidden"
           aria-label={open ? 'Tutup menu' : 'Buka menu'}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
@@ -128,7 +133,7 @@ export function Header() {
         </button>
       </div>
       {open && (
-        <nav aria-label="Navigasi seluler" className="flex flex-col gap-1 border-t border-line px-6 py-3 md:hidden">
+        <nav aria-label="Navigasi seluler" className="flex flex-col gap-1 border-t border-line px-6 py-3 lg:hidden">
           <NavLink to="/beranda" onClick={() => setOpen(false)} className="rounded px-1 py-2 text-sm font-medium">
             Beranda
           </NavLink>
