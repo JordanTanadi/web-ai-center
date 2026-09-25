@@ -1,0 +1,173 @@
+import { Link, useParams } from 'react-router-dom';
+import {
+  aksesKursus,
+  audienceLabel,
+  infoKursus,
+  kursusDariKode,
+  waTanyaProgram,
+} from '../data/pelatihan.ts';
+
+/**
+ * Halaman detail kursus — struktur mengikuti detail-kursus.html situs lama:
+ * hero (kode + audiens + judul + fakta + kartu akses), Tentang kursus,
+ * Materi yang akan dipelajari, Instruktur, dan sidebar Informasi kursus.
+ */
+export default function PelatihanDetail() {
+  const { kode = '' } = useParams();
+  // TODO_BACKEND: detail diambil dari GET /api/kursus/:kode ketika backend tersedia.
+  const kursus = kursusDariKode(kode);
+
+  if (!kursus) {
+    return (
+      <div className="mx-auto max-w-3xl px-6 py-14 text-center">
+        <h1 className="font-display text-2xl font-bold">Kursus tidak ditemukan</h1>
+        <p className="mt-2 text-muted">Kode kursus tidak tersedia. Silakan pilih program lain dari katalog.</p>
+        <Link
+          to="/layanan/pelatihan"
+          className="mt-4 inline-block text-sm font-bold text-brand hover:underline"
+        >
+          ← Kembali ke katalog kursus
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <article>
+      {/* Hero rata kiri (aturan layout: hero → kiri) dengan kartu akses di kanan. */}
+      <section className="bg-sky">
+        <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 lg:grid-cols-[1fr_340px]">
+          <div>
+            <Link to="/layanan/pelatihan" className="text-sm font-bold text-brand hover:underline">
+              ← Kembali ke katalog kursus
+            </Link>
+            <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-brand">
+              {kursus.kode} · {audienceLabel(kursus)}
+            </p>
+            <h1 className="mt-3 font-display text-3xl font-bold md:text-4xl">{kursus.judul}</h1>
+            <p className="mt-4 max-w-2xl text-lg text-muted">{kursus.deskripsi}</p>
+            <ul className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
+              <li>
+                <p className="font-bold">{kursus.level}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">Level</p>
+              </li>
+              <li>
+                <p className="font-bold">{kursus.durasi}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">Durasi</p>
+              </li>
+              <li>
+                <p className="font-bold">{kursus.format}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">Format belajar</p>
+              </li>
+            </ul>
+          </div>
+          {/* TODO_BACKEND: progress & status belajar per user dari backend; kartu ini
+              menampilkan kondisi preview publik dulu. */}
+          <aside className="h-fit rounded-2xl border border-line bg-white p-6 shadow-sm">
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{aksesKursus.label}</p>
+            <h2 className="mt-2 font-display text-xl font-bold">{aksesKursus.judul}</h2>
+            <p className="mt-3 text-sm text-muted">{aksesKursus.catatan}</p>
+            <a
+              href={waTanyaProgram(kursus.kode, kursus.judul)}
+              target="_blank"
+              rel="noreferrer"
+              className="btn-primary mt-4 block rounded-lg px-4 py-3 text-center text-sm font-bold text-white"
+            >
+              {aksesKursus.cta}
+            </a>
+          </aside>
+        </div>
+      </section>
+
+      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-12 lg:grid-cols-[1fr_320px]">
+        <div>
+          <section aria-labelledby="tentang-heading">
+            <h2 id="tentang-heading" className="font-display text-xl font-bold">
+              Tentang kursus ini
+            </h2>
+            <p className="mt-3 text-muted">{kursus.tentang}</p>
+            <ul className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
+              {kursus.hasil.map((h) => (
+                <li key={h} className="flex items-start gap-2 text-sm">
+                  <span aria-hidden="true" className="font-bold text-brand">
+                    ✓
+                  </span>
+                  <span>{h}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section aria-labelledby="materi-heading" className="mt-10">
+            <h2 id="materi-heading" className="font-display text-xl font-bold">
+              Materi yang akan dipelajari
+            </h2>
+            <ol className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
+              {kursus.modul.map((m, idx) => (
+                <li key={m.judul} className="flex gap-4 p-5">
+                  <span
+                    aria-hidden="true"
+                    className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-sky text-xs font-bold text-brand"
+                  >
+                    {String(idx + 1).padStart(2, '0')}
+                  </span>
+                  <div>
+                    <h3 className="font-display font-bold">{m.judul}</h3>
+                    <p className="mt-1 text-sm text-muted">{m.deskripsi}</p>
+                    <p className="mt-1 text-xs text-muted">
+                      {m.meta} · Video, latihan, dan kuis
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section aria-labelledby="instruktur-heading" className="mt-10 border-t border-line pt-8">
+            <div className="flex items-center gap-4">
+              <span
+                aria-hidden="true"
+                className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand font-display font-bold text-white"
+              >
+                {kursus.inisial}
+              </span>
+              <div>
+                <p className="text-xs uppercase tracking-wide text-muted">Instruktur</p>
+                <h3 id="instruktur-heading" className="font-display font-bold">
+                  {kursus.instruktur}
+                </h3>
+                <p className="text-sm text-muted">{kursus.peran}</p>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <aside
+          aria-labelledby="info-heading"
+          className="h-fit rounded-2xl border border-line bg-white p-6 lg:sticky lg:top-24"
+        >
+          <h3 id="info-heading" className="font-display text-lg font-bold">
+            Informasi kursus
+          </h3>
+          <ul className="mt-4 space-y-3 text-sm">
+            {infoKursus.map((i) => (
+              <li
+                key={i.label}
+                className="flex justify-between gap-4 border-b border-line pb-3 last:border-0 last:pb-0"
+              >
+                <span className="text-muted">{i.label}</span>
+                <span className="font-bold">{i.nilai}</span>
+              </li>
+            ))}
+          </ul>
+        </aside>
+      </div>
+
+      <div className="mx-auto max-w-6xl px-6 pb-14 text-center">
+        <Link to="/layanan/pelatihan" className="text-sm font-bold text-brand hover:underline">
+          ← Kembali ke katalog kursus
+        </Link>
+      </div>
+    </article>
+  );
+}

@@ -64,7 +64,11 @@ function KatalogKursus() {
                 </span>
                 <span className="text-xs text-muted">{k.target.join(' · ')}</span>
               </div>
-              <h3 className="mt-3 font-display text-lg font-bold">{k.judul}</h3>
+              <h3 className="mt-3 font-display text-lg font-bold">
+                <Link to={`/layanan/pelatihan/${k.kode}`} className="hover:text-brand">
+                  {k.judul}
+                </Link>
+              </h3>
               <p className="mt-2 text-sm text-muted">{k.deskripsi}</p>
               <p className="mt-3 text-xs text-muted">
                 Ubaya AI Center · {k.durasi} · {k.modul.length} modul · Sertifikat
@@ -87,14 +91,12 @@ function KatalogKursus() {
                   ))}
                 </ul>
               </details>
-              <a
-                href={waTanyaProgram(k.kode, k.judul)}
-                target="_blank"
-                rel="noreferrer"
+              <Link
+                to={`/layanan/pelatihan/${k.kode}`}
                 className="btn-primary mt-4 block rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
               >
-                Tanyakan program ini
-              </a>
+                Lihat detail kursus
+              </Link>
             </li>
           ))}
         </ul>

@@ -1,7 +1,9 @@
 // Konten halaman Pelatihan — migrasi dari situs lama:
 // - pelatihan.html (stats, katalog intro, filter kategori, modul unggulan R01, blok institusi)
-// - detail-kursus.html (objek `fallbackCourses`: R01, E01, P01 lengkap dengan modul & hasil)
-// TODO_BACKEND: ganti dengan GET /api/kursus ketika backend tersedia; kontrak field sama dengan sini.
+// - detail-kursus.html (objek `fallbackCourses`: R01, E01, P01 lengkap dengan modul & hasil,
+//   plus kartu akses & sidebar "Informasi kursus" untuk halaman detail per kursus)
+// TODO_BACKEND: ganti dengan GET /api/kursus (daftar) dan GET /api/kursus/:kode (detail);
+// kontrak field sama dengan sini.
 import { buildWaLink, kontakDummy } from './kontak.ts';
 
 export interface Modul {
@@ -18,10 +20,18 @@ export interface Kursus {
   target: string[];
   judul: string;
   deskripsi: string;
+  /** Deskripsi panjang "Tentang kursus ini" (detail-kursus.html, `about`). */
+  tentang: string;
   /** Durasi program, mis. '4 sesi'. */
   durasi: string;
+  /** Level kursus — default statis situs lama. */
+  level: string;
+  /** Format belajar — default statis situs lama. */
+  format: string;
   instruktur: string;
   peran: string;
+  /** Inisial instruktur untuk avatar (detail-kursus.html, `initials`). */
+  inisial: string;
   /** Tujuan pembelajaran (hasil) kursus. */
   hasil: string[];
   /** Daftar modul kursus. */
@@ -101,6 +111,23 @@ export const institusiPelatihan = {
   cta: 'Diskusikan kebutuhan',
 };
 
+/** Kartu "Akses kursus" di halaman detail (detail-kursus.html, aside `.enroll`). */
+export const aksesKursus = {
+  label: 'Akses kursus',
+  judul: 'Preview tersedia',
+  // Teks sama dengan catatan modul unggulan di katalog — satu sumber agar tidak beda versi.
+  catatan: modulUnggulan.catatanDetail,
+  cta: 'Tanya & daftar via WhatsApp',
+};
+
+/** Sidebar "Informasi kursus" (detail-kursus.html, aside `.side-box`). */
+export const infoKursus = [
+  { label: 'Penyedia', nilai: 'Ubaya AI Center' },
+  { label: 'Sertifikat', nilai: 'Tersedia' },
+  { label: 'Akses materi', nilai: 'Online' },
+  { label: 'Bahasa', nilai: 'Indonesia' },
+];
+
 export const kursusDummy: Kursus[] = [
   {
     kode: 'R01',
@@ -109,9 +136,15 @@ export const kursusDummy: Kursus[] = [
     deskripsi:
       'Bangun alur kerja riset yang lebih terarah dengan bantuan AI, mulai dari menemukan jurnal hingga ' +
       'mengelola sitasi secara bertanggung jawab.',
+    tentang:
+      'Kursus praktis untuk mahasiswa, dosen, dan masyarakat umum yang ingin memakai AI sebagai alat bantu ' +
+      'riset tanpa mengabaikan akurasi, etika, dan integritas akademik.',
     durasi: '4 sesi',
+    level: 'Pemula',
+    format: 'Online mandiri',
     instruktur: 'Tim Riset Ubaya AI Center',
     peran: 'Pengajar dan praktisi riset AI',
+    inisial: 'RA',
     hasil: [
       'Merumuskan kata kunci dan query akademik',
       'Menguji relevansi sumber dengan tools AI',
@@ -148,9 +181,15 @@ export const kursusDummy: Kursus[] = [
     deskripsi:
       'Rancang aktivitas kelas, asesmen, dan umpan balik yang lebih personal dengan AI yang kritis dan ' +
       'bertanggung jawab.',
+    tentang:
+      'Program untuk pendidik yang ingin mengintegrasikan AI ke dalam perencanaan dan praktik pembelajaran ' +
+      'secara efektif.',
     durasi: '3 sesi',
+    level: 'Pemula',
+    format: 'Online mandiri',
     instruktur: 'Tim Edukasi Ubaya AI Center',
     peran: 'Pengajar dan fasilitator pendidikan',
+    inisial: 'ED',
     hasil: [
       'Menyusun ide pembelajaran dengan AI',
       'Membuat asesmen yang lebih adaptif',
@@ -182,9 +221,15 @@ export const kursusDummy: Kursus[] = [
     deskripsi:
       'Bangun alur kerja untuk brainstorming, menulis, menganalisis data, dan mempresentasikan ide tanpa ' +
       'mengorbankan integritas akademik.',
+    tentang:
+      'Kursus fundamental untuk membangun kebiasaan kerja yang lebih produktif dengan AI, dari ide awal ' +
+      'hingga presentasi yang terstruktur.',
     durasi: '3 sesi',
+    level: 'Pemula',
+    format: 'Online mandiri',
     instruktur: 'Tim Talenta Ubaya AI Center',
     peran: 'Pengajar dan mentor produktivitas AI',
+    inisial: 'TA',
     hasil: [
       'Membuat workflow kerja dengan AI',
       'Mengolah ide dan data secara terstruktur',
@@ -211,7 +256,21 @@ export const kursusDummy: Kursus[] = [
   },
 ];
 
-/** Link WhatsApp bertanya satu program (pengganti "Lihat kursus" — halaman detail kursus tidak ada di situs baru). */
+/**
+ * Cari kursus untuk halaman detail — kode case-insensitive
+ * karena URL lama memakai slug kecil ('r01').
+ */
+export function kursusDariKode(kode: string): Kursus | undefined {
+  const bersih = kode.trim().toUpperCase();
+  return kursusDummy.find((k) => k.kode === bersih);
+}
+
+/** Label audiens persis halaman lama: 'Mahasiswa · Dosen · Umum' (Masyarakat umum → Umum). */
+export function audienceLabel(kursus: Kursus): string {
+  return kursus.target.map((t) => (t === 'Masyarakat umum' ? 'Umum' : t)).join(' · ');
+}
+
+/** Link WhatsApp bertanya satu program — dipakai di kartu akses halaman detail kursus. */
 export function waTanyaProgram(kode: string, judul: string): string {
   return buildWaLink(
     kontakDummy.whatsappNumber,

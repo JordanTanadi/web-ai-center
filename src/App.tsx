@@ -5,6 +5,7 @@ import SiteLayout from './components/SiteLayout.tsx';
 // Code-splitting per route agar JS awal hanya memuat yang dibutuhkan halaman ini.
 const Beranda = lazy(() => import('./pages/Beranda.tsx'));
 const LayananDetail = lazy(() => import('./pages/LayananDetail.tsx'));
+const PelatihanDetail = lazy(() => import('./pages/PelatihanDetail.tsx'));
 const Tim = lazy(() => import('./pages/Tim.tsx'));
 const TentangKami = lazy(() => import('./pages/TentangKami.tsx'));
 const Berita = lazy(() => import('./pages/Berita.tsx'));
@@ -29,6 +30,8 @@ export default function App() {
         <Route path="/" element={<Navigate to="/beranda" replace />} />
         <Route element={<SiteLayout />}>
           <Route path="/beranda" element={<Beranda />} />
+          {/* Detail kursus lebih spesifik dari /layanan/:slug — didaftarkan di atasnya. */}
+          <Route path="/layanan/pelatihan/:kode" element={<PelatihanDetail />} />
           <Route path="/layanan/:slug" element={<LayananDetail />} />
           <Route path="/tim" element={<Tim />} />
           <Route path="/tentang-kami" element={<TentangKami />} />
