@@ -7,6 +7,8 @@ import DokumentasiCard from '../components/DokumentasiCard.tsx';
 import TestimoniSlider from '../components/TestimoniSlider.tsx';
 import { heroSlidesDummy } from '../data/hero.ts';
 import { layananDummy } from '../data/layanan.ts';
+import { portofolioDummy } from '../data/portofolio.ts';
+import { fasilitasDummy } from '../data/fasilitas.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
@@ -45,7 +47,7 @@ function SectionBar({
 }
 
 // Struktur section mengikuti beranda/index.html (hero carousel → layanan →
-// dokumentasi → testimoni → berita), konten di-rewrite
+// portofolio → fasilitas → dokumentasi → testimoni → berita), konten di-rewrite
 // untuk AI Center Ubaya. File lama tetap ada sebagai referensi di ./beranda/index.html.
 export default function Beranda() {
   const location = useLocation();
@@ -79,6 +81,74 @@ export default function Beranda() {
               </article>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* Portofolio: 6 karya dari index.html situs lama (#portofolio). */}
+      <section aria-label="Portofolio" className="py-16">
+        <div className="mx-auto max-w-6xl px-6">
+          <SectionHeading
+            kicker="Karya Kami"
+            title="Portofolio produk AI"
+            sub="Sebagian solusi AI yang telah dikembangkan Ubaya AI Center untuk berbagai bidang."
+          />
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {portofolioDummy.map((k) => (
+              <li key={k.slug} className="overflow-hidden rounded-2xl border border-line bg-white">
+                <img
+                  src={k.gambar}
+                  alt={k.alt}
+                  width={k.lebar}
+                  height={k.tinggi}
+                  loading="lazy"
+                  className="aspect-[16/10] w-full object-cover"
+                />
+                <div className="p-5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-brand">
+                    {k.kategori} · {k.teknologi}
+                  </p>
+                  <h3 className="mt-2 font-display font-bold">{k.judul}</h3>
+                  <p className="mt-2 text-sm text-muted">{k.deskripsi}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-6 text-center text-sm text-muted">
+            Ingin membangun solusi AI seperti ini untuk organisasi Anda?{' '}
+            <Link to="/tentang-kami" className="font-bold text-brand hover:underline">
+              Hubungi kami →
+            </Link>
+          </p>
+        </div>
+      </section>
+
+      {/* Fasilitas: 3 ruang dari index.html situs lama (#fasilitas). */}
+      <section aria-label="Fasilitas" className="bg-soft py-16">
+        <div className="mx-auto max-w-6xl px-6">
+          <SectionHeading
+            kicker="Lihat Ruangnya"
+            title="Fasilitas yang dirancang untuk berkarya"
+            sub="Ruang demo, ruang pelatihan, dan ruang diskusi — dilengkapi untuk presentasi, kelas, dan kerja tim."
+          />
+          <ul className="mt-8 grid gap-5 md:grid-cols-3">
+            {fasilitasDummy.map((r) => (
+              <li key={r.slug} className="overflow-hidden rounded-2xl border border-line bg-white">
+                <img
+                  src={r.gambar}
+                  alt={r.alt}
+                  width={r.lebar}
+                  height={r.tinggi}
+                  loading="lazy"
+                  className="aspect-[16/10] w-full object-cover"
+                />
+                <div className="p-5 text-center">
+                  <p className="text-xs font-bold uppercase tracking-wider text-brand">{r.label}</p>
+                  <h3 className="mt-1 font-display font-bold">{r.judul}</h3>
+                  <p className="mt-2 text-sm text-muted">{r.deskripsi}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       </section>
 
