@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import LearningWorkspace from '../components/LearningWorkspace.tsx';
 import {
   aksesKursus,
   audienceLabel,
@@ -6,16 +8,36 @@ import {
   kursusDariKode,
   waTanyaProgram,
 } from '../data/pelatihan.ts';
+import {
+  bacaStateBelajar,
+  hitungProgressBelajar,
+  kurangiStateBelajar,
+  labelAksesKursus,
+  simpanStateBelajar,
+  stateAwalBelajar,
+  type Aksi,
+  type StateBelajar,
+} from '../lib/pembelajaran.ts';
 
 /**
  * Halaman detail kursus — struktur mengikuti detail-kursus.html situs lama:
  * hero (kode + audiens + judul + fakta + kartu akses), Tentang kursus,
- * Materi yang akan dipelajari, Instruktur, dan sidebar Informasi kursus.
+ * Materi yang akan dipelajari, Instruktur, sidebar Informasi kursus,
+ * lalu Ruang belajar (LMS) setelah peserta enroll.
  */
 export default function PelatihanDetail() {
   const { kode = '' } = useParams();
   // TODO_BACKEND: detail diambil dari GET /api/kursus/:kode ketika backend tersedia.
   const kursus = kursusDariKode(kode);
+
+  // State belajar per kursus (localStorage, persis situs lama);
+  // TODO_BACKEND: progress per user tersimpan di backend + akun peserta.
+  const [belajar, setBelajar] = useState<StateBelajar>(() =>
+    kursus ? bacaStateBelajar(kursus.kode, kursus.modul.length) : stateAwalBelajar(0),
+  );
+  useEffect(() => {
+    if (kursus) setBelajar(bacaStateBelajar(kursus.kode, kursus.modul.length));
+  }, [kursus]);
 
   if (!kursus) {
     return (
@@ -31,6 +53,29 @@ export default function PelatihanDetail() {
       </div>
     );
   }
+
+  const totalModul = kursus.modul.length;
+  const progress = hitungProgressBelajar(belajar, totalModul);
+  const label = labelAksesKursus(belajar, progress);
+
+  /** Terapkan aksi LMS + simpan ke localStorage dalam satu update. */
+  const kirimAksi = (aksi: Aksi) => {
+    setBelajar((sebelum) => {
+      const berikut = kurangiStateBelajar(sebelum, aksi, totalModul);
+      simpanStateBelajar(kursus.kode, berikut);
+      return berikut;
+    });
+  };
+
+  /** Tombol "Mulai belajar": enroll lalu scroll ke ruang belajar. */
+  const mulaiBelajar = () => {
+    kirimAksi({ type: 'enroll' });
+    requestAnimationFrame(() => {
+      document
+        .getElementById('learning-workspace')
+        ?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    });
+  };
 
   return (
     <article>
@@ -61,17 +106,52 @@ export default function PelatihanDetail() {
               </li>
             </ul>
           </div>
-          {/* TODO_BACKEND: progress & status belajar per user dari backend; kartu ini
-              menampilkan kondisi preview publik dulu. */}
+          {/* Progress/status belajar dari state LMS (localStorage); TODO_BACKEND:
+              progress per user + rating dari backend ketika akun peserta ada. */}
           <aside className="h-fit rounded-2xl border border-line bg-white p-6 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{aksesKursus.label}</p>
-            <h2 className="mt-2 font-display text-xl font-bold">{aksesKursus.judul}</h2>
-            <p className="mt-3 text-sm text-muted">{aksesKursus.catatan}</p>
+            <h2 className="mt-2 font-display text-xl font-bold">{label.judul}</h2>
+            {belajar.ratingSubmitted ? (
+              <p className="mt-2 text-sm" aria-label={`Rating kursus ${belajar.rating} dari 5`}>
+                <span className="font-bold text-brand">
+                  {'★'.repeat(belajar.rating)}
+                  {'☆'.repeat(5 - belajar.rating)}
+                </span>
+                <span className="ml-2 text-muted">{belajar.rating}.0 · 1 ulasan</span>
+              </p>
+            ) : null}
+            {belajar.enrolled ? null : (
+              <p className="mt-3 text-sm text-muted">{aksesKursus.catatan}</p>
+            )}
+            <div
+              className="mt-4 h-2 overflow-hidden rounded-full bg-line"
+              role="progressbar"
+              aria-label="Progress kursus"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={progress}
+            >
+              <span
+                className="block h-2 rounded-full bg-brand transition-all"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-3 text-sm">
+              <span className="font-bold">{label.status}</span>
+              <span className="text-muted">{label.jumlah}</span>
+            </div>
+            <button
+              type="button"
+              onClick={mulaiBelajar}
+              className="btn-primary mt-4 block w-full rounded-lg px-4 py-3 text-center text-sm font-bold text-white"
+            >
+              Mulai belajar
+            </button>
             <a
               href={waTanyaProgram(kursus.kode, kursus.judul)}
               target="_blank"
               rel="noreferrer"
-              className="btn-primary mt-4 block rounded-lg px-4 py-3 text-center text-sm font-bold text-white"
+              className="mt-3 block text-center text-sm font-bold text-brand hover:underline"
             >
               {aksesKursus.cta}
             </a>
@@ -162,6 +242,11 @@ export default function PelatihanDetail() {
           </ul>
         </aside>
       </div>
+
+      {/* Ruang belajar (LMS) — muncul setelah enroll, mengikuti detail-kursus.html. */}
+      {belajar.enrolled ? (
+        <LearningWorkspace kursus={kursus} state={belajar} onAction={kirimAksi} />
+      ) : null}
 
       <div className="mx-auto max-w-6xl px-6 pb-14 text-center">
         <Link to="/layanan/pelatihan" className="text-sm font-bold text-brand hover:underline">
