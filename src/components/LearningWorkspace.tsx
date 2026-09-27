@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import SectionHeading from './SectionHeading.tsx';
 import type { Kursus } from '../data/pelatihan.ts';
+import { useT } from '../lib/i18n.tsx';
 import {
   hitungProgressBelajar,
   jalankanModelDummy,
@@ -39,6 +40,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
   const jumlah = kursus.modul.length;
   const progress = hitungProgressBelajar(state, jumlah);
   const [feedback, setFeedback] = useState('');
+  const t = useT();
 
   // Feedback checkpoint di-reset saat ganti modul (situs lama: re-render DOM).
   useEffect(() => {
@@ -51,26 +53,26 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
   return (
     <section
       id="learning-workspace"
-      aria-label="Ruang belajar"
+      aria-label={t('Ruang belajar')}
       className="scroll-mt-20 bg-soft py-12"
     >
       <div className="mx-auto max-w-6xl px-6">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <SectionHeading
-            kicker="Ruang belajar"
-            title="Bangun kemampuanmu bertahap."
-            sub="Selesaikan modul, kerjakan latihan, lalu bawa ide menjadi prototipe."
+            kicker={t('Ruang belajar')}
+            title={t('Bangun kemampuanmu bertahap.')}
+            sub={t('Selesaikan modul, kerjakan latihan, lalu bawa ide menjadi prototipe.')}
             align="left"
           />
           <div className="w-full max-w-xs">
             <div className="flex items-center justify-between text-sm">
-              <span className="font-bold">Progress kursus</span>
+              <span className="font-bold">{t('Progress kursus')}</span>
               <span className="font-display font-bold text-brand">{progress}%</span>
             </div>
             <div
               className="mt-2 h-2 overflow-hidden rounded-full bg-line"
               role="progressbar"
-              aria-label="Progress kursus"
+              aria-label={t('Progress kursus')}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progress}
@@ -90,13 +92,13 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
             return (
               <li key={m.judul} className="rounded-2xl border border-line bg-white p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
-                  Modul {String(i + 1).padStart(2, '0')}
+                  {t(`Modul ${String(i + 1).padStart(2, '0')}`)}
                 </p>
-                <h3 className="mt-2 font-display font-bold">{m.judul}</h3>
-                <p className="mt-2 text-sm text-muted">{m.deskripsi}</p>
+                <h3 className="mt-2 font-display font-bold">{t(m.judul)}</h3>
+                <p className="mt-2 text-sm text-muted">{t(m.deskripsi)}</p>
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <span className={`text-xs font-bold ${selesai ? 'text-brand' : 'text-muted'}`}>
-                    {selesai ? 'Selesai' : terkunci ? 'Terkunci' : m.meta}
+                    {t(selesai ? 'Selesai' : terkunci ? 'Terkunci' : m.meta)}
                   </span>
                   <button
                     type="button"
@@ -110,7 +112,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                           : 'border border-brand text-brand hover:bg-brand hover:text-white'
                     }`}
                   >
-                    {selesai ? 'Ulangi' : terkunci ? 'Selesaikan modul sebelumnya' : 'Mulai modul'}
+                    {t(selesai ? 'Ulangi' : terkunci ? 'Selesaikan modul sebelumnya' : 'Mulai modul')}
                   </button>
                 </div>
               </li>
@@ -123,26 +125,26 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
             <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
-                  Lesson {aktif + 1} dari {jumlah}
+                  {t(`Lesson ${aktif + 1} dari ${jumlah}`)}
                 </p>
-                <h3 className="mt-2 font-display text-xl font-bold">{modulAktif.judul}</h3>
+                <h3 className="mt-2 font-display text-xl font-bold">{t(modulAktif.judul)}</h3>
 
                 {/* TODO_BACKEND: video lesson dari backend (module.video_url);
                     selama belum ada, blok ini hanya penanda durasi + tombol tonton. */}
                 <div className="mt-4 rounded-xl bg-sky p-4">
-                  <p className="font-bold">{modulAktif.judul}</p>
-                  <p className="mt-1 text-sm text-muted">Durasi: {modulAktif.meta}</p>
+                  <p className="font-bold">{t(modulAktif.judul)}</p>
+                  <p className="mt-1 text-sm text-muted">{t('Durasi:')} {t(modulAktif.meta)}</p>
                   <button
                     type="button"
                     onClick={() => onAction({ type: 'tontonLesson' })}
                     className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
                   >
-                    {state.watched[aktif] ? 'Lesson sudah ditonton' : 'Mulai lesson'}
+                    {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Mulai lesson')}
                   </button>
                 </div>
 
                 <div className="mt-4 rounded-xl border border-line p-4">
-                  <p className="font-bold">Checkpoint: apa tujuan utama lesson ini?</p>
+                  <p className="font-bold">{t('Checkpoint: apa tujuan utama lesson ini?')}</p>
                   <button
                     type="button"
                     onClick={() => {
@@ -156,27 +158,27 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                     }`}
                   >
                     {state.quizPassed[aktif]
-                      ? '✓ Jawaban benar: terapkan konsep pada masalah nyata'
-                      : OPSI_QUIZ_BENAR}
+                      ? t('✓ Jawaban benar: terapkan konsep pada masalah nyata')
+                      : t(OPSI_QUIZ_BENAR)}
                   </button>
                   <button
                     type="button"
                     onClick={() => setFeedback(FEEDBACK_SALAH)}
                     className="mt-2 block w-full rounded-lg border border-line px-4 py-2 text-left text-sm hover:border-brand"
                   >
-                    {OPSI_QUIZ_SALAH}
+                    {t(OPSI_QUIZ_SALAH)}
                   </button>
                   <p className="mt-2 text-sm font-bold text-brand" aria-live="polite">
-                    {feedback}
+                    {t(feedback)}
                   </p>
                 </div>
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-sm text-muted">
-                    {state.watched[aktif] ? 'Lesson selesai' : 'Belum ditonton'} ·{' '}
+                    {t(state.watched[aktif] ? 'Lesson selesai' : 'Belum ditonton')} ·{' '}
                     {state.quizPassed[aktif]
-                      ? 'Checkpoint lulus'
-                      : 'Checkpoint belum dikerjakan'}
+                      ? t('Checkpoint lulus')
+                      : t('Checkpoint belum dikerjakan')}
                   </span>
                   <button
                     type="button"
@@ -184,13 +186,13 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                     onClick={() => onAction({ type: 'toggleModulSelesai', index: aktif })}
                     className="btn-primary rounded-lg px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {state.completed[aktif] ? 'Tandai belum selesai' : 'Selesaikan modul'}
+                    {t(state.completed[aktif] ? 'Tandai belum selesai' : 'Selesaikan modul')}
                   </button>
                 </div>
               </div>
 
-              <aside aria-label="Rangkaian kursus">
-                <h4 className="text-sm font-bold">Rangkaian kursus</h4>
+              <aside aria-label={t('Rangkaian kursus')}>
+                <h4 className="text-sm font-bold">{t('Rangkaian kursus')}</h4>
                 <ul className="mt-3 space-y-2">
                   {kursus.modul.map((m, i) => {
                     const terkunci = modulTerkunci(i, state.completed);
@@ -207,8 +209,8 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                               : 'border border-line hover:border-brand'
                           }`}
                         >
-                          {state.completed[i] ? '✓ ' : terkunci ? '[TERKUNCI] ' : ''}
-                          {i + 1}. {m.judul}
+                          {t(state.completed[i] ? '✓ ' : terkunci ? '[TERKUNCI] ' : '')}
+                          {i + 1}. {t(m.judul)}
                         </button>
                       </li>
                     );
@@ -233,28 +235,28 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
   const [tugasModel, setTugasModel] = useState<TugasModel>('summarize');
   const [inputModel, setInputModel] = useState('');
   const [outputModel, setOutputModel] = useState('Output model akan muncul di sini.');
+  const t = useT();
 
   if (state.prototypeComplete) {
     return (
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Prototipe selesai</p>
-        <h3 className="mt-2 font-display text-xl font-bold">Proyekmu sudah dicatat.</h3>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{t('Prototipe selesai')}</p>
+        <h3 className="mt-2 font-display text-xl font-bold">{t('Proyekmu sudah dicatat.')}</h3>
         <p className="mt-2 text-muted">
-          Selamat, seluruh tahapan kursus ini sudah selesai. Kamu bisa kembali kapan saja untuk
-          memperbaiki catatan prototipe.
+          {t('Selamat, seluruh tahapan kursus ini sudah selesai. Kamu bisa kembali kapan saja untuk memperbaiki catatan prototipe.')}
         </p>
         <p className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white">
-          Kursus selesai · Progress 100%
+          {t('Kursus selesai · Progress 100%')}
         </p>
 
         {state.ratingSubmitted ? (
           <div className="mt-4 rounded-xl bg-soft p-4">
             <strong>
-              Rating kamu: {'★'.repeat(state.rating)}
+              {t('Rating kamu:')} {'★'.repeat(state.rating)}
               {'☆'.repeat(5 - state.rating)}
             </strong>
             <p className="mt-1 text-sm text-muted">
-              {state.review || 'Terima kasih sudah memberi penilaian.'}
+              {state.review || t('Terima kasih sudah memberi penilaian.')}
             </p>
           </div>
         ) : (
@@ -270,10 +272,10 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
               });
             }}
           >
-            <h4 className="font-display font-bold">Beri rating kursus ini</h4>
-            <p className="text-sm text-muted">Bagikan pengalamanmu setelah menyelesaikan seluruh materi.</p>
+            <h4 className="font-display font-bold">{t('Beri rating kursus ini')}</h4>
+            <p className="text-sm text-muted">{t('Bagikan pengalamanmu setelah menyelesaikan seluruh materi.')}</p>
             <label className="grid gap-1 text-sm font-bold">
-              Rating
+              {t('Rating')}
               <select
                 name="rating"
                 required
@@ -281,21 +283,21 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
                 className="rounded-lg border border-line bg-white px-3 py-2 font-normal"
               >
                 <option value="" disabled>
-                  Pilih rating
+                  {t('Pilih rating')}
                 </option>
                 {[5, 4, 3, 2, 1].map((n) => (
                   <option key={n} value={n}>
-                    {n === 5 ? '★★★★★ Sangat membantu' : LABEL_RATING[5 - n]}
+                    {n === 5 ? t('★★★★★ Sangat membantu') : t(LABEL_RATING[5 - n])}
                   </option>
                 ))}
               </select>
             </label>
             <label className="grid gap-1 text-sm font-bold">
-              Ulasan
+              {t('Ulasan')}
               <textarea
                 name="review"
                 rows={3}
-                placeholder="Apa yang paling bermanfaat dari kursus ini?"
+                placeholder={t('Apa yang paling bermanfaat dari kursus ini?')}
                 className="rounded-lg border border-line px-3 py-2 font-normal"
               />
             </label>
@@ -303,7 +305,7 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
               type="submit"
               className="btn-primary justify-self-start rounded-lg px-5 py-2.5 text-sm font-bold text-white"
             >
-              Kirim rating
+              {t('Kirim rating')}
             </button>
           </form>
         )}
@@ -314,10 +316,10 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
   if (!semuaSelesai) {
     return (
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Tahap akhir</p>
-        <h3 className="mt-2 font-display text-xl font-bold">Prototyping akhir</h3>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{t('Tahap akhir')}</p>
+        <h3 className="mt-2 font-display text-xl font-bold">{t('Prototyping akhir')}</h3>
         <p className="mt-2 text-muted">
-          Selesaikan semua modul terlebih dahulu untuk membuka lembar kerja prototipe.
+          {t('Selesaikan semua modul terlebih dahulu untuk membuka lembar kerja prototipe.')}
         </p>
       </div>
     );
@@ -326,18 +328,17 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
   if (!state.prototype.started) {
     return (
       <div>
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Tahap akhir</p>
-        <h3 className="mt-2 font-display text-xl font-bold">Prototyping akhir</h3>
+        <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{t('Tahap akhir')}</p>
+        <h3 className="mt-2 font-display text-xl font-bold">{t('Prototyping akhir')}</h3>
         <p className="mt-2 text-muted">
-          Ubah masalah nyata menjadi solusi kecil yang bisa diuji. Isi lembar kerja dan simpan
-          hasilnya sebagai proyek akhir.
+          {t('Ubah masalah nyata menjadi solusi kecil yang bisa diuji. Isi lembar kerja dan simpan hasilnya sebagai proyek akhir.')}
         </p>
         <button
           type="button"
           onClick={() => onAction({ type: 'mulaiPrototipe' })}
           className="btn-primary mt-4 rounded-lg px-5 py-2.5 text-sm font-bold text-white"
         >
-          Mulai prototyping
+          {t('Mulai prototyping')}
         </button>
       </div>
     );
@@ -346,11 +347,10 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
   const p = state.prototype;
   return (
     <div>
-      <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">Tahap akhir</p>
-      <h3 className="mt-2 font-display text-xl font-bold">Bangun prototipemu</h3>
+      <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{t('Tahap akhir')}</p>
+      <h3 className="mt-2 font-display text-xl font-bold">{t('Bangun prototipemu')}</h3>
       <p className="mt-2 text-muted">
-        Jelaskan ide secara singkat, pilih tools yang sesuai, lalu masukkan link demo atau file
-        hasil kerja.
+        {t('Jelaskan ide secara singkat, pilih tools yang sesuai, lalu masukkan link demo atau file hasil kerja.')}
       </p>
       <form
         className="mt-4 grid gap-3 sm:grid-cols-2"
@@ -370,48 +370,48 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
         }}
       >
         <label className="grid gap-1 text-sm font-bold">
-          Masalah yang ingin diselesaikan
+          {t('Masalah yang ingin diselesaikan')}
           <input
             name="problem"
             required
             defaultValue={p.problem}
-            placeholder="Contoh: mahasiswa kesulitan merangkum jurnal"
+            placeholder={t('Contoh: mahasiswa kesulitan merangkum jurnal')}
             className="rounded-lg border border-line px-3 py-2 font-normal"
           />
         </label>
         <label className="grid gap-1 text-sm font-bold">
-          Target pengguna
+          {t('Target pengguna')}
           <input
             name="user"
             required
             defaultValue={p.user}
-            placeholder="Contoh: mahasiswa semester akhir"
+            placeholder={t('Contoh: mahasiswa semester akhir')}
             className="rounded-lg border border-line px-3 py-2 font-normal"
           />
         </label>
         <label className="grid gap-1 text-sm font-bold sm:col-span-2">
-          Solusi prototipe
+          {t('Solusi prototipe')}
           <textarea
             name="solution"
             required
             rows={3}
             defaultValue={p.solution}
-            placeholder="Apa yang prototipemu lakukan?"
+            placeholder={t('Apa yang prototipemu lakukan?')}
             className="rounded-lg border border-line px-3 py-2 font-normal"
           />
         </label>
         <label className="grid gap-1 text-sm font-bold">
-          Tools yang digunakan
+          {t('Tools yang digunakan')}
           <input
             name="tools"
             required
             defaultValue={p.tools}
-            placeholder="Contoh: ChatGPT, Figma, Google AI Studio"
+            placeholder={t('Contoh: ChatGPT, Figma, Google AI Studio')}
             className="rounded-lg border border-line px-3 py-2 font-normal"
           />
         </label>
         <label className="grid gap-1 text-sm font-bold">
-          Link demo atau file hasil
+          {t('Link demo atau file hasil')}
           <input
             name="link"
             type="url"
@@ -424,38 +424,38 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
           type="submit"
           className="btn-primary justify-self-start rounded-lg px-5 py-2.5 text-sm font-bold text-white sm:col-span-2"
         >
-          Simpan prototipe & selesaikan kursus
+          {t('Simpan prototipe & selesaikan kursus')}
         </button>
       </form>
 
       <div className="mt-6 rounded-xl bg-soft p-4">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
-          Model lab · dummy inference
+          {t('Model lab · dummy inference')}
         </p>
-        <h4 className="mt-1 font-display font-bold">Coba kerangka modelmu</h4>
+        <h4 className="mt-1 font-display font-bold">{t('Coba kerangka modelmu')}</h4>
         <p className="mt-1 text-sm text-muted">
-          Masukkan data, pilih tugas model, lalu jalankan simulasi inference di browser.
+          {t('Masukkan data, pilih tugas model, lalu jalankan simulasi inference di browser.')}
         </p>
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <label className="grid gap-1 text-sm font-bold">
-            Tugas model
+            {t('Tugas model')}
             <select
               value={tugasModel}
               onChange={(e) => setTugasModel(e.target.value as TugasModel)}
               className="rounded-lg border border-line bg-white px-3 py-2 font-normal"
             >
-              <option value="summarize">Ringkas teks</option>
-              <option value="classify">Klasifikasi masalah</option>
-              <option value="ideate">Buat ide solusi</option>
+              <option value="summarize">{t('Ringkas teks')}</option>
+              <option value="classify">{t('Klasifikasi masalah')}</option>
+              <option value="ideate">{t('Buat ide solusi')}</option>
             </select>
           </label>
           <label className="grid gap-1 text-sm font-bold">
-            Input model
+            {t('Input model')}
             <textarea
               rows={3}
               value={inputModel}
               onChange={(e) => setInputModel(e.target.value)}
-              placeholder="Contoh: Mahasiswa membutuhkan cara cepat memahami jurnal ilmiah."
+              placeholder={t('Contoh: Mahasiswa membutuhkan cara cepat memahami jurnal ilmiah.')}
               className="rounded-lg border border-line px-3 py-2 font-normal"
             />
           </label>
@@ -465,10 +465,10 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
           onClick={() => setOutputModel(jalankanModelDummy(tugasModel, inputModel))}
           className="btn-primary mt-3 rounded-lg px-5 py-2.5 text-sm font-bold text-white"
         >
-          Jalankan model
+          {t('Jalankan model')}
         </button>
         <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-white p-4 text-sm">
-          {outputModel}
+          {t(outputModel)}
         </pre>
       </div>
     </div>

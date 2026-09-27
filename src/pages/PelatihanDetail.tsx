@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import LearningWorkspace from '../components/LearningWorkspace.tsx';
+import { useT } from '../lib/i18n.tsx';
 import {
   aksesKursus,
   audienceLabel,
@@ -27,6 +28,7 @@ import {
  */
 export default function PelatihanDetail() {
   const { kode = '' } = useParams();
+  const t = useT();
   // TODO_BACKEND: detail diambil dari GET /api/kursus/:kode ketika backend tersedia.
   const kursus = kursusDariKode(kode);
 
@@ -42,13 +44,13 @@ export default function PelatihanDetail() {
   if (!kursus) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-14 text-center">
-        <h1 className="font-display text-2xl font-bold">Kursus tidak ditemukan</h1>
-        <p className="mt-2 text-muted">Kode kursus tidak tersedia. Silakan pilih program lain dari katalog.</p>
+        <h1 className="font-display text-2xl font-bold">{t('Kursus tidak ditemukan')}</h1>
+        <p className="mt-2 text-muted">{t('Kode kursus tidak tersedia. Silakan pilih program lain dari katalog.')}</p>
         <Link
           to="/layanan/pelatihan"
           className="mt-4 inline-block text-sm font-bold text-brand hover:underline"
         >
-          ← Kembali ke katalog kursus
+          {t('← Kembali ke katalog kursus')}
         </Link>
       </div>
     );
@@ -84,49 +86,49 @@ export default function PelatihanDetail() {
         <div className="mx-auto grid max-w-6xl gap-8 px-6 py-10 lg:grid-cols-[1fr_340px]">
           <div>
             <Link to="/layanan/pelatihan" className="text-sm font-bold text-brand hover:underline">
-              ← Kembali ke katalog kursus
+              {t('← Kembali ke katalog kursus')}
             </Link>
             <p className="mt-6 text-xs font-bold uppercase tracking-[0.16em] text-brand">
-              {kursus.kode} · {audienceLabel(kursus)}
+              {kursus.kode} · {audienceLabel(kursus).split(' · ').map(t).join(' · ')}
             </p>
-            <h1 className="mt-3 font-display text-3xl font-bold md:text-4xl">{kursus.judul}</h1>
-            <p className="mt-4 max-w-2xl text-lg text-muted">{kursus.deskripsi}</p>
+            <h1 className="mt-3 font-display text-3xl font-bold md:text-4xl">{t(kursus.judul)}</h1>
+            <p className="mt-4 max-w-2xl text-lg text-muted">{t(kursus.deskripsi)}</p>
             <ul className="mt-6 flex flex-wrap gap-x-8 gap-y-3">
               <li>
-                <p className="font-bold">{kursus.level}</p>
-                <p className="text-xs uppercase tracking-wide text-muted">Level</p>
+                <p className="font-bold">{t(kursus.level)}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">{t('Level')}</p>
               </li>
               <li>
-                <p className="font-bold">{kursus.durasi}</p>
-                <p className="text-xs uppercase tracking-wide text-muted">Durasi</p>
+                <p className="font-bold">{t(kursus.durasi)}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">{t('Durasi')}</p>
               </li>
               <li>
-                <p className="font-bold">{kursus.format}</p>
-                <p className="text-xs uppercase tracking-wide text-muted">Format belajar</p>
+                <p className="font-bold">{t(kursus.format)}</p>
+                <p className="text-xs uppercase tracking-wide text-muted">{t('Format belajar')}</p>
               </li>
             </ul>
           </div>
           {/* Progress/status belajar dari state LMS (localStorage); TODO_BACKEND:
               progress per user + rating dari backend ketika akun peserta ada. */}
           <aside className="h-fit rounded-2xl border border-line bg-white p-6 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{aksesKursus.label}</p>
-            <h2 className="mt-2 font-display text-xl font-bold">{label.judul}</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{t(aksesKursus.label)}</p>
+            <h2 className="mt-2 font-display text-xl font-bold">{t(label.judul)}</h2>
             {belajar.ratingSubmitted ? (
-              <p className="mt-2 text-sm" aria-label={`Rating kursus ${belajar.rating} dari 5`}>
+              <p className="mt-2 text-sm" aria-label={t(`Rating kursus ${belajar.rating} dari 5`)}>
                 <span className="font-bold text-brand">
                   {'★'.repeat(belajar.rating)}
                   {'☆'.repeat(5 - belajar.rating)}
                 </span>
-                <span className="ml-2 text-muted">{belajar.rating}.0 · 1 ulasan</span>
+                <span className="ml-2 text-muted">{belajar.rating}.0 · {t('1 ulasan')}</span>
               </p>
             ) : null}
             {belajar.enrolled ? null : (
-              <p className="mt-3 text-sm text-muted">{aksesKursus.catatan}</p>
+              <p className="mt-3 text-sm text-muted">{t(aksesKursus.catatan)}</p>
             )}
             <div
               className="mt-4 h-2 overflow-hidden rounded-full bg-line"
               role="progressbar"
-              aria-label="Progress kursus"
+              aria-label={t('Progress kursus')}
               aria-valuemin={0}
               aria-valuemax={100}
               aria-valuenow={progress}
@@ -137,15 +139,15 @@ export default function PelatihanDetail() {
               />
             </div>
             <div className="mt-2 flex items-center justify-between gap-3 text-sm">
-              <span className="font-bold">{label.status}</span>
-              <span className="text-muted">{label.jumlah}</span>
+              <span className="font-bold">{t(label.status)}</span>
+              <span className="text-muted">{t(label.jumlah)}</span>
             </div>
             <button
               type="button"
               onClick={mulaiBelajar}
               className="btn-primary mt-4 block w-full rounded-lg px-4 py-3 text-center text-sm font-bold text-white"
             >
-              Mulai belajar
+              {t('Mulai belajar')}
             </button>
             <a
               href={waTanyaProgram(kursus.kode, kursus.judul)}
@@ -153,7 +155,7 @@ export default function PelatihanDetail() {
               rel="noreferrer"
               className="mt-3 block text-center text-sm font-bold text-brand hover:underline"
             >
-              {aksesKursus.cta}
+              {t(aksesKursus.cta)}
             </a>
           </aside>
         </div>
@@ -163,16 +165,16 @@ export default function PelatihanDetail() {
         <div>
           <section aria-labelledby="tentang-heading">
             <h2 id="tentang-heading" className="font-display text-xl font-bold">
-              Tentang kursus ini
+              {t('Tentang kursus ini')}
             </h2>
-            <p className="mt-3 text-muted">{kursus.tentang}</p>
+            <p className="mt-3 text-muted">{t(kursus.tentang)}</p>
             <ul className="mt-4 grid gap-x-8 gap-y-2 sm:grid-cols-2">
               {kursus.hasil.map((h) => (
                 <li key={h} className="flex items-start gap-2 text-sm">
                   <span aria-hidden="true" className="font-bold text-brand">
                     ✓
                   </span>
-                  <span>{h}</span>
+                  <span>{t(h)}</span>
                 </li>
               ))}
             </ul>
@@ -180,7 +182,7 @@ export default function PelatihanDetail() {
 
           <section aria-labelledby="materi-heading" className="mt-10">
             <h2 id="materi-heading" className="font-display text-xl font-bold">
-              Materi yang akan dipelajari
+              {t('Materi yang akan dipelajari')}
             </h2>
             <ol className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
               {kursus.modul.map((m, idx) => (
@@ -192,10 +194,10 @@ export default function PelatihanDetail() {
                     {String(idx + 1).padStart(2, '0')}
                   </span>
                   <div>
-                    <h3 className="font-display font-bold">{m.judul}</h3>
-                    <p className="mt-1 text-sm text-muted">{m.deskripsi}</p>
+                    <h3 className="font-display font-bold">{t(m.judul)}</h3>
+                    <p className="mt-1 text-sm text-muted">{t(m.deskripsi)}</p>
                     <p className="mt-1 text-xs text-muted">
-                      {m.meta} · Video, latihan, dan kuis
+                      {t(m.meta)} · {t('Video, latihan, dan kuis')}
                     </p>
                   </div>
                 </li>
@@ -212,11 +214,11 @@ export default function PelatihanDetail() {
                 {kursus.inisial}
               </span>
               <div>
-                <p className="text-xs uppercase tracking-wide text-muted">Instruktur</p>
+                <p className="text-xs uppercase tracking-wide text-muted">{t('Instruktur')}</p>
                 <h3 id="instruktur-heading" className="font-display font-bold">
-                  {kursus.instruktur}
+                  {t(kursus.instruktur)}
                 </h3>
-                <p className="text-sm text-muted">{kursus.peran}</p>
+                <p className="text-sm text-muted">{t(kursus.peran)}</p>
               </div>
             </div>
           </section>
@@ -227,7 +229,7 @@ export default function PelatihanDetail() {
           className="h-fit rounded-2xl border border-line bg-white p-6 lg:sticky lg:top-24"
         >
           <h3 id="info-heading" className="font-display text-lg font-bold">
-            Informasi kursus
+            {t('Informasi kursus')}
           </h3>
           <ul className="mt-4 space-y-3 text-sm">
             {infoKursus.map((i) => (
@@ -235,8 +237,8 @@ export default function PelatihanDetail() {
                 key={i.label}
                 className="flex justify-between gap-4 border-b border-line pb-3 last:border-0 last:pb-0"
               >
-                <span className="text-muted">{i.label}</span>
-                <span className="font-bold">{i.nilai}</span>
+                <span className="text-muted">{t(i.label)}</span>
+                <span className="font-bold">{t(i.nilai)}</span>
               </li>
             ))}
           </ul>
@@ -250,7 +252,7 @@ export default function PelatihanDetail() {
 
       <div className="mx-auto max-w-6xl px-6 pb-14 text-center">
         <Link to="/layanan/pelatihan" className="text-sm font-bold text-brand hover:underline">
-          ← Kembali ke katalog kursus
+          {t('← Kembali ke katalog kursus')}
         </Link>
       </div>
     </article>

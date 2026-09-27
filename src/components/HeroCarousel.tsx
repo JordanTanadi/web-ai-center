@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { HeroSlide } from '../data/hero.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
+import { useT } from '../lib/i18n.tsx';
 
 // Slider hero otomatis + dots, diadaptasi dari hero di beranda/index.html
 // (interval 7 detik, dots bar di bawah).
@@ -13,6 +14,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const [imgOk, setImgOk] = useState<Record<number, boolean>>({});
+  const t = useT();
 
   useEffect(() => {
     setIndex(0);
@@ -32,7 +34,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="Sorotan AI Center"
+      aria-label={t('Sorotan AI Center')}
       className="relative overflow-hidden bg-navy text-white"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -47,7 +49,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
           aria-roledescription="slide"
-          aria-label={`Slide ${index + 1} dari ${slides.length}`}
+          aria-label={t(`Slide ${index + 1} dari ${slides.length}`)}
           /* flex items-center: konten teks vertikal-centered di dalam min-height hero */
           className="absolute inset-0 flex items-center"
         >
@@ -79,24 +81,24 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                 transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
               >
                 <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
-                  {current.eyebrow}
+                  {t(current.eyebrow)}
                 </span>
                 <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold text-white md:text-5xl">
-                  {current.judul} <span className="text-yellow">{current.judulAksen}</span>
+                  {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
                 </h1>
-                <p className="mt-4 max-w-xl text-[#e8eaf6]">{current.sub}</p>
+                <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
                 <div className="mt-6 flex flex-wrap gap-3">
                   <Link
                     to={current.ctaPrimer.to}
                     className="rounded-lg bg-white px-6 py-3 font-display text-sm font-bold text-brand hover:bg-[#e7ecff]"
                   >
-                    {current.ctaPrimer.label}
+                    {t(current.ctaPrimer.label)}
                   </Link>
                   <Link
                     to={current.ctaSekunder.to}
                     className="rounded-lg border border-white px-6 py-3 font-display text-sm font-bold text-white hover:bg-white hover:text-ink"
                   >
-                    {current.ctaSekunder.label}
+                    {t(current.ctaSekunder.label)}
                   </Link>
                 </div>
                 <p className="mt-8 flex items-center gap-3 text-sm">
@@ -104,9 +106,9 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                     ❖
                   </span>
                   <span className="border-l-[3px] border-brand pl-3">
-                    <b>{current.badgeJudul}</b>
+                    <b>{t(current.badgeJudul)}</b>
                     <br />
-                    {current.badgeSub}
+                    {t(current.badgeSub)}
                   </span>
                 </p>
               </motion.div>
@@ -115,14 +117,14 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
       </div>
 
       {slides.length > 1 && (
-        <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2" role="tablist" aria-label="Pilih slide">
+        <div className="absolute bottom-5 left-1/2 z-20 flex -translate-x-1/2 gap-2" role="tablist" aria-label={t('Pilih slide')}>
           {slides.map((s, i) => (
             <button
               key={s.judul}
               type="button"
               role="tab"
               aria-selected={i === index}
-              aria-label={`Tampilkan slide ${i + 1}`}
+              aria-label={t(`Tampilkan slide ${i + 1}`)}
               onClick={() => setIndex(i)}
               className="flex h-11 min-w-11 items-center justify-center"
             >
@@ -137,7 +139,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
         </div>
       )}
       <p aria-live="polite" className="sr-only">
-        Slide {index + 1} dari {slides.length}
+        {t(`Slide ${index + 1} dari ${slides.length}`)}
       </p>
     </section>
   );

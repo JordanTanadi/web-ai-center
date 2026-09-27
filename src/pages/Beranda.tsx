@@ -10,6 +10,7 @@ import { layananDummy } from '../data/layanan.ts';
 import { portofolioDummy } from '../data/portofolio.ts';
 import { fasilitasDummy } from '../data/fasilitas.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
+import { useT } from '../lib/i18n.tsx';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
 import { testimoniDummy } from '../data/testimoni.ts';
@@ -29,9 +30,16 @@ function SectionBar({
   actionLabel: string;
   dark?: boolean;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-wrap items-end justify-between gap-4">
-      <SectionHeading kicker={kicker} title={title} sub={sub} align="left" tone={dark ? 'dark' : 'light'} />
+      <SectionHeading
+        kicker={t(kicker)}
+        title={t(title)}
+        sub={sub ? t(sub) : undefined}
+        align="left"
+        tone={dark ? 'dark' : 'light'}
+      />
       <Link
         to={actionTo}
         className={`shrink-0 rounded-lg px-5 py-2.5 font-display text-sm font-bold ${
@@ -40,7 +48,7 @@ function SectionBar({
             : 'btn-primary text-white'
         }`}
       >
-        {actionLabel}
+        {t(actionLabel)}
       </Link>
     </div>
   );
@@ -51,6 +59,7 @@ function SectionBar({
 // untuk AI Center Ubaya. File lama tetap ada sebagai referensi di ./beranda/index.html.
 export default function Beranda() {
   const location = useLocation();
+  const t = useT();
 
   // Klik "Layanan" di navbar/footer (/beranda#layanan) scroll ke section layanan.
   useEffect(() => {
@@ -66,17 +75,17 @@ export default function Beranda() {
 
       <section id="layanan" className="scroll-mt-20 bg-sky py-16">
         <div className="mx-auto max-w-6xl px-6">
-          <SectionHeading kicker="Layanan" title="Pilih Jalur Kolaborasimu" sub="Pelatihan dan inference solution untuk kebutuhan nyata." />
+          <SectionHeading kicker={t('Layanan')} title={t('Pilih Jalur Kolaborasimu')} sub={t('Pelatihan dan inference solution untuk kebutuhan nyata.')} />
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             {layananDummy.map((c) => (
               <article key={c.slug} className="flex flex-col rounded-2xl border border-line bg-white p-6 text-center">
-                <h3 className="font-display font-bold">{c.nama}</h3>
-                <p className="mt-2 flex-1 text-sm text-muted">{c.tagline}</p>
+                <h3 className="font-display font-bold">{t(c.nama)}</h3>
+                <p className="mt-2 flex-1 text-sm text-muted">{t(c.tagline)}</p>
                 <Link
                   to={`/layanan/${c.slug}`}
                   className="mx-auto mt-4 inline-block rounded-lg border border-brand px-5 py-2 text-sm font-bold text-brand hover:bg-brand hover:text-white"
                 >
-                  Detail Layanan →
+                  {t('Detail Layanan →')}
                 </Link>
               </article>
             ))}
@@ -85,12 +94,12 @@ export default function Beranda() {
       </section>
 
       {/* Portofolio: 6 karya dari index.html situs lama (#portofolio). */}
-      <section aria-label="Portofolio" className="py-16">
+      <section aria-label={t('Portofolio')} className="py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading
-            kicker="Karya Kami"
-            title="Portofolio produk AI"
-            sub="Sebagian solusi AI yang telah dikembangkan Ubaya AI Center untuk berbagai bidang."
+            kicker={t('Karya Kami')}
+            title={t('Portofolio produk AI')}
+            sub={t('Sebagian solusi AI yang telah dikembangkan Ubaya AI Center untuk berbagai bidang.')}
           />
           <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {portofolioDummy.map((k) => (
@@ -105,30 +114,30 @@ export default function Beranda() {
                 />
                 <div className="p-5">
                   <p className="text-xs font-bold uppercase tracking-wider text-brand">
-                    {k.kategori} · {k.teknologi}
+                    {t(`${k.kategori} · ${k.teknologi}`)}
                   </p>
-                  <h3 className="mt-2 font-display font-bold">{k.judul}</h3>
-                  <p className="mt-2 text-sm text-muted">{k.deskripsi}</p>
+                  <h3 className="mt-2 font-display font-bold">{t(k.judul)}</h3>
+                  <p className="mt-2 text-sm text-muted">{t(k.deskripsi)}</p>
                 </div>
               </li>
             ))}
           </ul>
           <p className="mt-6 text-center text-sm text-muted">
-            Ingin membangun solusi AI seperti ini untuk organisasi Anda?{' '}
+            {t('Ingin membangun solusi AI seperti ini untuk organisasi Anda?')}{' '}
             <Link to="/tentang-kami" className="font-bold text-brand hover:underline">
-              Hubungi kami →
+              {t('Hubungi kami →')}
             </Link>
           </p>
         </div>
       </section>
 
       {/* Fasilitas: 3 ruang dari index.html situs lama (#fasilitas). */}
-      <section aria-label="Fasilitas" className="bg-soft py-16">
+      <section aria-label={t('Fasilitas')} className="bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading
-            kicker="Lihat Ruangnya"
-            title="Fasilitas yang dirancang untuk berkarya"
-            sub="Ruang demo, ruang pelatihan, dan ruang diskusi — dilengkapi untuk presentasi, kelas, dan kerja tim."
+            kicker={t('Lihat Ruangnya')}
+            title={t('Fasilitas yang dirancang untuk berkarya')}
+            sub={t('Ruang demo, ruang pelatihan, dan ruang diskusi — dilengkapi untuk presentasi, kelas, dan kerja tim.')}
           />
           <ul className="mt-8 grid gap-5 md:grid-cols-3">
             {fasilitasDummy.map((r) => (
@@ -142,9 +151,9 @@ export default function Beranda() {
                   className="aspect-[16/10] w-full object-cover"
                 />
                 <div className="p-5 text-center">
-                  <p className="text-xs font-bold uppercase tracking-wider text-brand">{r.label}</p>
-                  <h3 className="mt-1 font-display font-bold">{r.judul}</h3>
-                  <p className="mt-2 text-sm text-muted">{r.deskripsi}</p>
+                  <p className="text-xs font-bold uppercase tracking-wider text-brand">{t(r.label)}</p>
+                  <h3 className="mt-1 font-display font-bold">{t(r.judul)}</h3>
+                  <p className="mt-2 text-sm text-muted">{t(r.deskripsi)}</p>
                 </div>
               </li>
             ))}
@@ -153,7 +162,7 @@ export default function Beranda() {
       </section>
 
       {/* aria-label langsung pada <section> (jadi region bernama); tanpa wrapper div. */}
-      <section aria-label="Dokumentasi Kegiatan" className="bg-brand py-16 text-white">
+      <section aria-label={t('Dokumentasi Kegiatan')} className="bg-brand py-16 text-white">
         <div className="mx-auto max-w-6xl px-6">
           {/* 3 card penampung highlight; TODO_BACKEND: backend yang menentukan limit/isi 3 highlight */}
           <SectionBar
@@ -183,15 +192,15 @@ export default function Beranda() {
       </section>
       */}
 
-      <section aria-label="Testimoni" className="bg-soft py-16">
+      <section aria-label={t('Testimoni')} className="bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
-          <SectionHeading kicker="Testimoni" title="Apa Kata Mereka?" sub="Cerita peserta dan mitra AI Center." />
+          <SectionHeading kicker={t('Testimoni')} title={t('Apa Kata Mereka?')} sub={t('Cerita peserta dan mitra AI Center.')} />
           {/* TODO_BACKEND: testimoni dari GET /api/testimoni */}
           <TestimoniSlider items={testimoniDummy} dark={false} />
         </div>
       </section>
 
-      <section aria-label="Berita Terkini" className="py-16">
+      <section aria-label={t('Berita Terkini')} className="py-16">
         <div className="mx-auto max-w-6xl px-6">
           {/* 3 card penampung highlight; TODO_BACKEND: backend yang menentukan limit/isi 3 highlight */}
           <SectionBar

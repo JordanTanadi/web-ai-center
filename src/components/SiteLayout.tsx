@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
 import { kontakDummy, waLinkKontak } from '../data/kontak.ts';
+import { useT } from '../lib/i18n.tsx';
+import LanguageToggle from './LanguageToggle.tsx';
 
 const kontenLinks = [
   { to: '/berita', label: 'Berita' },
@@ -31,6 +33,7 @@ export function Header() {
   const location = useLocation();
   const kontenActive =
     location.pathname === '/berita' || location.pathname === '/dokumentasi';
+  const t = useT();
 
   // Tutup dropdown Konten saat rute berubah, tekan Escape, atau klik di luar
   useEffect(() => {
@@ -69,82 +72,87 @@ export function Header() {
             desktop/laptop = selalu navbar — kompak di 768–1023px agar tetap muat;
             layar sentuh (HP/tablet) <1024px = burger; di bawah 768px navbar tidak
             muat untuk siapa pun, jadi semua perangkat memakai burger. */}
-        <nav
-          aria-label="Navigasi utama"
-          className="ml-auto hidden items-center gap-5 md:fine-pointer:max-lg:flex md:fine-pointer:max-lg:gap-3 lg:flex"
-        >
-          <NavLink to="/beranda" className={navLinkCls}>
-            Beranda
-          </NavLink>
-          <Link
-            to="/beranda#layanan"
-            className="whitespace-nowrap rounded px-1 py-2 text-sm font-medium text-ink hover:text-brand"
+        {/* Wrapper ml-auto: logo di kiri, nav + toggle + burger rata kanan
+            (di layar sempit nav tersembunyi → toggle & burger tetap rata kanan). */}
+        <div className="ml-auto flex items-center gap-3">
+          <nav
+            aria-label={t('Navigasi utama')}
+            className="hidden items-center gap-5 md:fine-pointer:max-lg:flex md:fine-pointer:max-lg:gap-3 lg:flex"
           >
-            Layanan
-          </Link>
-          <div ref={kontenRef} className="relative">
-            <button
-              type="button"
-              aria-haspopup="true"
-              aria-expanded={kontenOpen}
-              onClick={() => setKontenOpen((v) => !v)}
-              className={`flex items-center gap-1 whitespace-nowrap rounded px-1 py-2 text-sm font-medium ${
-                kontenActive ? 'text-brand' : 'text-ink hover:text-brand'
-              }`}
+            <NavLink to="/beranda" className={navLinkCls}>
+              {t('Beranda')}
+            </NavLink>
+            <Link
+              to="/beranda#layanan"
+              className="whitespace-nowrap rounded px-1 py-2 text-sm font-medium text-ink hover:text-brand"
             >
-              Konten
-              <span aria-hidden="true" className={`text-xs transition-transform ${kontenOpen ? 'rotate-180' : ''}`}>
-                ▾
-              </span>
-            </button>
-            {kontenOpen && (
-              <div
-                role="menu"
-                aria-label="Submenu konten"
-                className="absolute left-0 top-full min-w-44 rounded-xl border border-line bg-white py-2 shadow-lg"
+              {t('Layanan')}
+            </Link>
+            <div ref={kontenRef} className="relative">
+              <button
+                type="button"
+                aria-haspopup="true"
+                aria-expanded={kontenOpen}
+                onClick={() => setKontenOpen((v) => !v)}
+                className={`flex items-center gap-1 whitespace-nowrap rounded px-1 py-2 text-sm font-medium ${
+                  kontenActive ? 'text-brand' : 'text-ink hover:text-brand'
+                }`}
               >
-                {kontenLinks.map((l) => (
-                  <NavLink
-                    key={l.to}
-                    to={l.to}
-                    role="menuitem"
-                    onClick={() => setKontenOpen(false)}
-                    className={({ isActive }) =>
-                      `block px-4 py-2 text-sm ${isActive ? 'font-bold text-brand' : 'text-ink hover:bg-soft hover:text-brand'}`
-                    }
-                  >
-                    {l.label}
-                  </NavLink>
-                ))}
-              </div>
-            )}
-          </div>
-          <NavLink to="/tim" className={navLinkCls}>
-            Tim
-          </NavLink>
-          <NavLink to="/tentang-kami" className={navLinkCls}>
-            Tentang Kami
-          </NavLink>
-          <NavLink to="/tentang-kami" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white md:fine-pointer:max-lg:px-3 lg:px-4">
-            Kontak
-          </NavLink>
-        </nav>
-        <button
-          className="ml-auto rounded-lg border border-line px-3 py-2 md:fine-pointer:hidden lg:hidden"
-          aria-label={open ? 'Tutup menu' : 'Buka menu'}
-          aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
-        >
-          ☰
-        </button>
+                {t('Konten')}
+                <span aria-hidden="true" className={`text-xs transition-transform ${kontenOpen ? 'rotate-180' : ''}`}>
+                  ▾
+                </span>
+              </button>
+              {kontenOpen && (
+                <div
+                  role="menu"
+                  aria-label={t('Submenu konten')}
+                  className="absolute left-0 top-full min-w-44 rounded-xl border border-line bg-white py-2 shadow-lg"
+                >
+                  {kontenLinks.map((l) => (
+                    <NavLink
+                      key={l.to}
+                      to={l.to}
+                      role="menuitem"
+                      onClick={() => setKontenOpen(false)}
+                      className={({ isActive }) =>
+                        `block px-4 py-2 text-sm ${isActive ? 'font-bold text-brand' : 'text-ink hover:bg-soft hover:text-brand'}`
+                      }
+                    >
+                      {t(l.label)}
+                    </NavLink>
+                  ))}
+                </div>
+              )}
+            </div>
+            <NavLink to="/tim" className={navLinkCls}>
+              {t('Tim')}
+            </NavLink>
+            <NavLink to="/tentang-kami" className={navLinkCls}>
+              {t('Tentang Kami')}
+            </NavLink>
+            <NavLink to="/tentang-kami" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white md:fine-pointer:max-lg:px-3 lg:px-4">
+              {t('Kontak')}
+            </NavLink>
+          </nav>
+          <LanguageToggle />
+          <button
+            className="rounded-lg border border-line px-3 py-2 md:fine-pointer:hidden lg:hidden"
+            aria-label={t(open ? 'Tutup menu' : 'Buka menu')}
+            aria-expanded={open}
+            onClick={() => setOpen((v) => !v)}
+          >
+            ☰
+          </button>
+        </div>
       </div>
       {open && (
-        <nav aria-label="Navigasi seluler" className="flex flex-col gap-1 border-t border-line px-6 py-3 md:fine-pointer:hidden lg:hidden">
+        <nav aria-label={t('Navigasi seluler')} className="flex flex-col gap-1 border-t border-line px-6 py-3 md:fine-pointer:hidden lg:hidden">
           <NavLink to="/beranda" onClick={() => setOpen(false)} className="rounded px-1 py-2 text-sm font-medium">
-            Beranda
+            {t('Beranda')}
           </NavLink>
           <Link to="/beranda#layanan" onClick={() => setOpen(false)} className="rounded px-1 py-2 text-sm font-medium">
-            Layanan
+            {t('Layanan')}
           </Link>
           <button
             type="button"
@@ -152,7 +160,7 @@ export function Header() {
             onClick={() => setKontenMobileOpen((v) => !v)}
             className="flex items-center gap-1 rounded px-1 py-2 text-left text-sm font-medium"
           >
-            Konten
+            {t('Konten')}
             <span aria-hidden="true" className="text-xs">
               {kontenMobileOpen ? '▴' : '▾'}
             </span>
@@ -166,23 +174,23 @@ export function Header() {
                   onClick={() => setOpen(false)}
                   className="rounded px-1 py-2 text-sm font-medium"
                 >
-                  {l.label}
+                  {t(l.label)}
                 </NavLink>
               ))}
             </div>
           )}
           <NavLink to="/tim" onClick={() => setOpen(false)} className="rounded px-1 py-2 text-sm font-medium">
-            Tim
+            {t('Tim')}
           </NavLink>
           <NavLink to="/tentang-kami" onClick={() => setOpen(false)} className="rounded px-1 py-2 text-sm font-medium">
-            Tentang Kami
+            {t('Tentang Kami')}
           </NavLink>
           <NavLink
             to="/tentang-kami"
             onClick={() => setOpen(false)}
             className="btn-primary mt-1 rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
           >
-            Kontak
+            {t('Kontak')}
           </NavLink>
         </nav>
       )}
@@ -191,6 +199,7 @@ export function Header() {
 }
 
 export function Footer() {
+  const t = useT();
   return (
     <footer id="kontak" className="footer-legacy-font bg-navy text-sm text-[#c9cde6]">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-2 lg:grid-cols-[1.25fr_1.15fr_0.8fr_0.8fr]">
@@ -207,13 +216,13 @@ export function Footer() {
               loading="lazy"
             />
           </div>
-          <p className="font-display font-bold text-white">Tentang AI Center</p>
-          <p className="mt-2 text-[13px]">{kontakDummy.deskripsiFooter}</p>
+          <p className="font-display font-bold text-white">{t('Tentang AI Center')}</p>
+          <p className="mt-2 text-[13px]">{t(kontakDummy.deskripsiFooter)}</p>
         </div>
         <div>
           <p className="font-display font-bold text-white">AI Center Universitas Surabaya</p>
           <address className="mt-2 text-[13px] not-italic">
-            {kontakDummy.alamat.join(', ')}
+            {kontakDummy.alamat.map(t).join(', ')}
             <br />
             <a
               href={`mailto:${kontakDummy.email}`}
@@ -241,31 +250,31 @@ export function Footer() {
             </a>
           </address>
         </div>
-        <nav aria-label="Halaman populer">
-          <p className="font-display font-bold text-white">Halaman Populer</p>
+        <nav aria-label={t('Halaman populer')}>
+          <p className="font-display font-bold text-white">{t('Halaman Populer')}</p>
           <ul className="mt-2 space-y-1">
             {populerLinks.map((l) => (
               <li key={l.label}>
                 {l.to.includes('#') ? (
                   <Link to={l.to} className="hover:text-white hover:underline">
-                    {l.label}
+                    {t(l.label)}
                   </Link>
                 ) : (
                   <NavLink to={l.to} className="hover:text-white hover:underline">
-                    {l.label}
+                    {t(l.label)}
                   </NavLink>
                 )}
               </li>
             ))}
           </ul>
         </nav>
-        <nav aria-label="Layanan AI Center">
-          <p className="font-display font-bold text-white">Layanan</p>
+        <nav aria-label={t('Layanan AI Center')}>
+          <p className="font-display font-bold text-white">{t('Layanan')}</p>
           <ul className="mt-2 space-y-1">
             {layananLinks.map((l) => (
               <li key={l.label}>
                 <Link to={l.to} className="hover:text-white hover:underline">
-                  {l.label}
+                  {t(l.label)}
                 </Link>
               </li>
             ))}
@@ -280,10 +289,11 @@ export function Footer() {
 }
 
 export default function SiteLayout() {
+  const t = useT();
   return (
     <div className="flex min-h-screen flex-col">
       <a href="#konten" className="sr-only focus:not-sr-only focus:absolute focus:bg-white focus:p-2">
-        Lewati ke konten
+        {t('Lewati ke konten')}
       </a>
       <Header />
       <main id="konten" className="flex-1">

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getLayananBySlug } from '../data/layanan.ts';
+import { useT } from '../lib/i18n.tsx';
 import {
   institusiPelatihan,
   katalogIntro,
@@ -16,23 +17,24 @@ import {
 /** Katalog kursus + filter kategori (khusus layanan pelatihan). */
 function KatalogKursus() {
   const [filter, setFilter] = useState('all');
+  const t = useT();
   const terlihat = kursusDummy.filter((k) => kursusCocokFilter(k, filter));
 
   return (
     <section aria-labelledby="katalog-heading" className="mt-12">
       <div className="text-center">
         <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
-          {katalogIntro.eyebrow}
+          {t(katalogIntro.eyebrow)}
         </p>
         <h2 id="katalog-heading" className="mt-2 font-display text-xl font-bold">
-          {katalogIntro.judul}
+          {t(katalogIntro.judul)}
         </h2>
-        <p className="mx-auto mt-2 max-w-2xl text-muted">{katalogIntro.sub}</p>
+        <p className="mx-auto mt-2 max-w-2xl text-muted">{t(katalogIntro.sub)}</p>
       </div>
 
       <div
         role="group"
-        aria-label="Filter kategori kursus"
+        aria-label={t('Filter kategori kursus')}
         className="mt-5 flex flex-wrap justify-center gap-2"
       >
         {kategoriKursus.map((kat) => (
@@ -47,13 +49,13 @@ function KatalogKursus() {
                 : 'border border-line bg-white text-ink hover:border-brand hover:text-brand'
             }`}
           >
-            {kat.label}
+            {t(kat.label)}
           </button>
         ))}
       </div>
 
       {terlihat.length === 0 ? (
-        <p className="mt-6 text-center text-muted">{katalogIntro.kosong}</p>
+        <p className="mt-6 text-center text-muted">{t(katalogIntro.kosong)}</p>
       ) : (
         <ul className="mt-6 grid gap-5 sm:grid-cols-2">
           {terlihat.map((k) => (
@@ -62,30 +64,30 @@ function KatalogKursus() {
                 <span className="rounded bg-soft px-2 py-0.5 font-body text-xs font-bold text-brand">
                   {k.kode}
                 </span>
-                <span className="text-xs text-muted">{k.target.join(' · ')}</span>
+                <span className="text-xs text-muted">{k.target.map(t).join(' · ')}</span>
               </div>
               <h3 className="mt-3 font-display text-lg font-bold">
                 <Link to={`/layanan/pelatihan/${k.kode}`} className="hover:text-brand">
-                  {k.judul}
+                  {t(k.judul)}
                 </Link>
               </h3>
-              <p className="mt-2 text-sm text-muted">{k.deskripsi}</p>
+              <p className="mt-2 text-sm text-muted">{t(k.deskripsi)}</p>
               <p className="mt-3 text-xs text-muted">
-                Ubaya AI Center · {k.durasi} · {k.modul.length} modul · Sertifikat
+                Ubaya AI Center · {t(k.durasi)} · {t(`${k.modul.length} modul`)} · {t('Sertifikat')}
               </p>
               <p className="mt-1 text-xs text-muted">
-                Instruktur: {k.instruktur} — {k.peran}
+                {t('Instruktur:')} {t(k.instruktur)} — {t(k.peran)}
               </p>
               <details className="mt-3 text-sm">
-                <summary className="cursor-pointer font-medium text-brand">Lihat rincian modul</summary>
+                <summary className="cursor-pointer font-medium text-brand">{t('Lihat rincian modul')}</summary>
                 <ul className="mt-2 space-y-2">
                   {k.modul.map((m, idx) => (
                     <li key={m.judul}>
                       <p className="font-medium">
-                        {idx + 1}. {m.judul}
+                        {idx + 1}. {t(m.judul)}
                       </p>
                       <p className="text-xs text-muted">
-                        {m.deskripsi} ({m.meta})
+                        {t(m.deskripsi)} ({t(m.meta)})
                       </p>
                     </li>
                   ))}
@@ -95,7 +97,7 @@ function KatalogKursus() {
                 to={`/layanan/pelatihan/${k.kode}`}
                 className="btn-primary mt-4 block rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
               >
-                Lihat detail kursus
+                {t('Lihat detail kursus')}
               </Link>
             </li>
           ))}
@@ -107,34 +109,35 @@ function KatalogKursus() {
 
 /** Blok Modul unggulan R01 (khusus layanan pelatihan). */
 function ModulUnggulan() {
+  const t = useT();
   return (
     <section aria-labelledby="modul-unggulan-heading" className="mt-12 rounded-2xl border border-line bg-white p-6 text-center md:p-8">
       <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
-        {modulUnggulan.eyebrow}
+        {t(modulUnggulan.eyebrow)}
       </p>
       <h2 id="modul-unggulan-heading" className="mt-2 font-display text-xl font-bold">
-        {modulUnggulan.judul}
+        {t(modulUnggulan.judul)}
       </h2>
-      <p className="mx-auto mt-2 max-w-2xl text-muted">{modulUnggulan.deskripsi}</p>
+      <p className="mx-auto mt-2 max-w-2xl text-muted">{t(modulUnggulan.deskripsi)}</p>
       <ul className="mx-auto mt-4 max-w-md space-y-2 text-left">
-        {modulUnggulan.topik.map((t) => (
-          <li key={t} className="flex items-start gap-3">
+        {modulUnggulan.topik.map((topik) => (
+          <li key={topik} className="flex items-start gap-3">
             <span aria-hidden="true" className="mt-0.5 text-brand">
               ✦
             </span>
-            <span>{t}</span>
+            <span>{t(topik)}</span>
           </li>
         ))}
       </ul>
-      <p className="mt-4 text-sm font-medium">{modulUnggulan.catatan}</p>
-      <p className="mx-auto mt-1 max-w-2xl text-xs text-muted">{modulUnggulan.catatanDetail}</p>
+      <p className="mt-4 text-sm font-medium">{t(modulUnggulan.catatan)}</p>
+      <p className="mx-auto mt-1 max-w-2xl text-xs text-muted">{t(modulUnggulan.catatanDetail)}</p>
       <a
         href={waTanyaProgram('R01', modulUnggulan.judul)}
         target="_blank"
         rel="noreferrer"
         className="btn-primary mt-4 inline-block rounded-lg px-6 py-3 font-display text-sm font-bold text-white"
       >
-        Tanyakan program ini
+        {t('Tanyakan program ini')}
       </a>
     </section>
   );
@@ -142,37 +145,39 @@ function ModulUnggulan() {
 
 /** Blok penutup "Untuk institusi" (khusus layanan pelatihan). */
 function UntukInstitusi() {
+  const t = useT();
   return (
     <section aria-labelledby="institusi-heading" className="mt-12 rounded-2xl bg-soft p-6 text-center md:p-8">
       <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
-        {institusiPelatihan.kicker}
+        {t(institusiPelatihan.kicker)}
       </p>
       <h2 id="institusi-heading" className="mt-2 font-display text-xl font-bold">
-        {institusiPelatihan.judul}
+        {t(institusiPelatihan.judul)}
       </h2>
-      <p className="mx-auto mt-2 max-w-2xl text-muted">{institusiPelatihan.deskripsi}</p>
+      <p className="mx-auto mt-2 max-w-2xl text-muted">{t(institusiPelatihan.deskripsi)}</p>
       <a
         href={waPelatihanInstitusi()}
         target="_blank"
         rel="noreferrer"
         className="btn-primary mt-4 inline-block rounded-lg px-6 py-3 font-display text-sm font-bold text-white"
       >
-        {institusiPelatihan.cta}
+        {t(institusiPelatihan.cta)}
       </a>
     </section>
   );
 }
 
 export default function LayananDetail() {
+  const t = useT();
   const { slug = '' } = useParams();
   const item = getLayananBySlug(slug);
 
   if (!item) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-14 text-center">
-        <h1 className="font-display text-2xl font-bold">Layanan tidak ditemukan</h1>
+        <h1 className="font-display text-2xl font-bold">{t('Layanan tidak ditemukan')}</h1>
         <Link to="/beranda#layanan" className="mt-4 inline-block text-sm font-bold text-brand hover:underline">
-          ← Kembali ke daftar layanan
+          {t('← Kembali ke daftar layanan')}
         </Link>
       </div>
     );
@@ -188,24 +193,24 @@ export default function LayananDetail() {
       {/* Header + deskripsi dipusatkan (ritme halaman lain); daftar fitur & CTA
           ditata rapi di bawahnya. */}
       <header className="text-center">
-        <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">Layanan</p>
-        <h1 className="mt-2 font-display text-3xl font-bold">{item.nama}</h1>
-        <p className="mt-2 font-medium text-muted">{item.tagline}</p>
+        <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">{t('Layanan')}</p>
+        <h1 className="mt-2 font-display text-3xl font-bold">{t(item.nama)}</h1>
+        <p className="mt-2 font-medium text-muted">{t(item.tagline)}</p>
       </header>
-      <p className="mx-auto mt-6 max-w-2xl text-center">{item.deskripsi}</p>
+      <p className="mx-auto mt-6 max-w-2xl text-center">{t(item.deskripsi)}</p>
 
       {isPelatihan && (
         <ul className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3">
           {statsPelatihan.map((s) => (
             <li key={s.label} className="text-center">
-              <p className="font-display text-xl font-bold text-brand">{s.nilai}</p>
-              <p className="text-xs text-muted">{s.label}</p>
+              <p className="font-display text-xl font-bold text-brand">{t(s.nilai)}</p>
+              <p className="text-xs text-muted">{t(s.label)}</p>
             </li>
           ))}
         </ul>
       )}
 
-      <h2 className="mt-8 text-center font-display text-xl font-bold">Yang Anda dapatkan</h2>
+      <h2 className="mt-8 text-center font-display text-xl font-bold">{t('Yang Anda dapatkan')}</h2>
       <ul className="mx-auto mt-4 max-w-md space-y-3">
         {item.fitur.map((f) => (
           <li key={f} className="flex items-start gap-3">
@@ -221,7 +226,7 @@ export default function LayananDetail() {
             >
               <path d="M20 6 9 17l-5-5" />
             </svg>
-            <span>{f}</span>
+            <span>{t(f)}</span>
           </li>
         ))}
       </ul>
@@ -239,13 +244,13 @@ export default function LayananDetail() {
           to="/tentang-kami"
           className="btn-primary rounded-lg px-6 py-3 font-display text-sm font-bold text-white"
         >
-          Hubungi Kami
+          {t('Hubungi Kami')}
         </Link>
         <Link
           to="/beranda#layanan"
           className="rounded-lg border border-brand px-6 py-3 font-display text-sm font-bold text-brand hover:bg-brand hover:text-white"
         >
-          ← Semua Layanan
+          {t('← Semua Layanan')}
         </Link>
       </div>
     </div>
