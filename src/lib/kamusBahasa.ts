@@ -225,6 +225,41 @@ export const kamusBahasa: Record<string, string> = {
   'Pendampingan integrasi infrastruktur': 'Infrastructure integration support',
   'Dokumentasi teknis yang jelas': 'Clear technical documentation',
   'Dukungan purna implementasi': 'Post-implementation support',
+  // Inference Solution — panel penjelasan, alur kerja, & contoh penerapan (teks baru,
+  // disusun dari pemahaman layanan inference; bukan salinan situs lama)
+  'Apa itu Inference Solution?': 'What is an Inference Solution?',
+  'Inference adalah tahap menjalankan model machine learning untuk memprediksi data baru — bagian yang membuat model benar-benar dipakai, bukan sekadar dilatih. Inference Solution adalah layanan Ubaya AI Center yang mengubah model Anda menjadi layanan siap pakai — biasanya berupa API — sehingga aplikasi, website, atau sistem internal Anda dapat memanggil prediksi kapan pun dibutuhkan, diinfrastruktur yang terkelola dan didampingi tim kami.':
+    'Inference is the stage of running a machine learning model to predict new data — the part that puts a model to real use, not just training it. Inference Solution is Ubaya AI Center’s service that turns your model into a ready-to-use service — usually an API — so your application, website, or internal system can call predictions whenever needed, on managed infrastructure guided by our team.',
+  'Kapan Anda membutuhkannya?': 'When do you need it?',
+  'Model riset atau prototipe sudah jadi, tetapi belum bisa dipakai tim lain':
+    'Your research or prototype model is ready but other teams cannot use it yet',
+  'Butuh fitur AI di aplikasi atau website tanpa membangun infrastruktur ML sendiri':
+    'You need AI features in your app or website without building your own ML infrastructure',
+  'Perlu prediksi otomatis yang konsisten untuk gambar, teks, atau data':
+    'You need consistent automatic predictions for images, text, or data',
+  'Ingin hasil model tetap andal performanya saat dipakai banyak pengguna':
+    'You want the model to stay reliable in performance when used by many users',
+  'Bagaimana cara kerjanya?': 'How does it work?',
+  'Konsultasi & audit kebutuhan': 'Consultation & needs audit',
+  'Kami memetakan use case, data, dan model yang sudah — atau yang perlu disiapkan — bersama tim Anda.':
+    'We map out the use case, data, and existing model — or what needs to be prepared — with your team.',
+  'Persiapan model': 'Model preparation',
+  'Model dioptimalkan dan dibungkus agar siap dijalankan di server, termasuk preprocessing dan versi yang terkendali.':
+    'The model is optimized and packaged so it is ready to run on the server, including preprocessing and version control.',
+  'Deployment sebagai API': 'Deployment as an API',
+  'Model dijalankan sebagai endpoint layanan (API) yang stabil, lengkap dengan dokumentasi pemakaian.':
+    'The model runs as a stable service endpoint (API), complete with usage documentation.',
+  'Integrasi & pengujian': 'Integration & testing',
+  'API disambungkan ke aplikasi Anda lalu diuji pada data nyata: akurasi, latensi, dan perilakunya.':
+    'The API is connected to your application and tested on real data: accuracy, latency, and behavior.',
+  'Operasional & purna implementasi': 'Operations & post-implementation',
+  'Monitoring, pembaruan model, dan dukungan teknis agar layanan tetap andal setelah berjalan.':
+    'Monitoring, model updates, and technical support to keep the service reliable after launch.',
+  'Contoh penerapan': 'Application examples',
+  'Beberapa produk AI Center yang menjalankan prediksi model secara langsung:':
+    'Several AI Center products that run model predictions directly:',
+  'Lihat portofolio lengkap': 'See the full portfolio',
+  'Diskusikan kebutuhan Anda': 'Discuss your needs',
   // Modul unggulan (pelatihan.html #unggulan)
   'Modul unggulan · R01': 'Featured module · R01',
   'AI untuk mencari referensi jurnal': 'AI for finding journal references',

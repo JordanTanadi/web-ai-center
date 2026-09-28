@@ -94,7 +94,7 @@ export default function Beranda() {
       </section>
 
       {/* Portofolio: 6 karya dari index.html situs lama (#portofolio). */}
-      <section aria-label={t('Portofolio')} className="py-16">
+      <section id="portofolio" aria-label={t('Portofolio')} className="scroll-mt-20 py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading
             kicker={t('Karya Kami')}

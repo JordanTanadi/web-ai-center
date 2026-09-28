@@ -3,6 +3,14 @@ import { Link, useParams } from 'react-router-dom';
 import { getLayananBySlug } from '../data/layanan.ts';
 import { useT } from '../lib/i18n.tsx';
 import {
+  alurInference,
+  apaItuInference,
+  contohInference,
+  contohInferenceIntro,
+  kebutuhanInference,
+  waDiskusiInference,
+} from '../data/inference.ts';
+import {
   aksiHeroPelatihan,
   institusiPelatihan,
   katalogIntro,
@@ -145,6 +153,98 @@ function ModulUnggulan() {
   );
 }
 
+/** Panel penjelasan "Apa itu Inference Solution?" (khusus layanan inference). */
+function ApaItuInference() {
+  const t = useT();
+  return (
+    <section
+      aria-labelledby="apa-itu-inference-heading"
+      className="mt-8 rounded-2xl border border-line bg-soft p-6 text-center md:p-8"
+    >
+      <h2 id="apa-itu-inference-heading" className="font-display text-xl font-bold">
+        {t(apaItuInference.judul)}
+      </h2>
+      <p className="mx-auto mt-3 max-w-2xl text-muted">{t(apaItuInference.deskripsi)}</p>
+      <p className="mt-5 font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
+        {t('Kapan Anda membutuhkannya?')}
+      </p>
+      <ul className="mx-auto mt-3 max-w-2xl space-y-2 text-left">
+        {kebutuhanInference.map((k) => (
+          <li key={k} className="flex items-start gap-3">
+            <span aria-hidden="true" className="mt-0.5 text-brand">
+              ✦
+            </span>
+            <span>{t(k)}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Alur kerja layanan inference — 5 langkah (khusus layanan inference). */
+function AlurKerjaInference() {
+  const t = useT();
+  return (
+    <section aria-labelledby="alur-kerja-heading" className="mt-12 text-center">
+      <h2 id="alur-kerja-heading" className="font-display text-xl font-bold">
+        {t('Bagaimana cara kerjanya?')}
+      </h2>
+      <ol className="mt-5 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-3">
+        {alurInference.map((l) => (
+          <li key={l.nomor} className="rounded-2xl border border-line bg-white p-5">
+            <p className="font-display text-lg font-bold text-brand">{l.nomor}</p>
+            <h3 className="mt-1 font-display font-bold">{t(l.judul)}</h3>
+            <p className="mt-1 text-sm text-muted">{t(l.deskripsi)}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  );
+}
+
+/** Contoh penerapan dari portofolio + CTA (khusus layanan inference). */
+function ContohPenerapanInference() {
+  const t = useT();
+  return (
+    <section
+      aria-labelledby="contoh-penerapan-heading"
+      className="mt-12 rounded-2xl border border-line bg-white p-6 text-center md:p-8"
+    >
+      <h2 id="contoh-penerapan-heading" className="font-display text-xl font-bold">
+        {t('Contoh penerapan')}
+      </h2>
+      <p className="mx-auto mt-2 max-w-2xl text-muted">{t(contohInferenceIntro)}</p>
+      <ul className="mt-4 flex flex-wrap justify-center gap-2">
+        {contohInference.map((c) => (
+          <li
+            key={c.slug}
+            className="rounded-full border border-line bg-soft px-3 py-1 text-sm font-medium"
+          >
+            {t(c.judul)}
+          </li>
+        ))}
+      </ul>
+      <div className="mt-5 flex flex-wrap justify-center gap-3">
+        <Link
+          to="/beranda#portofolio"
+          className="rounded-lg border border-brand px-6 py-3 font-display text-sm font-bold text-brand hover:bg-brand hover:text-white"
+        >
+          {t('Lihat portofolio lengkap')}
+        </Link>
+        <a
+          href={waDiskusiInference()}
+          target="_blank"
+          rel="noreferrer"
+          className="btn-primary rounded-lg px-6 py-3 font-display text-sm font-bold text-white"
+        >
+          {t('Diskusikan kebutuhan Anda')}
+        </a>
+      </div>
+    </section>
+  );
+}
+
 /** Blok penutup "Untuk institusi" (khusus layanan pelatihan). */
 function UntukInstitusi() {
   const t = useT();
@@ -186,6 +286,7 @@ export default function LayananDetail() {
   }
 
   const isPelatihan = item.slug === 'pelatihan';
+  const isInference = item.slug === 'inference-solution';
 
   return (
     // Pelatihan memakai container lebar agar katalog kursus muat 2 kolom;
@@ -200,6 +301,9 @@ export default function LayananDetail() {
         <p className="mt-2 font-medium text-muted">{t(item.tagline)}</p>
       </header>
       <p className="mx-auto mt-6 max-w-2xl text-center">{t(item.deskripsi)}</p>
+
+      {/* Penjelasan inference: apa itu + tanda kebutuhan, mengikuti ritme center halaman. */}
+      {isInference && <ApaItuInference />}
 
       {isPelatihan && (
         <ul className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3">
@@ -261,6 +365,13 @@ export default function LayananDetail() {
           </li>
         ))}
       </ul>
+
+      {isInference && (
+        <>
+          <AlurKerjaInference />
+          <ContohPenerapanInference />
+        </>
+      )}
 
       {isPelatihan && (
         <>
