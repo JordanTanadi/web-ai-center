@@ -3,12 +3,14 @@ import { Link, useParams } from 'react-router-dom';
 import { getLayananBySlug } from '../data/layanan.ts';
 import { useT } from '../lib/i18n.tsx';
 import {
+  aksiHeroPelatihan,
   institusiPelatihan,
   katalogIntro,
   kategoriKursus,
   kursusCocokFilter,
   kursusDummy,
   modulUnggulan,
+  panelCaraBelajar,
   statsPelatihan,
   waPelatihanInstitusi,
   waTanyaProgram,
@@ -21,7 +23,7 @@ function KatalogKursus() {
   const terlihat = kursusDummy.filter((k) => kursusCocokFilter(k, filter));
 
   return (
-    <section aria-labelledby="katalog-heading" className="mt-12">
+    <section id="katalog" aria-labelledby="katalog-heading" className="mt-12">
       <div className="text-center">
         <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
           {t(katalogIntro.eyebrow)}
@@ -147,7 +149,7 @@ function ModulUnggulan() {
 function UntukInstitusi() {
   const t = useT();
   return (
-    <section aria-labelledby="institusi-heading" className="mt-12 rounded-2xl bg-soft p-6 text-center md:p-8">
+    <section id="layanan-kustom" aria-labelledby="institusi-heading" className="mt-12 rounded-2xl bg-soft p-6 text-center md:p-8">
       <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
         {t(institusiPelatihan.kicker)}
       </p>
@@ -208,6 +210,35 @@ export default function LayananDetail() {
             </li>
           ))}
         </ul>
+      )}
+
+      {/* Tombol hero + panel "Cara belajar di sini" — konten pelatihan.html (disetujui user):
+          tombol berupa anchor ke #katalog dan #layanan-kustom, panel ditengah mengikuti ritme halaman. */}
+      {isPelatihan && (
+        <>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            {aksiHeroPelatihan.map((a, i) => (
+              <a
+                key={a.href}
+                href={a.href}
+                className={
+                  i === 0
+                    ? 'btn-primary rounded-lg px-6 py-3 font-display text-sm font-bold text-white'
+                    : 'rounded-lg border border-brand px-6 py-3 font-display text-sm font-bold text-brand hover:bg-brand hover:text-white'
+                }
+              >
+                {t(a.label)}
+              </a>
+            ))}
+          </div>
+          <aside className="mx-auto mt-8 max-w-2xl rounded-2xl border border-line bg-soft p-6 text-center">
+            <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
+              {t(panelCaraBelajar.kicker)}
+            </p>
+            <h2 className="mt-2 font-display text-xl font-bold">{t(panelCaraBelajar.judul)}</h2>
+            <p className="mt-2 text-muted">{t(panelCaraBelajar.deskripsi)}</p>
+          </aside>
+        </>
       )}
 
       <h2 className="mt-8 text-center font-display text-xl font-bold">{t('Yang Anda dapatkan')}</h2>

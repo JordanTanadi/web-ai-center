@@ -73,6 +73,24 @@ export const statsPelatihan = [
   { nilai: 'Hybrid', label: 'Online & tatap muka' },
 ];
 
+/** Panel hero "Cara belajar di sini" (pelatihan.html, aside `.hero-panel`) — teks dari situs lama. */
+export const panelCaraBelajar = {
+  kicker: 'Cara belajar di sini',
+  judul: 'Materi yang dekat dengan kebutuhan Anda.',
+  deskripsi:
+    'Setiap program dirancang bersama praktisi dan pengajar agar peserta tidak hanya mengenal tools, ' +
+    'tetapi mampu menerapkannya dalam pekerjaan nyata.',
+};
+
+/**
+ * Tombol hero pelatihan (pelatihan.html, `.hero-actions`) — anchor dalam halaman.
+ * href persis anchor lama: #katalog dan #layanan-kustom.
+ */
+export const aksiHeroPelatihan = [
+  { label: 'Jelajahi katalog', href: '#katalog' },
+  { label: 'Rancang pelatihan untuk tim', href: '#layanan-kustom' },
+] as const;
+
 /** Navigasi & copy bagian Katalog kursus (pelatihan.html, `#katalog`). */
 export const katalogIntro = {
   eyebrow: 'Katalog kursus',
