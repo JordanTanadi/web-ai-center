@@ -1,4 +1,5 @@
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/layanan dan GET /api/layanan/:slug).
+// Data dummy = FALLBACK untuk backend (GET /api/layanan & /api/layanan/:slug via
+// useApiDaftar/useApiObjek): dipakai bila VITE_API_BASE_URL kosong atau request gagal.
 // Teks "pelatihan" disalin dari situs lama (pelatihan.html + pillar "Pelatihan & Talenta" di index.html).
 export interface Layanan {
   slug: string;

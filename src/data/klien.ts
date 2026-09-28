@@ -1,4 +1,6 @@
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/klien).
+// Data untuk section "Our Client" (saat ini dikomentari di Beranda).
+// Endpoint GET /api/klien sudah tersedia di backend — wire dengan useApiDaftar
+// saat section diaktifkan kembali.
 export interface Klien {
   nama: string;
   bidang: string;

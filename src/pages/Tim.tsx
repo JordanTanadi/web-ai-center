@@ -3,6 +3,7 @@ import SectionHeading from '../components/SectionHeading.tsx';
 import TeamCard from '../components/TeamCard.tsx';
 import { timDummy } from '../data/tim.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiDaftar } from '../lib/useApiData.ts';
 
 // Pola halaman mengikuti halaman Berita/Dokumentasi (heading → pencarian → grid card).
 export default function Tim() {
@@ -12,14 +13,15 @@ export default function Tim() {
   const q = searchParams.get('q') ?? '';
   const setQ = (value: string) => setSearchParams(value ? { q: value } : {}, { replace: true });
   const query = q.toLowerCase();
-  const items = timDummy.filter(
+  // Daftar dari GET /api/tim; pencarian masih client-side di atas daftar lengkap.
+  const semuaTim = useApiDaftar('/tim', timDummy);
+  const items = semuaTim.filter(
     (a) => !query || a.nama.toLowerCase().includes(query) || a.peran.toLowerCase().includes(query),
   );
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
-      {/* Copy tanpa label "data dummy" — hanya untuk pengguna. TODO_BACKEND di komentar. */}
+      {/* Copy tanpa label "data dummy" — hanya untuk pengguna. */}
       <SectionHeading kicker={t('Tim')} title={t('Tim Kami')} sub={t('Struktur tim AI Center Universitas Surabaya.')} level="h1" />
-      {/* TODO_BACKEND: daftar + pencarian server-side via GET /api/tim?q= */}
       <div className="mx-auto mt-6 max-w-md">
         <label htmlFor="cari-tim" className="sr-only">
           {t('Cari anggota tim')}

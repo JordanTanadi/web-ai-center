@@ -60,7 +60,7 @@ export const kamusBahasa: Record<string, string> = {
   '← Kembali ke daftar dokumentasi': '← Back to documentation list',
 
   // — Beranda: hero ————————————————————————————————————————————
-  // (slide hero — TODO_BACKEND: teks slide dari backend)
+  // (slide hero — teks slide dari backend via GET /api/hero-slides di Beranda)
 
   // — Beranda: hero (data hero.ts) ————————————————————————————————
   'Pusat Riset & Layanan': 'Research & Services Center',

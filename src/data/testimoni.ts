@@ -1,4 +1,5 @@
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/testimoni).
+// Data dummy = FALLBACK untuk backend (GET /api/testimoni via useApiDaftar di Beranda):
+// dipakai bila VITE_API_BASE_URL kosong atau request gagal.
 export interface Testimoni {
   nama: string;
   peran: string;

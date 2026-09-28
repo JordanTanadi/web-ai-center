@@ -1,5 +1,6 @@
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/berita).
-// Bentuk response backend yang diharapkan: { items: BeritaItem[] } dengan field yang sama.
+// Data dummy = FALLBACK untuk backend (GET /api/berita via useApiDaftar/useApiObjek):
+// dipakai bila VITE_API_BASE_URL kosong atau request gagal — sumber utama ada di DB.
+// Bentuk respons backend: { items: BeritaItem[] } dengan field yang sama.
 export interface BeritaItem {
   slug: string;
   judul: string;

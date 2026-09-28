@@ -1,7 +1,7 @@
 // Visi & Misi resmi AI Center — mengikuti dokumen "Visi & Misi" (Arah Kami).
-// TODO_BACKEND: ganti dengan GET /api/profil (field visi & misi).
-// Catatan integrasi: kolom DB `misi` bertipe teks — simpan satu poin per baris,
-// lalu split('\n') di lapisan pemetaan API saat frontend mulai fetch backend.
+// Sudah di-wire: TentangKami memanggil GET /api/profil lalu memakai
+// petakanProfilApi() — profilDummy tetap fallback + sumber introVisiMisi
+// (kolom backend tidak punya field intro).
 export interface Profil {
   /** Kalimat pengantar section Visi & Misi. */
   introVisiMisi: string;
@@ -30,3 +30,53 @@ export const profilDummy: Profil = {
     'Menciptakan ekosistem inovasi dan startup berbasis AI.',
   ],
 };
+
+/** Kontrak respons GET /api/profil — ↔ server/src/api/types.ts Profil. */
+export interface ProfilApi {
+  nama: string;
+  tagline: string;
+  ringkasan: string;
+  alamat: string;
+  email: string;
+  telepon: string;
+  /** Satu baris: 'judul — deskripsi' (lihat catatan di atas profilDummy). */
+  visi?: string;
+  /** Beberapa baris dipisah '\n', satu poin misi per baris. */
+  misi?: string;
+  statistik?: Array<{ label: string; value: string }>;
+}
+
+/** Pecah string visi API ('judul — deskripsi') menjadi struktur UI. */
+function pecahVisi(visi: string): Profil['visi'] {
+  const pemisah = ' — ';
+  const indeks = visi.indexOf(pemisah);
+  if (indeks === -1) {
+    // Tanpa pemisah → seluruh teks dianggap judul (deskripsi kosong).
+    return { judul: visi, deskripsi: '' };
+  }
+  return {
+    judul: visi.slice(0, indeks),
+    deskripsi: visi.slice(indeks + pemisah.length),
+  };
+}
+
+/**
+ * Petakan respons API → struktur Profil untuk UI.
+ * Aturan eksplisit:
+ * - `introVisiMisi` tidak ada di kolom backend → selalu dari profilDummy;
+ * - `visi` kosong/null → kartu visi memakai profilDummy (mencegah kartu
+ *   kosong; backend seed selalu mengisinya);
+ * - `misi` kosong/null → `[]`, supaya empty-state "Misi belum tersedia."
+ *   di halaman tetap tampil bila CMS sengaja dikosongkan.
+ */
+export function petakanProfilApi(api: ProfilApi): Profil {
+  const misi = (api.misi ?? '')
+    .split('\n')
+    .map((poin) => poin.trim())
+    .filter((poin) => poin !== '');
+  return {
+    introVisiMisi: profilDummy.introVisiMisi,
+    visi: api.visi !== undefined && api.visi.trim() !== '' ? pecahVisi(api.visi) : profilDummy.visi,
+    misi,
+  };
+}

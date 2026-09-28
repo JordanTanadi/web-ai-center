@@ -1,11 +1,21 @@
 import SectionHeading from '../components/SectionHeading.tsx';
 import { kontakDummy, waLinkKontak } from '../data/kontak.ts';
-import { profilDummy, type Profil } from '../data/profil.ts';
+import {
+  petakanProfilApi,
+  profilDummy,
+  type Profil,
+  type ProfilApi,
+} from '../data/profil.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiObjek } from '../lib/useApiData.ts';
 
-// TODO_BACKEND: profil (visi/misi/deskripsi/statistik) diambil dari GET /api/profil.
-export default function TentangKami({ profil = profilDummy }: { profil?: Profil }) {
+export default function TentangKami({ profil: profilOverride }: { profil?: Profil }) {
   const t = useT();
+  // Visi/misi dari GET /api/profil (petakanProfilApi); prop `profil` eksplisit
+  // (untuk test/konteks khusus) menang atas data API.
+  const profilApi = useApiObjek<ProfilApi>('/profil', undefined);
+  const profil: Profil =
+    profilOverride ?? (profilApi !== undefined ? petakanProfilApi(profilApi) : profilDummy);
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
       <SectionHeading kicker={t('Tentang')} title={t('Tentang Kami')} sub={t('AI Center Universitas Surabaya.')} level="h1" />

@@ -1,5 +1,7 @@
 // Info kontak resmi AI Center — satu sumber kebenaran untuk Footer dan Tentang Kami.
-// TODO_BACKEND: ganti dengan GET /api/profil (field kontak) ketika backend terintegrasi.
+// TODO_BACKEND: field kontak (alamat/email/telepon) sudah tersedia di GET /api/profil,
+// tetapi sengaja BELUM di-wire — tampilan kontak/footer mengikuti keputusan konten,
+// jangan diubah tanpa konfirmasi pemilik konten.
 // Sumber: section Kontak + deskripsi "AI Solution Factory" di situs lama (index.html).
 
 export interface Kontak {

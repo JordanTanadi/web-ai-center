@@ -3,6 +3,7 @@ import SectionHeading from '../components/SectionHeading.tsx';
 import DokumentasiCard from '../components/DokumentasiCard.tsx';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiDaftar } from '../lib/useApiData.ts';
 
 // Pola halaman mengikuti halaman Berita (heading → pencarian → grid card).
 export default function Dokumentasi() {
@@ -12,7 +13,10 @@ export default function Dokumentasi() {
   const q = searchParams.get('q') ?? '';
   const setQ = (value: string) => setSearchParams(value ? { q: value } : {}, { replace: true });
   const query = q.toLowerCase();
-  const items = dokumentasiDummy.filter(
+  // Daftar dari GET /api/dokumentasi; pencarian masih client-side di atas
+  // daftar lengkap (endpoint mendukung ?q= & ?kategori= bila diperlukan).
+  const semuaDokumentasi = useApiDaftar('/dokumentasi', dokumentasiDummy);
+  const items = semuaDokumentasi.filter(
     (d) =>
       !query ||
       d.judul.toLowerCase().includes(query) ||
@@ -21,14 +25,13 @@ export default function Dokumentasi() {
   );
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
-      {/* Copy tanpa label "data dummy" — hanya untuk pengguna. TODO_BACKEND di komentar. */}
+      {/* Copy tanpa label "data dummy" — hanya untuk pengguna. */}
       <SectionHeading
         kicker={t('Konten')}
         title={t('Dokumentasi')}
         sub={t('Dokumentasi kegiatan, workshop, dan kolaborasi AI Center.')}
         level="h1"
       />
-      {/* TODO_BACKEND: daftar + pencarian server-side via GET /api/dokumentasi?q= */}
       <div className="mx-auto mt-6 max-w-md">
         <label htmlFor="cari-dokumentasi" className="sr-only">
           {t('Cari dokumentasi')}

@@ -1,4 +1,5 @@
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/tim).
+// Data dummy = FALLBACK untuk backend (GET /api/tim via useApiDaftar di Tim):
+// dipakai bila VITE_API_BASE_URL kosong atau request gagal — sumber utama ada di DB.
 // Sumber: section "Tim Kami" di situs lama (index.html) — nama & peran asli tim.
 // foto: diekstrak dari base64 di index.html situs lama ke public/tim/ (disetujui user).
 export interface AnggotaTim {

@@ -3,6 +3,7 @@ import SectionHeading from '../components/SectionHeading.tsx';
 import NewsCard from '../components/NewsCard.tsx';
 import { beritaDummy } from '../data/berita.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiDaftar } from '../lib/useApiData.ts';
 
 export default function Berita() {
   // State pencarian disimpan di URL (?q=) agar hasil bisa dibagikan/di-bookmark.
@@ -10,14 +11,16 @@ export default function Berita() {
   const t = useT();
   const q = searchParams.get('q') ?? '';
   const setQ = (value: string) => setSearchParams(value ? { q: value } : {}, { replace: true });
-  const items = beritaDummy.filter(
+  // Daftar dari GET /api/berita; pencarian masih client-side di atas daftar
+  // lengkap (endpoint mendukung ?q= bila nanti ingin pencarian server-side).
+  const semuaBerita = useApiDaftar('/berita', beritaDummy);
+  const items = semuaBerita.filter(
     (b) => !q || b.judul.toLowerCase().includes(q.toLowerCase()) || b.ringkasan.toLowerCase().includes(q.toLowerCase()),
   );
   return (
     <div className="mx-auto max-w-6xl px-6 py-14">
-      {/* Copy tanpa label "data dummy" — hanya untuk pengguna. TODO_BACKEND di komentar. */}
+      {/* Copy tanpa label "data dummy" — hanya untuk pengguna. */}
       <SectionHeading kicker={t('Konten')} title={t('Berita')} sub={t('Kabar terbaru dan informasi terkini dari AI Center.')} level="h1" />
-      {/* TODO_BACKEND: daftar + pencarian server-side via GET /api/berita?q= */}
       <div className="mx-auto mt-6 max-w-md">
         <label htmlFor="cari-berita" className="sr-only">
           {t('Cari berita')}

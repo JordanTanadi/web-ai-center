@@ -11,6 +11,7 @@ import { portofolioDummy } from '../data/portofolio.ts';
 import { fasilitasDummy } from '../data/fasilitas.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiDaftar } from '../lib/useApiData.ts';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
 import { testimoniDummy } from '../data/testimoni.ts';
@@ -61,6 +62,14 @@ export default function Beranda() {
   const location = useLocation();
   const t = useT();
 
+  // Data section diambil dari backend bila VITE_API_BASE_URL diset;
+  // kalau tidak (atau gagal) tetap memakai data dummy di src/data/.
+  const slidesHero = useApiDaftar('/hero-slides', heroSlidesDummy);
+  const daftarLayanan = useApiDaftar('/layanan', layananDummy);
+  const highlightDokumentasi = useApiDaftar('/dokumentasi', dokumentasiDummy);
+  const daftarTestimoni = useApiDaftar('/testimoni', testimoniDummy);
+  const highlightBerita = useApiDaftar('/berita', beritaDummy);
+
   // Klik "Layanan" di navbar/footer (/beranda#layanan) scroll ke section layanan.
   useEffect(() => {
     if (!location.hash) return;
@@ -70,14 +79,14 @@ export default function Beranda() {
 
   return (
     <div>
-      {/* TODO_BACKEND: slide hero dari GET /api/hero-slides */}
-      <HeroCarousel slides={heroSlidesDummy} />
+      {/* Slide hero — GET /api/hero-slides. */}
+      <HeroCarousel slides={slidesHero} />
 
       <section id="layanan" className="scroll-mt-20 bg-sky py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading kicker={t('Layanan')} title={t('Pilih Jalur Kolaborasimu')} sub={t('Pelatihan dan inference solution untuk kebutuhan nyata.')} />
           <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {layananDummy.map((c) => (
+            {daftarLayanan.map((c) => (
               <article key={c.slug} className="flex flex-col rounded-2xl border border-line bg-white p-6 text-center">
                 <h3 className="font-display font-bold">{t(c.nama)}</h3>
                 <p className="mt-2 flex-1 text-sm text-muted">{t(c.tagline)}</p>
@@ -164,7 +173,7 @@ export default function Beranda() {
       {/* aria-label langsung pada <section> (jadi region bernama); tanpa wrapper div. */}
       <section aria-label={t('Dokumentasi Kegiatan')} className="bg-brand py-16 text-white">
         <div className="mx-auto max-w-6xl px-6">
-          {/* 3 card penampung highlight; TODO_BACKEND: backend yang menentukan limit/isi 3 highlight */}
+          {/* Highlight 3 dokumentasi teratas — GET /api/dokumentasi (limit penampilan di frontend). */}
           <SectionBar
             kicker="Kegiatan"
             title="Dokumentasi Kegiatan"
@@ -174,7 +183,7 @@ export default function Beranda() {
             dark
           />
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {dokumentasiDummy.slice(0, 3).map((d) => (
+            {highlightDokumentasi.slice(0, 3).map((d) => (
               <DokumentasiCard key={d.slug} item={d} showLink={false} />
             ))}
           </div>
@@ -195,14 +204,14 @@ export default function Beranda() {
       <section aria-label={t('Testimoni')} className="bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
           <SectionHeading kicker={t('Testimoni')} title={t('Apa Kata Mereka?')} sub={t('Cerita peserta dan mitra AI Center.')} />
-          {/* TODO_BACKEND: testimoni dari GET /api/testimoni */}
-          <TestimoniSlider items={testimoniDummy} dark={false} />
+          {/* Testimoni — GET /api/testimoni. */}
+          <TestimoniSlider items={daftarTestimoni} dark={false} />
         </div>
       </section>
 
       <section aria-label={t('Berita Terkini')} className="py-16">
         <div className="mx-auto max-w-6xl px-6">
-          {/* 3 card penampung highlight; TODO_BACKEND: backend yang menentukan limit/isi 3 highlight */}
+          {/* Highlight 3 berita teratas — GET /api/berita (limit penampilan di frontend). */}
           <SectionBar
             kicker="Berita"
             title="Berita Terkini"
@@ -211,7 +220,7 @@ export default function Beranda() {
             actionLabel="Lihat Semua →"
           />
           <div className="mt-8 grid gap-5 md:grid-cols-3">
-            {beritaDummy.slice(0, 3).map((b) => (
+            {highlightBerita.slice(0, 3).map((b) => (
               <NewsCard key={b.slug} item={b} showLink={false} />
             ))}
           </div>

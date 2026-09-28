@@ -10,11 +10,12 @@ import type {
   DokumentasiItem,
   HeroSlide,
   Klien,
+  Kursus,
   Layanan,
   Profil,
   Testimoni,
 } from '../api/types';
-import type { heroSlides, klien, layanan, profil, tim, testimoni, berita, dokumentasi } from '../db/schema';
+import type { heroSlides, klien, kursus, layanan, profil, tim, testimoni, berita, dokumentasi } from '../db/schema';
 
 type BeritaRow = typeof berita.$inferSelect;
 type DokumentasiRow = typeof dokumentasi.$inferSelect;
@@ -24,6 +25,7 @@ type HeroRow = typeof heroSlides.$inferSelect;
 type KlienRow = typeof klien.$inferSelect;
 type TestimoniRow = typeof testimoni.$inferSelect;
 type ProfilRow = typeof profil.$inferSelect;
+type KursusRow = typeof kursus.$inferSelect;
 
 export function toBeritaItem(row: BeritaRow): BeritaItem {
   return {
@@ -102,5 +104,23 @@ export function toProfil(row: ProfilRow): Profil {
     ...(row.visi !== null ? { visi: row.visi } : {}),
     ...(row.misi !== null ? { misi: row.misi } : {}),
     ...(row.statistik !== null ? { statistik: row.statistik } : {}),
+  };
+}
+
+export function toKursus(row: KursusRow): Kursus {
+  return {
+    kode: row.kode,
+    target: row.target,
+    judul: row.judul,
+    deskripsi: row.deskripsi,
+    tentang: row.tentang,
+    durasi: row.durasi,
+    level: row.level,
+    format: row.format,
+    instruktur: row.instruktur,
+    peran: row.peran,
+    inisial: row.inisial,
+    hasil: row.hasil,
+    modul: row.modul,
   };
 }

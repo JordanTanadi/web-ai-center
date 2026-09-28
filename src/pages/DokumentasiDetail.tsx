@@ -1,12 +1,17 @@
 import { Link, useParams } from 'react-router-dom';
-import { getDokumentasiBySlug } from '../data/dokumentasi.ts';
+import { getDokumentasiBySlug, type DokumentasiItem } from '../data/dokumentasi.ts';
 import { formatTanggal } from '../lib/formatTanggal.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiObjek } from '../lib/useApiData.ts';
 
 export default function DokumentasiDetail() {
   const t = useT();
   const { slug = '' } = useParams();
-  const item = getDokumentasiBySlug(slug);
+  // Detail dari GET /api/dokumentasi/:slug; slug kosong → path 404 (lihat BeritaDetail).
+  const item = useApiObjek<DokumentasiItem>(
+    `/dokumentasi/${encodeURIComponent(slug || 'tidak-ada')}`,
+    getDokumentasiBySlug(slug),
+  );
   if (!item) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-14 text-center">
@@ -28,7 +33,6 @@ export default function DokumentasiDetail() {
         <h1 className="mt-2 font-display text-3xl font-bold">{t(item.judul)}</h1>
       </header>
       <p className="mt-6">{t(item.deskripsi)}</p>
-      {/* TODO_BACKEND: detail dokumentasi dari GET /api/dokumentasi/:slug */}
       <div className="mt-8 text-center">
         <Link to="/dokumentasi" className="inline-block text-sm font-bold text-brand hover:underline">
           {t('← Kembali ke daftar dokumentasi')}

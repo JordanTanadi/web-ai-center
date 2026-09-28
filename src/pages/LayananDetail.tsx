@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getLayananBySlug } from '../data/layanan.ts';
+import { getLayananBySlug, type Layanan } from '../data/layanan.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiDaftar, useApiObjek } from '../lib/useApiData.ts';
 import {
   alurInference,
   apaItuInference,
@@ -28,7 +29,9 @@ import {
 function KatalogKursus() {
   const [filter, setFilter] = useState('all');
   const t = useT();
-  const terlihat = kursusDummy.filter((k) => kursusCocokFilter(k, filter));
+  // Katalog dari GET /api/kursus; filter kategori tetap client-side.
+  const daftarKursus = useApiDaftar('/kursus', kursusDummy);
+  const terlihat = daftarKursus.filter((k) => kursusCocokFilter(k, filter));
 
   return (
     <section id="katalog" aria-labelledby="katalog-heading" className="mt-12">
@@ -272,7 +275,11 @@ function UntukInstitusi() {
 export default function LayananDetail() {
   const t = useT();
   const { slug = '' } = useParams();
-  const item = getLayananBySlug(slug);
+  // Detail dari GET /api/layanan/:slug; slug kosong → path 404 (lihat BeritaDetail).
+  const item = useApiObjek<Layanan>(
+    `/layanan/${encodeURIComponent(slug || 'tidak-ada')}`,
+    getLayananBySlug(slug),
+  );
 
   if (!item) {
     return (
@@ -292,7 +299,6 @@ export default function LayananDetail() {
     // Pelatihan memakai container lebar agar katalog kursus muat 2 kolom;
     // layanan lain tetap sempit seperti sebelumnya.
     <div className={`mx-auto px-6 py-14 ${isPelatihan ? 'max-w-6xl' : 'max-w-3xl'}`}>
-      {/* TODO_BACKEND: detail layanan dari GET /api/layanan/:slug */}
       {/* Header + deskripsi dipusatkan (ritme halaman lain); daftar fitur & CTA
           ditata rapi di bawahnya. */}
       <header className="text-center">

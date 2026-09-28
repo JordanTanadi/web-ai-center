@@ -91,6 +91,32 @@ export interface Profil {
   statistik?: Array<{ label: string; value: string }>;
 }
 
+/** ↔ src/data/pelatihan.ts Modul (kursus) */
+export interface ModulKursus {
+  judul: string;
+  deskripsi: string;
+  meta: string;
+}
+
+/** ↔ src/data/pelatihan.ts Kursus */
+export interface Kursus {
+  /** Kode kursus, mis. 'R01' (unik, disimpan huruf besar). */
+  kode: string;
+  /** Label audiens untuk filter katalog, mis. ['Mahasiswa', 'Dosen']. */
+  target: string[];
+  judul: string;
+  deskripsi: string;
+  tentang: string;
+  durasi: string;
+  level: string;
+  format: string;
+  instruktur: string;
+  peran: string;
+  inisial: string;
+  hasil: string[];
+  modul: ModulKursus[];
+}
+
 /** Bentuk standar daftar — { items: [...] } sesuai komentar TODO_BACKEND. */
 export interface ListResponse<T> {
   items: T[];

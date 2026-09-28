@@ -8,7 +8,7 @@
 import type { Db } from './client';
 import { createDb, resolveDbTarget } from './client';
 import { resolveConfig } from '../config';
-import { berita, dokumentasi, heroSlides, klien, layanan, profil, tim, testimoni } from './schema';
+import { berita, dokumentasi, heroSlides, klien, kursus, layanan, profil, tim, testimoni } from './schema';
 
 type BeritaSeed = Omit<typeof berita.$inferInsert, 'id' | 'createdAt'>;
 type DokumentasiSeed = Omit<typeof dokumentasi.$inferInsert, 'id' | 'createdAt'>;
@@ -18,6 +18,7 @@ type HeroSeed = Omit<typeof heroSlides.$inferInsert, 'id'>;
 type KlienSeed = Omit<typeof klien.$inferInsert, 'id'>;
 type TestimoniSeed = Omit<typeof testimoni.$inferInsert, 'id'>;
 type ProfilSeed = typeof profil.$inferInsert;
+type KursusSeed = Omit<typeof kursus.$inferInsert, 'id'>;
 
 export const SEED_BERITA: BeritaSeed[] = [
   {
@@ -77,24 +78,52 @@ export const SEED_DOKUMENTASI: DokumentasiSeed[] = [
 ];
 
 export const SEED_TIM: TimSeed[] = [
-  { nama: 'Nama Kepala AI Center', peran: 'Kepala AI Center', kredensial: 'Ph.D.', foto: null, urutan: 0 },
-  { nama: 'Nama Koordinator Riset', peran: 'Koordinator Riset', kredensial: 'M.Kom.', foto: null, urutan: 1 },
-  { nama: 'Nama Koordinator Pelatihan', peran: 'Koordinator Pelatihan', kredensial: 'M.Kom.', foto: null, urutan: 2 },
+  { nama: 'Dr. Mohammad Farid Naufal', peran: 'Ketua', kredensial: null, foto: '/tim/farid-naufal.jpg', urutan: 0 },
+  {
+    nama: 'Dr. Monica Widiasri',
+    peran: 'Koordinator Riset & Edukasi',
+    kredensial: null,
+    foto: '/tim/monica-widiasri.jpg',
+    urutan: 1,
+  },
+  { nama: 'Prof. Joko Siswantoro', peran: 'Tim Riset', kredensial: null, foto: '/tim/joko-siswantoro.jpg', urutan: 2 },
+  {
+    nama: 'Marco Ariano Kristyanto',
+    peran: 'Tim Hardware',
+    kredensial: 'M.M., M.Kom.',
+    foto: '/tim/marco-kristyanto.jpg',
+    urutan: 3,
+  },
+  {
+    nama: 'Fikri Baharuddin',
+    peran: 'Tim Software',
+    kredensial: 'M.Kom.',
+    foto: '/tim/fikri-baharuddin.jpg',
+    urutan: 4,
+  },
+  {
+    nama: 'Jabesh Nehemiah Wijaya',
+    peran: 'Tim Software',
+    kredensial: 'S.Kom., M.Kom.',
+    foto: '/tim/jabesh-wijaya.jpg',
+    urutan: 5,
+  },
 ];
 
 export const SEED_LAYANAN: LayananSeed[] = [
   {
     slug: 'pelatihan',
     nama: 'Pelatihan',
-    tagline: 'Kursus AI/ML terstruktur untuk belajar mandiri dan bertahap.',
+    tagline: 'Belajar AI untuk membuat dampak nyata.',
     deskripsi:
-      'Platform pembelajaran AI dan machine learning dengan kursus bertingkat, materi video, latihan praktik, ' +
-      'evaluasi, dan sertifikat penyelesaian untuk sivitas akademika serta umum.',
+      'Program praktis dari Ubaya AI Center untuk mahasiswa, dosen, guru, profesional, dan masyarakat umum ' +
+      'yang ingin menggunakan AI secara kritis, produktif, dan bertanggung jawab.',
     fitur: [
-      'Katalog kursus dari dasar hingga lanjut',
-      'Modul video, materi bacaan, dan latihan praktik',
-      'Kuis dan evaluasi di setiap tahap pembelajaran',
-      'Progress belajar dan sertifikat penyelesaian',
+      'Workshop & bootcamp terjadwal',
+      'Pelatihan kustom sesuai kebutuhan',
+      'Materi terstruktur dan mudah diikuti',
+      'Studi kasus akademik dan profesional',
+      'Sertifikat setelah menyelesaikan program',
     ],
   },
   {
@@ -124,7 +153,7 @@ export const SEED_HERO: HeroSeed[] = [
     ctaSekunder: { label: 'Lihat Berita', to: '/berita' },
     badgeJudul: 'AI Center Ubaya',
     badgeSub: 'Riset · Pelatihan · Layanan',
-    image: '/hero-1.jpg',
+    image: '/hero-1-1600.webp',
     srcSet: '/hero-1-800.webp 800w, /hero-1-1600.webp 1600w',
     sizes: '100vw',
   },
@@ -138,7 +167,7 @@ export const SEED_HERO: HeroSeed[] = [
     ctaSekunder: { label: 'Tim Kami', to: '/tim' },
     badgeJudul: 'Inference Solution',
     badgeSub: 'Integrasi model + dukungan teknis',
-    image: '/hero-2.jpg',
+    image: '/hero-2-1600.webp',
     srcSet: '/hero-2-800.webp 800w, /hero-2-1600.webp 1600w',
     sizes: '100vw',
   },
@@ -201,6 +230,138 @@ export const SEED_PROFIL: ProfilSeed = {
   statistik: null,
 };
 
+/** Data kursus — disalin dari `kursusDummy` frontend (src/data/pelatihan.ts). */
+export const SEED_KURSUS: KursusSeed[] = [
+  {
+    urutan: 0,
+    kode: 'R01',
+    target: ['Mahasiswa', 'Dosen', 'Masyarakat umum'],
+    judul: 'AI untuk Mencari dan Mengelola Referensi Jurnal',
+    deskripsi:
+      'Bangun alur kerja riset yang lebih terarah dengan bantuan AI, mulai dari menemukan jurnal hingga ' +
+      'mengelola sitasi secara bertanggung jawab.',
+    tentang:
+      'Kursus praktis untuk mahasiswa, dosen, dan masyarakat umum yang ingin memakai AI sebagai alat bantu ' +
+      'riset tanpa mengabaikan akurasi, etika, dan integritas akademik.',
+    durasi: '4 sesi',
+    level: 'Pemula',
+    format: 'Online mandiri',
+    instruktur: 'Tim Riset Ubaya AI Center',
+    peran: 'Pengajar dan praktisi riset AI',
+    inisial: 'RA',
+    hasil: [
+      'Merumuskan kata kunci dan query akademik',
+      'Menguji relevansi sumber dengan tools AI',
+      'Mengenali halusinasi dan referensi palsu',
+      'Mengelola sitasi dengan rapi',
+    ],
+    modul: [
+      {
+        judul: 'Merumuskan pertanyaan dan kata kunci riset',
+        deskripsi: 'Ubah topik menjadi pertanyaan riset dan query akademik yang terarah.',
+        meta: '4 video · 35 menit',
+      },
+      {
+        judul: 'Mencari jurnal ilmiah dengan Semantic Scholar',
+        deskripsi: 'Temukan sumber primer, telusuri sitasi, dan buat daftar bacaan awal.',
+        meta: '5 video · 48 menit',
+      },
+      {
+        judul: 'Menguji relevansi dengan Consensus dan Elicit',
+        deskripsi: 'Bandingkan temuan AI dengan isi jurnal dan cek kualitas buktinya.',
+        meta: '4 video · 42 menit',
+      },
+      {
+        judul: 'Meringkas jurnal dan mengelola sitasi',
+        deskripsi: 'Buat ringkasan berbasis konteks dan rapikan pustaka dengan Zotero atau Mendeley.',
+        meta: '5 video · 55 menit',
+      },
+    ],
+  },
+  {
+    urutan: 1,
+    kode: 'E01',
+    target: ['Guru', 'Dosen', 'Masyarakat umum'],
+    judul: 'Merancang Pembelajaran dengan AI',
+    deskripsi:
+      'Rancang aktivitas kelas, asesmen, dan umpan balik yang lebih personal dengan AI yang kritis dan ' +
+      'bertanggung jawab.',
+    tentang:
+      'Program untuk pendidik yang ingin mengintegrasikan AI ke dalam perencanaan dan praktik pembelajaran ' +
+      'secara efektif.',
+    durasi: '3 sesi',
+    level: 'Pemula',
+    format: 'Online mandiri',
+    instruktur: 'Tim Edukasi Ubaya AI Center',
+    peran: 'Pengajar dan fasilitator pendidikan',
+    inisial: 'ED',
+    hasil: [
+      'Menyusun ide pembelajaran dengan AI',
+      'Membuat asesmen yang lebih adaptif',
+      'Menguji kualitas output AI',
+      'Menjaga etika dan privasi peserta didik',
+    ],
+    modul: [
+      {
+        judul: 'Memetakan kebutuhan belajar dan tujuan kelas',
+        deskripsi: 'Tentukan tujuan belajar dan konteks peserta didik sebelum memakai AI.',
+        meta: '4 video · 35 menit',
+      },
+      {
+        judul: 'Menyusun materi serta aktivitas pembelajaran',
+        deskripsi: 'Kembangkan bahan ajar, aktivitas, dan contoh yang relevan.',
+        meta: '5 video · 45 menit',
+      },
+      {
+        judul: 'Membuat asesmen dan rubrik dengan AI',
+        deskripsi: 'Rancang asesmen, rubrik, dan umpan balik yang tetap dikontrol pendidik.',
+        meta: '4 video · 40 menit',
+      },
+    ],
+  },
+  {
+    urutan: 2,
+    kode: 'P01',
+    target: ['Mahasiswa', 'Masyarakat umum'],
+    judul: 'Produktivitas Akademik dengan AI',
+    deskripsi:
+      'Bangun alur kerja untuk brainstorming, menulis, menganalisis data, dan mempresentasikan ide tanpa ' +
+      'mengorbankan integritas akademik.',
+    tentang:
+      'Kursus fundamental untuk membangun kebiasaan kerja yang lebih produktif dengan AI, dari ide awal ' +
+      'hingga presentasi yang terstruktur.',
+    durasi: '3 sesi',
+    level: 'Pemula',
+    format: 'Online mandiri',
+    instruktur: 'Tim Talenta Ubaya AI Center',
+    peran: 'Pengajar dan mentor produktivitas AI',
+    inisial: 'TA',
+    hasil: [
+      'Membuat workflow kerja dengan AI',
+      'Mengolah ide dan data secara terstruktur',
+      'Memeriksa kualitas tulisan dan analisis',
+      'Menggunakan AI secara jujur dan bertanggung jawab',
+    ],
+    modul: [
+      {
+        judul: 'Brainstorming dan perencanaan tugas',
+        deskripsi: 'Pecah tugas besar menjadi langkah kerja yang jelas dan realistis.',
+        meta: '4 video · 32 menit',
+      },
+      {
+        judul: 'Menulis, menyunting, dan memeriksa ide',
+        deskripsi: 'Gunakan AI sebagai partner berpikir tanpa menggantikan suara penulis.',
+        meta: '5 video · 46 menit',
+      },
+      {
+        judul: 'Menganalisis data dan menyajikan temuan',
+        deskripsi: 'Ubah data dan ide menjadi kesimpulan serta presentasi yang mudah dipahami.',
+        meta: '4 video · 43 menit',
+      },
+    ],
+  },
+];
+
 /** Isi ulang semua tabel dummy (hapus dulu → idempoten & deterministik). */
 export async function runSeed(db: Db): Promise<void> {
   await db.delete(berita);
@@ -210,6 +371,7 @@ export async function runSeed(db: Db): Promise<void> {
   await db.delete(heroSlides);
   await db.delete(klien);
   await db.delete(testimoni);
+  await db.delete(kursus);
   await db.delete(profil);
 
   if (SEED_BERITA.length > 0) await db.insert(berita).values(SEED_BERITA);
@@ -219,6 +381,7 @@ export async function runSeed(db: Db): Promise<void> {
   if (SEED_HERO.length > 0) await db.insert(heroSlides).values(SEED_HERO);
   if (SEED_KLIEN.length > 0) await db.insert(klien).values(SEED_KLIEN);
   if (SEED_TESTIMONI.length > 0) await db.insert(testimoni).values(SEED_TESTIMONI);
+  if (SEED_KURSUS.length > 0) await db.insert(kursus).values(SEED_KURSUS);
   await db.insert(profil).values(SEED_PROFIL);
 }
 

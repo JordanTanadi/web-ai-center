@@ -75,6 +75,22 @@ export function registerRoutes(app: AnyElysia, repos: Repositories): AnyElysia {
       return item;
     })
 
+    // — Kursus (Pelatihan) —————————————————————————————————————
+    .get('/api/kursus', async ({ query }) => ({
+      items: await repos.kursus.list({
+        q: normalizeSearch(query.q),
+        pagination: parsePagination(query.page, query.limit),
+      }),
+    }))
+    .get('/api/kursus/:kode', async ({ params, set }) => {
+      const item = await repos.kursus.findByKode(params.kode);
+      if (item === null) {
+        set.status = 404;
+        return { error: 'Kursus tidak ditemukan' };
+      }
+      return item;
+    })
+
     // — Konten beranda ——————————————————————————————————————————
     .get('/api/hero-slides', async () => ({ items: await repos.hero.list() }))
     .get('/api/klien', async () => ({ items: await repos.klien.list() }))

@@ -3,7 +3,9 @@
 // (API) untuk mitra, dari integrasi sampai purna implementasi — konsisten dengan hero slide 2
 // (hero.ts) dan deskripsi layanan di layanan.ts. Situs lama tidak punya section ini sendiri
 // (pillar lama: Kolaborasi Penelitian, Pelatihan & Talenta, Komputasi Performa Tinggi).
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/inference).
+// TODO_BACKEND: endpoint GET /api/inference belum ada — konten inference masih
+// statis di file ini. Bila nanti mau dikelola CMS, buat endpoint + tabel dulu,
+// lalu wire seperti halaman lain (useApiObjek).
 import { buildWaLink, kontakDummy } from './kontak.ts';
 import { portofolioDummy } from './portofolio.ts';
 

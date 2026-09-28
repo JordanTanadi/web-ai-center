@@ -5,7 +5,7 @@
  */
 import { and, asc, desc, eq, ilike, or } from 'drizzle-orm';
 import type { Db } from '../db/client';
-import { berita, dokumentasi, heroSlides, klien, layanan, profil, tim, testimoni } from '../db/schema';
+import { berita, dokumentasi, heroSlides, klien, kursus, layanan, profil, tim, testimoni } from '../db/schema';
 import { toLikePattern } from '../lib/query';
 import {
   toAnggotaTim,
@@ -13,6 +13,7 @@ import {
   toDokumentasiItem,
   toHeroSlide,
   toKlien,
+  toKursus,
   toLayanan,
   toProfil,
   toTestimoni,
@@ -21,6 +22,7 @@ import type {
   DokumentasiRepository,
   HeroRepository,
   KlienRepository,
+  KursusRepository,
   LayananRepository,
   ProfilRepository,
   Repositories,
@@ -160,6 +162,35 @@ export function createRepositories(db: Db): Repositories {
     },
   };
 
+  const kursusRepo: KursusRepository = {
+    async list({ q, pagination }) {
+      const search =
+        q === null
+          ? undefined
+          : or(
+              ilike(kursus.judul, toLikePattern(q)),
+              ilike(kursus.deskripsi, toLikePattern(q)),
+              ilike(kursus.tentang, toLikePattern(q)),
+              ilike(kursus.instruktur, toLikePattern(q)),
+            );
+      const base = db
+        .select()
+        .from(kursus)
+        .where(search)
+        .orderBy(asc(kursus.urutan), asc(kursus.id));
+      const rows = await applyPagination(base, pagination);
+      return rows.map(toKursus);
+    },
+    async findByKode(kode) {
+      const bersih = kode.trim().toUpperCase();
+      if (bersih === '') return null;
+      // eq dengan nilai sudah di-uppercase = pencocokan case-insensitive
+      // untuk kode tersimpan 'R01' (mirror frontend kursusDariKode).
+      const rows = await db.select().from(kursus).where(eq(kursus.kode, bersih)).limit(1);
+      return rows[0] !== undefined ? toKursus(rows[0]) : null;
+    },
+  };
+
   return {
     berita: beritaRepo,
     dokumentasi: dokumentasiRepo,
@@ -169,5 +200,6 @@ export function createRepositories(db: Db): Repositories {
     klien: klienRepo,
     testimoni: testimoniRepo,
     profil: profilRepo,
+    kursus: kursusRepo,
   };
 }

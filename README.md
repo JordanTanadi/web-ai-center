@@ -1,6 +1,8 @@
 # Web AI Center — Frontend
 
-CMS frontend AI Center Universitas Surabaya. Data masih dummy; backend belum terintegrasi.
+CMS frontend AI Center Universitas Surabaya. Terhubung ke backend read-only
+(`VITE_API_BASE_URL`, lihat `.env.example`) — bila backend mati, env kosong, atau
+mode test, semua halaman otomatis memakai data dummy (lihat `src/lib/api.ts`).
 
 ## Tech stack
 
@@ -21,7 +23,7 @@ CMS frontend AI Center Universitas Surabaya. Data masih dummy; backend belum ter
 
 ## Arti penanda di kode
 
-- `TODO_BACKEND` — bagian ini baru dummy; backend wajib mengisi (endpoint contoh tertulis di komentar, mis. `GET /api/berita`).
+- `TODO_BACKEND` — bagian yang **sengaja belum diintegrasikan** + alasannya di komentar (menunggu keputusan konten/endpoint/akun). Sebagian besar endpoint sudah terintegrasi lewat `src/lib/useApiData.ts`.
 - `TODO_ASSET` — file aset (mis. foto hero) perlu diganti/ditambah di `public/`.
 - Limit 3 card hanya di highlight beranda; halaman `/berita` dan `/dokumentasi` me-render semua data tanpa batas.
 
@@ -44,6 +46,10 @@ npm run preview  # sajikan hasil build (http://localhost:4173)
 ```
 
 Catatan: butuh Node ≥ 20 dan akses internet (instalasi pertama). Nilai asli (API key dsb.) hanya di `.env` lokal — lihat `.env.example`, jangan commit `.env`.
+
+Menjalankan **dengan data dari database**: salin `.env.example` → `.env`, jalankan
+backend `server/` (bagian bawah) dulu, baru `npm run dev`. Tanpa `.env`, web tetap
+jalan penuh dengan data dummy.
 
 ## Backend `server/` (baru)
 
@@ -74,6 +80,7 @@ bun run db:generate     # generate migrasi — hanya setelah ubah schema.ts
 | `GET /api/dokumentasi/:slug` | — | 404 `{ error }` |
 | `GET /api/tim` | `q`, `page`, `limit` | `{ items }` |
 | `GET /api/layanan` · `/:slug` | — | `{ items }` / 404 |
+| `GET /api/kursus` · `/api/kursus/:kode` | `q`, `page`, `limit` | `{ items }` / 404; kode case-insensitive (`r01`) |
 | `GET /api/hero-slides` · `/api/klien` · `/api/testimoni` | — | `{ items }` |
 | `GET /api/profil` | — | Tentang Kami + kontak footer; 404 bila belum di-seed |
 
@@ -81,10 +88,24 @@ CORS: whitelist origin lewat `CORS_ORIGIN` (default `http://localhost:5173`).
 
 ### Status integrasi frontend
 
-Frontend **masih memakai data dummy** (penanda `TODO_BACKEND` di `src/data/*.ts`
-dan halaman). Endpoint di atas sudah siap menggantikannya lewat
-`VITE_API_BASE_URL` (`http://localhost:3000/api`). CRUD admin belum dikerjakan
-(scope backend saat ini baru API baca).
+Sudah terintegrasi lewat `src/lib/useApiData.ts` (`useApiDaftar`/`useApiObjek`) —
+setiap halaman selalu punya fallback data dummy bila `VITE_API_BASE_URL` kosong,
+backend mati, respons gagal, atau saat unit test:
+
+- Beranda: hero, layanan, testimoni, highlight berita & dokumentasi
+- `/berita` + `/berita/:slug`, `/dokumentasi` + `/:slug`, `/tim`
+- `/layanan/:slug`, katalog kursus + detail (`/api/kursus`, `/api/kursus/:kode`)
+- `/tentang-kami` visi/misi (`GET /api/profil` → pemetaan `petakanProfilApi`)
+
+Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
+
+- kontak footer (`src/data/kontak.ts`) — field sudah ada di `/api/profil`, tampilan
+  kontak sengaja tidak diubah tanpa konfirmasi pemilik konten
+- konten halaman Inference — endpoint `GET /api/inference` belum ada
+- video lesson + progress LMS per peserta — butuh konten video & akun
+- section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
+
+CRUD admin belum dikerjakan (scope backend saat ini baru API baca).
 
 ## Ringkasan pengerjaan
 
@@ -93,10 +114,11 @@ dan halaman). Endpoint di atas sudah siap menggantikannya lewat
 3. Data dummy bertanda backend untuk hero, berita, dokumentasi, tim, klien, testimoni.
 4. Optimasi Lighthouse hingga desktop 100/100/100/100 dan mobile 95/100/100/100 (robots.txt, dimensi gambar, target sentuh, kompresi + WebP responsif, code-splitting route, preload LCP).
 5. Keputusan rapat 16 Sept: layanan tinggal 2 (Pelatihan + Inference Solution), Our Client dikomentari (kode dipertahankan), testimoni naik ke posisi Our Client dengan background `bg-soft`, kontak footer/Tentang Kami disentralisasi di `src/data/kontak.ts` (email `aicenter@unit.ubaya.ac.id`, WA 0895-6342-22240, website LPPM).
-6. Unit test frontend ditulis ulang: **87 test / 15 file** (lib, data, komponen, halaman, routing); backend **76 test**. `tsc` bersih di dua sisi.
+6. Unit test: frontend **238 test / 30 file** (lib, data, komponen, halaman, routing); backend **86 test**. `tsc` bersih di dua sisi.
+7. Integrasi frontend↔backend: tabel + route `GET /api/kursus` (+ migrasi `0001`), lapisan `src/lib/api.ts` + hook `useApiData`, wiring semua halaman konten; seed disinkronkan dengan data frontend (tim 6 anggota, teks layanan, gambar hero).
 
 ### Penanda TODO
 
-- `TODO_BACKEND` — bagian ini baru dummy; backend wajib mengisi (endpoint contoh tertulis di komentar).
+- `TODO_BACKEND` — bagian yang sengaja belum diintegrasikan + alasannya (lihat "Status integrasi frontend").
 - `TODO_ASSET` — file aset perlu diganti/ditambah di `public/`.
 - `TODO_KONTEN` — teks menyusul dari dokumen resmi (mis. visi/misi dari PDF rapat 16 Sept 2026).

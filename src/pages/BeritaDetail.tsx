@@ -1,12 +1,18 @@
 import { Link, useParams } from 'react-router-dom';
-import { getBeritaBySlug } from '../data/berita.ts';
+import { getBeritaBySlug, type BeritaItem } from '../data/berita.ts';
 import { formatTanggal } from '../lib/formatTanggal.ts';
 import { useT } from '../lib/i18n.tsx';
+import { useApiObjek } from '../lib/useApiData.ts';
 
 export default function BeritaDetail() {
   const t = useT();
   const { slug = '' } = useParams();
-  const item = getBeritaBySlug(slug);
+  // Detail dari GET /api/berita/:slug; slug kosong sengaja diarahkan ke path
+  // yang pasti 404 supaya respons daftar tidak pernah terbaca sebagai detail.
+  const item = useApiObjek<BeritaItem>(
+    `/berita/${encodeURIComponent(slug || 'tidak-ada')}`,
+    getBeritaBySlug(slug),
+  );
   if (!item) {
     return (
       <div className="mx-auto max-w-3xl px-6 py-14 text-center">
@@ -29,7 +35,6 @@ export default function BeritaDetail() {
         <p className="mt-2 font-medium text-muted">{t(item.ringkasan)}</p>
       </header>
       <p className="mt-6">{t(item.isi)}</p>
-      {/* TODO_BACKEND: isi detail diambil dari GET /api/berita/:slug */}
       <div className="mt-8 text-center">
         <Link to="/berita" className="inline-block text-sm font-bold text-brand hover:underline">
           {t('← Kembali ke daftar berita')}

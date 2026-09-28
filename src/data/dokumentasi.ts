@@ -1,11 +1,12 @@
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/dokumentasi).
+// Data dummy = FALLBACK untuk backend (GET /api/dokumentasi via useApiDaftar/useApiObjek):
+// dipakai bila VITE_API_BASE_URL kosong atau request gagal — sumber utama ada di DB.
 export interface DokumentasiItem {
   slug: string;
   judul: string;
   deskripsi: string;
   tanggal: string; // ISO date
   kategori: string;
-  /** Path gambar di `public/` (opsional). TODO_BACKEND: backend mengirim URL gambar. */
+  /** Path/URL gambar (opsional) — dikirim kolom `gambar` tabel dokumentasi. */
   gambar?: string;
 }
 

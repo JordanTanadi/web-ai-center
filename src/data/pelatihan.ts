@@ -2,8 +2,11 @@
 // - pelatihan.html (stats, katalog intro, filter kategori, modul unggulan R01, blok institusi)
 // - detail-kursus.html (objek `fallbackCourses`: R01, E01, P01 lengkap dengan modul & hasil,
 //   plus kartu akses & sidebar "Informasi kursus" untuk halaman detail per kursus)
-// TODO_BACKEND: ganti dengan GET /api/kursus (daftar) dan GET /api/kursus/:kode (detail);
-// kontrak field sama dengan sini.
+// Katalog & detail kursus kini diambil dari backend (GET /api/kursus dan
+// GET /api/kursus/:kode via useApiDaftar/useApiObjek di LayananDetail &
+// PelatihanDetail) — array `kursusDummy` di file ini jadi fallback-nya.
+// Teks statis di file ini (stats, panel, intro katalog, modul unggulan, dst.)
+// tetap hardcoded; kontrak field kursus sama dengan sini.
 import { buildWaLink, kontakDummy } from './kontak.ts';
 
 export interface Modul {

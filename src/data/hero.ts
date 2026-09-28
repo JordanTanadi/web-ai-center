@@ -1,4 +1,5 @@
-// TODO_BACKEND: ganti data dummy ini dengan fetch ke API backend (mis. GET /api/hero-slides).
+// Data dummy = FALLBACK untuk backend (GET /api/hero-slides via useApiDaftar di Beranda):
+// dipakai bila VITE_API_BASE_URL kosong atau request gagal.
 // Slide hero beranda — struktur mengikuti slider hero di beranda/index.html.
 export interface HeroSlide {
   eyebrow: string;
@@ -11,7 +12,7 @@ export interface HeroSlide {
   badgeSub: string;
   /** Path gambar di `public/` (opsional). Bila kosong, slide fallback ke background navy. */
   image?: string;
-  /** Srcset responsif (opsional). TODO_BACKEND: backend mengirim varian ukuran + srcset. */
+  /** Srcset responsif (opsional) — dikirim kolom `src_set` tabel hero_slides. */
   srcSet?: string;
   sizes?: string;
 }

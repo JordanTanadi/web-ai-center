@@ -9,6 +9,7 @@ import type {
   DokumentasiItem,
   HeroSlide,
   Klien,
+  Kursus,
   Layanan,
   Profil,
   Testimoni,
@@ -65,6 +66,12 @@ export interface ProfilRepository {
   get(): Promise<Profil | null>;
 }
 
+export interface KursusRepository {
+  list(params: ListParams): Promise<Kursus[]>;
+  /** Detail kursus; kode case-insensitive (URL lama memakai 'r01'). */
+  findByKode(kode: string): Promise<Kursus | null>;
+}
+
 /** Kumpulan semua repository yang disuntikkan ke route. */
 export interface Repositories {
   berita: BeritaRepository;
@@ -75,4 +82,5 @@ export interface Repositories {
   klien: KlienRepository;
   testimoni: TestimoniRepository;
   profil: ProfilRepository;
+  kursus: KursusRepository;
 }

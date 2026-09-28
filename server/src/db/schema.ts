@@ -10,6 +10,13 @@ export interface HeroCta {
   to: string;
 }
 
+/** Elemen modul kursus (jsonb) — ↔ src/data/pelatihan.ts Modul. */
+export interface ModulKursus {
+  judul: string;
+  deskripsi: string;
+  meta: string;
+}
+
 /** Item statistik "Tentang Kami": { label, value }. */
 export interface StatistikItem {
   label: string;
@@ -110,4 +117,27 @@ export const profil = pgTable('profil', {
   visi: text('visi'),
   misi: text('misi'),
   statistik: jsonb('statistik').$type<StatistikItem[]>(),
+});
+
+/**
+ * Kursus (Pelatihan) — interface frontend: Kursus.
+ * `target`, `hasil`, `modul` bertipe jsonb (array); `urutan` menentukan
+ * urutan tampil katalog, bukan bagian kontrak API.
+ */
+export const kursus = pgTable('kursus', {
+  id: serial('id').primaryKey(),
+  kode: text('kode').notNull().unique(),
+  target: jsonb('target').$type<string[]>().notNull(),
+  judul: text('judul').notNull(),
+  deskripsi: text('deskripsi').notNull(),
+  tentang: text('tentang').notNull(),
+  durasi: text('durasi').notNull(),
+  level: text('level').notNull(),
+  format: text('format').notNull(),
+  instruktur: text('instruktur').notNull(),
+  peran: text('peran').notNull(),
+  inisial: text('inisial').notNull(),
+  hasil: jsonb('hasil').$type<string[]>().notNull(),
+  modul: jsonb('modul').$type<ModulKursus[]>().notNull(),
+  urutan: integer('urutan').notNull().default(0),
 });

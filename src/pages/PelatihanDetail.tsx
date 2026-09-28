@@ -8,7 +8,9 @@ import {
   infoKursus,
   kursusDariKode,
   waTanyaProgram,
+  type Kursus,
 } from '../data/pelatihan.ts';
+import { useApiObjek } from '../lib/useApiData.ts';
 import {
   bacaStateBelajar,
   hitungProgressBelajar,
@@ -29,8 +31,11 @@ import {
 export default function PelatihanDetail() {
   const { kode = '' } = useParams();
   const t = useT();
-  // TODO_BACKEND: detail diambil dari GET /api/kursus/:kode ketika backend tersedia.
-  const kursus = kursusDariKode(kode);
+  // Detail dari GET /api/kursus/:kode; kode kosong → path 404 (lihat BeritaDetail).
+  const kursus = useApiObjek<Kursus>(
+    `/kursus/${encodeURIComponent(kode || 'tidak-ada')}`,
+    kursusDariKode(kode),
+  );
 
   // State belajar per kursus (localStorage, persis situs lama);
   // TODO_BACKEND: progress per user tersimpan di backend + akun peserta.
