@@ -27,3 +27,8 @@ coverage/
 lighthouse_report/
 *.test.ts
 *.test.tsx
+
+# artefak tool lokal (opencode + cache TS), bukan bagian proyek
+.agents/
+skills-lock.json
+tsconfig.tsbuildinfo
