@@ -1,8 +1,8 @@
 // Info kontak resmi AI Center — satu sumber kebenaran untuk Footer dan Tentang Kami.
-// TODO_BACKEND: field kontak (alamat/email/telepon) sudah tersedia di GET /api/profil,
-// tetapi sengaja BELUM di-wire — tampilan kontak/footer mengikuti keputusan konten,
-// jangan diubah tanpa konfirmasi pemilik konten.
-// Sumber: section Kontak + deskripsi "AI Solution Factory" di situs lama (index.html).
+// KEPUTUSAN (28 Sep 2026): kontak — khususnya nomor WA & pesan pembawa — diambil
+// dari situs lama dan dipertahankan STATIS; TIDAK di-wire ke GET /api/profil.
+// Sumber: section Kontak di situs lama (index.html) — nomor & greeting persis
+// link wa.me di sana (62895634222240).
 
 export interface Kontak {
   /** Email resmi AI Center. */
@@ -29,7 +29,7 @@ export const kontakDummy: Kontak = {
   email: 'aicenter@unit.ubaya.ac.id',
   whatsappDisplay: '0895-6342-22240',
   whatsappNumber: '0895-6342-22240',
-  whatsappGreeting: 'Halo Ubaya AI Center, saya ingin berdiskusi mengenai layanan AI Center.',
+  whatsappGreeting: 'Halo Ubaya AI Center, saya ingin berdiskusi mengenai layanan/kerja sama AI.',
   websiteUrl: 'https://lppm.ubaya.ac.id/aicenter',
   websiteLabel: 'lppm.ubaya.ac.id/aicenter',
   alamat: ['Gedung Fakultas Teknik · TA 1.2', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],

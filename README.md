@@ -97,10 +97,11 @@ backend mati, respons gagal, atau saat unit test:
 - `/layanan/:slug`, katalog kursus + detail (`/api/kursus`, `/api/kursus/:kode`)
 - `/tentang-kami` visi/misi (`GET /api/profil` → pemetaan `petakanProfilApi`)
 
+Kontak footer/WA **sengaja statis** dari situs lama (nomor + pesan persis link
+`wa.me` di sana) — bukan bagian dari integrasi backend, lihat `src/data/kontak.ts`.
+
 Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
 
-- kontak footer (`src/data/kontak.ts`) — field sudah ada di `/api/profil`, tampilan
-  kontak sengaja tidak diubah tanpa konfirmasi pemilik konten
 - konten halaman Inference — endpoint `GET /api/inference` belum ada
 - video lesson + progress LMS per peserta — butuh konten video & akun
 - section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
