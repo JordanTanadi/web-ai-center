@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
 import SectionHeading from '../components/SectionHeading.tsx';
 import HeroCarousel from '../components/HeroCarousel.tsx';
-import ClientCarousel from '../components/ClientCarousel.tsx';
+// Our Client dikomentari sesuai briefing rapat ("di-comment dulu, keep code").
+// import ClientCarousel from '../components/ClientCarousel.tsx';
 import NewsCard from '../components/NewsCard.tsx';
 import DokumentasiCard from '../components/DokumentasiCard.tsx';
 import TestimoniSlider from '../components/TestimoniSlider.tsx';
@@ -16,7 +17,8 @@ import { useT } from '../lib/i18n.tsx';
 import { useApiDaftar } from '../lib/useApiData.ts';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
-import { klienDummy } from '../data/klien.ts';
+// Bagian dari Our Client yang dikomentari di atas; data tetap dipertahankan.
+// import { klienDummy } from '../data/klien.ts';
 import { testimoniDummy } from '../data/testimoni.ts';
 
 function SectionBar({
@@ -70,7 +72,8 @@ export default function Beranda() {
   const daftarLayanan = useApiDaftar('/layanan', layananDummy);
   const highlightDokumentasi = useApiDaftar('/dokumentasi', dokumentasiDummy);
   // Klien dari GET /api/klien; fallback dummy FTB/CAW/Ubaya (lihat src/data/klien.ts).
-  const daftarKlien = useApiDaftar('/klien', klienDummy);
+  // Dikomentari bersama section Our Client di bawah — aktifkan lagi bila dibutuhkan.
+  // const daftarKlien = useApiDaftar('/klien', klienDummy);
   const daftarTestimoni = useApiDaftar('/testimoni', testimoniDummy);
   const highlightBerita = useApiDaftar('/berita', beritaDummy);
 
@@ -207,13 +210,15 @@ export default function Beranda() {
         </div>
       </section>
 
-      {/* Klien Kami — GET /api/klien (fallback placeholder FTB/CAW/Ubaya). */}
-      <section aria-label={t('Klien Kami')} className="py-16">
+      {/* Our Client dikomentari sesuai briefing rapat ("our client di-comment dulu, keep code").
+          Testimoni (slot berikutnya) menempati posisinya; aktifkan kembali dengan menghapus
+          tanda komentar. Data & endpoint GET /api/klien tetap ada. */}
+      {/* <section aria-label={t('Klien Kami')} className="py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading kicker={t('Dipercaya')} title={t('Klien Kami')} sub={t('Mitra yang berkolaborasi dengan AI Center.')} />
           <ClientCarousel items={daftarKlien} perPage={3} />
         </div>
-      </section>
+      </section> */}
 
       <section aria-label={t('Testimoni')} className="bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6 text-center">
