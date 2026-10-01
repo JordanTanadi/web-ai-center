@@ -1,5 +1,9 @@
+import { kontakDummy, waLinkKontak } from './kontak.ts';
+
 // Data dummy = FALLBACK untuk backend (GET /api/hero-slides via useApiDaftar di Beranda):
 // dipakai bila VITE_API_BASE_URL kosong atau request gagal.
+// CTA primer berorientasi nilai (konversi); `to` boleh URL eksternal (konsultasi WA)
+// — HeroCarousel me-render-nya sebagai <a> tab baru.
 // Slide hero beranda — struktur mengikuti slider hero di beranda/index.html.
 export interface HeroSlide {
   eyebrow: string;
@@ -23,7 +27,7 @@ export const heroSlidesDummy: HeroSlide[] = [
     judul: 'Pusat Riset & Layanan',
     judulAksen: 'Kecerdasan Artifisial',
     sub: 'Kursus AI/ML dan inference solution untuk sivitas akademika serta mitra industri.',
-    ctaPrimer: { label: 'Tentang Kami', to: '/tentang-kami' },
+    ctaPrimer: { label: 'Jadwalkan Konsultasi AI', to: waLinkKontak(kontakDummy) },
     ctaSekunder: { label: 'Lihat Berita', to: '/berita' },
     badgeJudul: 'AI Center Ubaya',
     badgeSub: 'Riset · Pelatihan · Layanan',
@@ -36,7 +40,7 @@ export const heroSlidesDummy: HeroSlide[] = [
     judul: 'Akselerasi Riset dan Produk',
     judulAksen: 'untuk Kebutuhan Nyata',
     sub: 'Kembangkan dan deploy model Anda sebagai layanan inference dengan pendampingan AI Center.',
-    ctaPrimer: { label: 'Lihat Dokumentasi', to: '/dokumentasi' },
+    ctaPrimer: { label: 'Mulai Transformasi Bisnis Anda', to: '/layanan/inference-solution' },
     ctaSekunder: { label: 'Tim Kami', to: '/tim' },
     badgeJudul: 'Inference Solution',
     badgeSub: 'Integrasi model + dukungan teknis',

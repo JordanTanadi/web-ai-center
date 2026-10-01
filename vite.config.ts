@@ -4,6 +4,10 @@ import { defineConfig } from 'vite';
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Disajikan dari subfolder XAMPP (/coding/Web-AI-Center/): aset build
+  // (JS/CSS) memakai basis ini; path public di kode TS mengikuti via
+  // src/lib/basis.ts agar dev (/) dan build tetap jalan.
+  base: '/coding/Web-AI-Center/',
   plugins: [react(), tailwindcss()],
   test: {
     environment: 'jsdom',

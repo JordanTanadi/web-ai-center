@@ -1,6 +1,10 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { kontakDummy, waLinkKontak } from '../data/kontak.ts';
+import { kontakDummy, petaUrlKontak, waLinkKontak } from '../data/kontak.ts';
+import { aset } from '../lib/basis.ts';
+import { scrollForRoute } from '../lib/routeScroll.ts';
+import Ikon from './Ikon.tsx';
+import PetaEmbed from './PetaEmbed.tsx';
 import { useT } from '../lib/i18n.tsx';
 import LanguageToggle from './LanguageToggle.tsx';
 
@@ -64,9 +68,9 @@ export function Header() {
         <NavLink to="/beranda" className="flex items-center gap-3" aria-label="AI Center Ubaya beranda">
           {/* Logo kompak: besar di <640px & ≥1024px; mengecil di 640–767px (header burger)
               dan 768–1023px (navbar desktop mode kompak) agar tidak overflow */}
-          <img src="/ubaya_logo.png" alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto sm:max-md:h-9 lg:h-9" />
+          <img src={aset('/ubaya_logo.png')} alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto sm:max-md:h-9 lg:h-9" />
           <span className="hidden h-8 w-px bg-line sm:block" aria-hidden="true" />
-          <img src="/AI-Center_Logo.png" alt="Logo AI Center" width="440" height="116" className="h-8 w-auto sm:max-md:h-10 lg:h-10" />
+          <img src={aset('/AI-Center_Logo.png')} alt="Logo AI Center" width="440" height="116" className="h-8 w-auto sm:max-md:h-10 lg:h-10" />
         </NavLink>
         {/* Navbar vs burger ditentukan DEVICE (pointer), bukan hanya lebar jendela:
             desktop/laptop = selalu navbar — kompak di 768–1023px agar tetap muat;
@@ -131,7 +135,7 @@ export function Header() {
             <NavLink to="/tentang-kami" className={navLinkCls}>
               {t('Tentang Kami')}
             </NavLink>
-            <NavLink to="/tentang-kami" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white md:fine-pointer:max-lg:px-3 lg:px-4">
+            <NavLink to="/tentang-kami#kontak" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white md:fine-pointer:max-lg:px-3 lg:px-4">
               {t('Kontak')}
             </NavLink>
           </nav>
@@ -186,7 +190,7 @@ export function Header() {
             {t('Tentang Kami')}
           </NavLink>
           <NavLink
-            to="/tentang-kami"
+            to="/tentang-kami#kontak"
             onClick={() => setOpen(false)}
             className="btn-primary mt-1 rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
           >
@@ -201,14 +205,14 @@ export function Header() {
 export function Footer() {
   const t = useT();
   return (
-    <footer id="kontak" className="footer-legacy-font bg-navy text-sm text-[#c9cde6]">
-      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-2 lg:grid-cols-[1.25fr_1.15fr_0.8fr_0.8fr]">
+    <footer id="kontak" className="footer-legacy-font scroll-mt-20 bg-navy text-sm text-[#c9cde6]">
+      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.7fr_0.7fr_1fr]">
         <div>
           <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-white px-4 py-2 lg:flex-nowrap">
-            <img src="/ubaya_logo.png" alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto max-w-full shrink-0" loading="lazy" />
+            <img src={aset('/ubaya_logo.png')} alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto max-w-full shrink-0" loading="lazy" />
             <span className="h-7 w-px shrink-0 bg-line" aria-hidden="true" />
             <img
-              src="/AI-Center_Logo.png"
+              src={aset('/AI-Center_Logo.png')}
               alt="Logo AI Center"
               width="440"
               height="116"
@@ -222,12 +226,20 @@ export function Footer() {
         <div>
           <p className="font-display font-bold text-white">AI Center Universitas Surabaya</p>
           <address className="mt-2 text-[13px] not-italic">
-            {kontakDummy.alamat.map(t).join(', ')}
+            <a
+              href={petaUrlKontak(kontakDummy)}
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-white hover:underline"
+            >
+              {kontakDummy.alamat.map(t).join(', ')}
+            </a>
             <br />
             <a
               href={`mailto:${kontakDummy.email}`}
               className="inline-block min-h-6 py-1 hover:text-white hover:underline"
             >
+              <Ikon nama="email" className="mr-1.5 inline h-4 w-4 align-[-2px]" />
               {kontakDummy.email}
             </a>
             <br />
@@ -237,6 +249,7 @@ export function Footer() {
               rel="noreferrer"
               className="inline-block min-h-6 py-1 hover:text-white hover:underline"
             >
+              <Ikon nama="whatsapp" className="mr-1.5 inline h-4 w-4 align-[-2px]" />
               WhatsApp {kontakDummy.whatsappDisplay} ↗
             </a>
             <br />
@@ -246,7 +259,19 @@ export function Footer() {
               rel="noreferrer"
               className="inline-block min-h-6 py-1 hover:text-white hover:underline"
             >
+              <Ikon nama="globe" className="mr-1.5 inline h-4 w-4 align-[-2px]" />
               {kontakDummy.websiteLabel} ↗
+            </a>
+            <br />
+            <a
+              href={kontakDummy.instagramUrl}
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Instagram AI Center"
+              className="inline-block min-h-6 py-1 hover:text-white hover:underline"
+            >
+              <Ikon nama="instagram" className="mr-1.5 inline h-4 w-4 align-[-2px]" />
+              Instagram {kontakDummy.instagramLabel} ↗
             </a>
           </address>
         </div>
@@ -280,6 +305,13 @@ export function Footer() {
             ))}
           </ul>
         </nav>
+        {/* Peta kecil di sebelah kolom Layanan. */}
+        <PetaEmbed
+          latitude={kontakDummy.latitude}
+          longitude={kontakDummy.longitude}
+          tone="dark"
+          mini
+        />
       </div>
       <div className="border-t border-white/10 py-4 text-center text-xs text-[#9aa0c7]">
         © {new Date().getFullYear()} AI Center Universitas Surabaya
@@ -290,6 +322,15 @@ export function Footer() {
 
 export default function SiteLayout() {
   const t = useT();
+  const location = useLocation();
+  // Gulir mengikuti navigasi SPA: hash → section tujuan; tanpa hash → ke atas.
+  // Referensi mencegah efek mount ganda (StrictMode) menggulir dua kali saat muat awal.
+  const lokasiTerakhir = useRef<typeof location | null>(null);
+  useEffect(() => {
+    if (lokasiTerakhir.current === location) return;
+    lokasiTerakhir.current = location;
+    scrollForRoute(location.hash);
+  }, [location]);
   return (
     <div className="flex min-h-screen flex-col">
       <a href="#konten" className="sr-only focus:not-sr-only focus:absolute focus:bg-white focus:p-2">

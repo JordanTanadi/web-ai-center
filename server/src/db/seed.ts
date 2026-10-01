@@ -149,7 +149,12 @@ export const SEED_HERO: HeroSeed[] = [
     judul: 'Pusat Riset & Layanan',
     judulAksen: 'Kecerdasan Artifisial',
     sub: 'Kursus AI/ML dan inference solution untuk sivitas akademika serta mitra industri.',
-    ctaPrimer: { label: 'Tentang Kami', to: '/tentang-kami' },
+    // CTA disinkronkan dengan src/data/hero.ts (frontend). Link konsultasi WA
+    // memakai nomor + pesan statis situs lama (lihat src/data/kontak.ts).
+    ctaPrimer: {
+      label: 'Jadwalkan Konsultasi AI',
+      to: 'https://wa.me/62895634222240?text=Halo%20Ubaya%20AI%20Center%2C%20saya%20ingin%20berdiskusi%20mengenai%20layanan%2Fkerja%20sama%20AI.',
+    },
     ctaSekunder: { label: 'Lihat Berita', to: '/berita' },
     badgeJudul: 'AI Center Ubaya',
     badgeSub: 'Riset · Pelatihan · Layanan',
@@ -163,7 +168,7 @@ export const SEED_HERO: HeroSeed[] = [
     judul: 'Akselerasi Riset dan Produk',
     judulAksen: 'untuk Kebutuhan Nyata',
     sub: 'Kembangkan dan deploy model Anda sebagai layanan inference dengan pendampingan AI Center.',
-    ctaPrimer: { label: 'Lihat Dokumentasi', to: '/dokumentasi' },
+    ctaPrimer: { label: 'Mulai Transformasi Bisnis Anda', to: '/layanan/inference-solution' },
     ctaSekunder: { label: 'Tim Kami', to: '/tim' },
     badgeJudul: 'Inference Solution',
     badgeSub: 'Integrasi model + dukungan teknis',
@@ -173,13 +178,14 @@ export const SEED_HERO: HeroSeed[] = [
   },
 ];
 
+// Sinkron dengan src/data/klien.ts (frontend) — aturan seed = data frontend,
+// supaya tampilan "Klien Kami" sama persis dengan atau tanpa backend.
+// TODO_KONTEN: nama FTB/CAW/Ubaya masih placeholder — konfirmasi nama resmi
+// + bidang ke user sebelum rilis.
 export const SEED_KLIEN: KlienSeed[] = [
-  { nama: 'PT Sinar Teknologi', bidang: 'Teknologi', urutan: 0 },
-  { nama: 'CV Data Prima', bidang: 'Konsultan Data', urutan: 1 },
-  { nama: 'Dinas Pendidikan Kota Surabaya', bidang: 'Pemerintahan', urutan: 2 },
-  { nama: 'PT Karya Digital', bidang: 'Software House', urutan: 3 },
-  { nama: 'Yayasan Pendidikan Ubaya', bidang: 'Pendidikan', urutan: 4 },
-  { nama: 'PT Cloud Nusantara', bidang: 'Infrastruktur', urutan: 5 },
+  { nama: 'FTB', bidang: 'Mitra Fakultas (placeholder)', urutan: 0 },
+  { nama: 'CAW', bidang: 'Mitra (placeholder)', urutan: 1 },
+  { nama: 'Ubaya', bidang: 'Universitas Surabaya', urutan: 2 },
 ];
 
 export const SEED_TESTIMONI: TestimoniSeed[] = [

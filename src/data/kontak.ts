@@ -17,8 +17,17 @@ export interface Kontak {
   websiteUrl: string;
   /** Label tampilan tautan website. */
   websiteLabel: string;
+  /** URL Instagram resmi (placeholder — konfirmasi handle asli).
+   * TODO_KONTEN: ganti dengan handle Instagram resmi setelah dikonfirmasi. */
+  instagramUrl: string;
+  /** Label tampilan tautan Instagram. */
+  instagramLabel: string;
   /** Alamat fisik, per baris. */
   alamat: string[];
+  /** Koordinat pin Google Maps (pitch gedung, bukan hasil search teks). */
+  latitude: number;
+  /** Koordinat pin Google Maps (pitch gedung, bukan hasil search teks). */
+  longitude: number;
   /** Deskripsi singkat profil AI Center (Tentang Kami). */
   deskripsiSingkat: string;
   /** Deskripsi ringkas untuk Footer. */
@@ -32,7 +41,13 @@ export const kontakDummy: Kontak = {
   whatsappGreeting: 'Halo Ubaya AI Center, saya ingin berdiskusi mengenai layanan/kerja sama AI.',
   websiteUrl: 'https://lppm.ubaya.ac.id/aicenter',
   websiteLabel: 'lppm.ubaya.ac.id/aicenter',
+  // TODO_KONTEN: placeholder — ganti dengan handle Instagram resmi setelah dikonfirmasi.
+  instagramUrl: 'https://instagram.com/aicenter_ubaya',
+  instagramLabel: '@aicenter_ubaya',
   alamat: ['Gedung Fakultas Teknik · TA 1.2', 'Jalan Raya Kalirungkut, Tenggilis, Surabaya'],
+  // TODO_KONTEN: pin presisi dari user (Sep 2026) — verifikasi ulang bila gedung pindah.
+  latitude: -7.321919965577327,
+  longitude: 112.76790932621508,
   deskripsiSingkat:
     'Ubaya AI Center adalah AI Solution Factory — ruang di mana riset, talenta, dan komputasi performa tinggi ' +
     'bertemu untuk menghasilkan produk dan dampak nyata bagi akademik, industri, dan masyarakat.',
@@ -59,4 +74,15 @@ export function buildWaLink(nomor: string, pesan?: string): string {
 /** Link WhatsApp lengkap dari data kontak (nomor + pesan pembawa). */
 export function waLinkKontak(kontak: Kontak): string {
   return buildWaLink(kontak.whatsappNumber, kontak.whatsappGreeting);
+}
+
+/**
+ * URL Google Maps yang terkunci ke pin koordinat kontak
+ * (mode search resmi `api=1&query=lat,lng` — tepat di titik, bukan hasil search teks).
+ */
+export function petaUrlKontak(kontak: Kontak): string {
+  if (!Number.isFinite(kontak.latitude) || !Number.isFinite(kontak.longitude)) {
+    throw new Error('Koordinat kontak tidak valid');
+  }
+  return `https://www.google.com/maps/search/?api=1&query=${kontak.latitude},${kontak.longitude}`;
 }

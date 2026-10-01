@@ -139,7 +139,7 @@ export default function PelatihanDetail() {
               aria-valuenow={progress}
             >
               <span
-                className="block h-2 rounded-full bg-brand transition-all"
+                className="block h-2 rounded-full bg-brand transition-[width]"
                 style={{ width: `${progress}%` }}
               />
             </div>

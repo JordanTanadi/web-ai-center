@@ -63,6 +63,8 @@ export const kamusBahasa: Record<string, string> = {
   // (slide hero — teks slide dari backend via GET /api/hero-slides di Beranda)
 
   // — Beranda: hero (data hero.ts) ————————————————————————————————
+  'Jadwalkan Konsultasi AI': 'Schedule an AI Consultation',
+  'Mulai Transformasi Bisnis Anda': 'Start Your Business Transformation',
   'Pusat Riset & Layanan': 'Research & Services Center',
   'Kecerdasan Artifisial': 'Artificial Intelligence',
   'Kursus AI/ML dan inference solution untuk sivitas akademika serta mitra industri.':
@@ -88,6 +90,16 @@ export const kamusBahasa: Record<string, string> = {
   'Pelatihan dan inference solution untuk kebutuhan nyata.':
     'Training and inference solutions for real-world needs.',
   'Detail Layanan →': 'Service Details →',
+
+  // — Beranda: kontak ———————————————————————————————————————————
+  'Sapa kami lewat kanal favoritmu.': 'Reach us through your favorite channel.',
+  'Email AI Center': 'AI Center email',
+  'WhatsApp AI Center': 'AI Center WhatsApp',
+  'Instagram AI Center': 'AI Center Instagram',
+
+  // — Beranda: tentang singkat ———————————————————————————————————
+  'Siapa Kami': 'Who We Are',
+  'Selengkapnya →': 'Learn More →',
 
   // — Beranda: portofolio (migrasi index.html) ————————————————————
   'Karya Kami': 'Our Work',
@@ -139,6 +151,11 @@ export const kamusBahasa: Record<string, string> = {
   'Meja Kolaborasi': 'Collaboration Table',
   'Ruang diskusi dengan meja bundar dan layar presentasi untuk brainstorming dan rapat tim.':
     'A discussion space with a round table and presentation screen for brainstorming and team meetings.',
+
+  // — Beranda: klien ———————————————————————————————————————————
+  'Klien Kami': 'Our Clients',
+  Dipercaya: 'Trusted',
+  'Mitra yang berkolaborasi dengan AI Center.': 'Partners collaborating with AI Center.',
 
   // — Beranda: dokumentasi / testimoni / berita ————————————————————
   Kegiatan: 'Activities',

@@ -1,16 +1,14 @@
-// Data untuk section "Our Client" (saat ini dikomentari di Beranda).
-// Endpoint GET /api/klien sudah tersedia di backend — wire dengan useApiDaftar
-// saat section diaktifkan kembali.
+// Data untuk section "Our Client" di Beranda — sudah di-wire di Beranda.tsx
+// via useApiDaftar('/klien', klienDummy).
+// TODO_KONTEN: nama FTB/CAW/Ubaya masih placeholder sesuai spec — konfirmasi
+// nama resmi + bidang ke user sebelum rilis.
 export interface Klien {
   nama: string;
   bidang: string;
 }
 
 export const klienDummy: Klien[] = [
-  { nama: 'PT Sinar Teknologi', bidang: 'Teknologi' },
-  { nama: 'CV Data Prima', bidang: 'Konsultan Data' },
-  { nama: 'Dinas Pendidikan Kota Surabaya', bidang: 'Pemerintahan' },
-  { nama: 'PT Karya Digital', bidang: 'Software House' },
-  { nama: 'Yayasan Pendidikan Ubaya', bidang: 'Pendidikan' },
-  { nama: 'PT Cloud Nusantara', bidang: 'Infrastruktur' },
+  { nama: 'FTB', bidang: 'Mitra Fakultas (placeholder)' },
+  { nama: 'CAW', bidang: 'Mitra (placeholder)' },
+  { nama: 'Ubaya', bidang: 'Universitas Surabaya' },
 ];

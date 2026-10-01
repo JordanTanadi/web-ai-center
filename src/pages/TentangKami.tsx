@@ -1,5 +1,5 @@
 import SectionHeading from '../components/SectionHeading.tsx';
-import { kontakDummy, waLinkKontak } from '../data/kontak.ts';
+import { kontakDummy } from '../data/kontak.ts';
 import {
   petakanProfilApi,
   profilDummy,
@@ -57,23 +57,6 @@ export default function TentangKami({ profil: profilOverride }: { profil?: Profi
           </article>
         </div>
       </section>
-
-      {/* Kontak dipusatkan mengikuti ritme halaman; tetap elemen <address> semantik */}
-      <address className="mx-auto mt-12 block max-w-3xl text-center not-italic text-sm text-muted">
-        {kontakDummy.alamat.map(t).join(', ')}
-        <br />
-        <a href={`mailto:${kontakDummy.email}`} className="text-brand hover:underline">
-          {kontakDummy.email}
-        </a>
-        <br />
-        <a href={waLinkKontak(kontakDummy)} target="_blank" rel="noreferrer" className="text-brand hover:underline">
-          WhatsApp {kontakDummy.whatsappDisplay} ↗
-        </a>
-        <br />
-        <a href={kontakDummy.websiteUrl} target="_blank" rel="noreferrer" className="text-brand hover:underline">
-          {kontakDummy.websiteLabel} ↗
-        </a>
-      </address>
     </div>
   );
 }

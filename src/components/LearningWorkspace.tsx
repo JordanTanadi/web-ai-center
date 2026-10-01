@@ -78,7 +78,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
               aria-valuenow={progress}
             >
               <span
-                className="block h-2 rounded-full bg-brand transition-all"
+                className="block h-2 rounded-full bg-brand transition-[width]"
                 style={{ width: `${progress}%` }}
               />
             </div>

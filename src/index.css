@@ -69,6 +69,10 @@
   --color-line: #E3EAF3; /* hairline border/divider */
   --font-display: 'Cabinet Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-body: 'General Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  /* Font pelengkap teknis (kicker/tag/snippet): Geist Mono bila tersedia,
+     fallback ke monospace sistem. TODO_ASSET: self-host
+     public/fonts/GeistMono-Regular.woff2 + @font-face bila file resmi ada. */
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 body {
@@ -115,6 +119,62 @@ input {
 
 .btn-primary:active {
   filter: brightness(0.92);
+}
+
+/* Tombol aksen konversi (CTA berani): oranye solid + teks navy.
+   Navy di atas oranye ≈5.6:1 — lolos WCAG AA untuk teks tombol. */
+.btn-accent {
+  background-color: var(--color-orange);
+  color: var(--color-navy);
+  transition: filter 150ms ease;
+}
+
+.btn-accent:hover {
+  filter: brightness(1.08);
+}
+
+.btn-accent:active {
+  filter: brightness(0.94);
+}
+
+/* Garis aksen atas kartu ala situs patokan: gradient brand → bright,
+   muncul saat hover/fokus. Pakai bersama rounded-2xl + border.
+   Hover-lift: properti eksplisit (transform, box-shadow), bukan transition-all. */
+.card-accent {
+  position: relative;
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.card-accent:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 22px 45px -28px rgb(10 34 64 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-accent,
+  .card-accent:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+.card-accent::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 4px;
+  width: 100%;
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  background-image: linear-gradient(90deg, var(--color-brand), var(--color-brand-bright));
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.card-accent:hover::after,
+.card-accent:focus-within::after {
+  opacity: 1;
 }
 
 /* Heading: rapikan sisa kata terakhir (widow) di baris baru */

@@ -2,8 +2,31 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { HeroSlide } from '../data/hero.ts';
+import { aset, srcSetBerbasis } from '../lib/basis.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
 import { useT } from '../lib/i18n.tsx';
+
+// Tombol CTA hero: primer memakai aksen konversi oranye; tujuan eksternal
+// (http…) dirender sebagai <a> tab baru (mis. link konsultasi WhatsApp),
+// internal tetap <Link> agar SPA + akses keyboard tetap benar.
+function CtaButton({ cta, aksen = false }: { cta: HeroSlide['ctaPrimer']; aksen?: boolean }) {
+  const t = useT();
+  const cls = aksen
+    ? 'btn-accent rounded-lg px-6 py-3 font-display text-sm font-bold'
+    : 'rounded-lg border border-white px-6 py-3 font-display text-sm font-bold text-white hover:bg-white hover:text-ink';
+  if (/^https?:\/\//i.test(cta.to)) {
+    return (
+      <a href={cta.to} target="_blank" rel="noreferrer" className={cls}>
+        {t(cta.label)}
+      </a>
+    );
+  }
+  return (
+    <Link to={cta.to} className={cls}>
+      {t(cta.label)}
+    </Link>
+  );
+}
 
 // Slider hero otomatis + dots, diadaptasi dari hero di beranda/index.html
 // (interval 7 detik, dots bar di bawah).
@@ -30,6 +53,8 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
 
   if (slides.length === 0) return null;
   const current = slides[index % slides.length];
+  // Animasi entrance dimatikan bila pengguna meminta reduced motion.
+  const hematGerak = prefersReducedMotion();
 
   return (
     <section
@@ -45,7 +70,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
       <div className="relative min-h-[520px] md:min-h-[560px]">
         <motion.div
           key={index % slides.length}
-          initial={{ opacity: 0 }}
+          initial={hematGerak ? false : { opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.6, ease: 'easeOut' }}
           aria-roledescription="slide"
@@ -56,8 +81,8 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
             {current.image && imgOk[index] !== false && (
               <div className="absolute inset-0" aria-hidden="true">
                 <img
-                  src={current.image}
-                  srcSet={current.srcSet}
+                  src={current.image ? aset(current.image) : undefined}
+                  srcSet={srcSetBerbasis(current.srcSet)}
                   sizes={current.sizes}
                   alt=""
                   width="1600"
@@ -76,7 +101,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
             {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}
             <div className="relative z-10 w-full mx-auto max-w-6xl px-6 py-20 md:py-24">
               <motion.div
-                initial={{ opacity: 0, y: 16 }}
+                initial={hematGerak ? false : { opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
               >
@@ -88,27 +113,24 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                 </h1>
                 <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
                 <div className="mt-6 flex flex-wrap gap-3">
-                  <Link
-                    to={current.ctaPrimer.to}
-                    className="rounded-lg bg-white px-6 py-3 font-display text-sm font-bold text-brand hover:bg-[#e7ecff]"
-                  >
-                    {t(current.ctaPrimer.label)}
-                  </Link>
-                  <Link
-                    to={current.ctaSekunder.to}
-                    className="rounded-lg border border-white px-6 py-3 font-display text-sm font-bold text-white hover:bg-white hover:text-ink"
-                  >
-                    {t(current.ctaSekunder.label)}
-                  </Link>
+                  <CtaButton cta={current.ctaPrimer} aksen />
+                  <CtaButton cta={current.ctaSekunder} />
                 </div>
-                <p className="mt-8 flex items-center gap-3 text-sm">
-                  <span aria-hidden="true" className="text-2xl text-yellow">
-                    ❖
-                  </span>
-                  <span className="border-l-[3px] border-brand pl-3">
-                    <b>{t(current.badgeJudul)}</b>
-                    <br />
-                    {t(current.badgeSub)}
+                {/* Tagpill ala situs patokan: emblem + judul tebal + sub mono. */}
+                <p className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-lg">
+                  <img
+                    src={aset('/AI-Center_Logo.png')}
+                    alt=""
+                    aria-hidden="true"
+                    width="440"
+                    height="116"
+                    className="h-8 w-auto"
+                  />
+                  <span>
+                    <b className="block font-display text-sm font-bold text-brand">{t(current.badgeJudul)}</b>
+                    <small className="block font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted">
+                      {t(current.badgeSub)}
+                    </small>
                   </span>
                 </p>
               </motion.div>

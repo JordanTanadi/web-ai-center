@@ -1,11 +1,31 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Testimoni } from '../data/testimoni.ts';
+import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
 import { useT } from '../lib/i18n.tsx';
 
 // Slider testimoni satu kutipan (diadaptasi dari section testimoni di beranda/index.html).
-export default function TestimoniSlider({ items, dark = true }: { items: Testimoni[]; dark?: boolean }) {
+// Berpindah sendiri tiap intervalMs (jeda saat hover/fokus, mati saat reduced-motion);
+// tombol manual tetap tersedia sebagai alternatif.
+export default function TestimoniSlider({
+  items,
+  dark = true,
+  intervalMs = 7000,
+}: {
+  items: Testimoni[];
+  dark?: boolean;
+  intervalMs?: number;
+}) {
   const [idx, setIdx] = useState(0);
+  const [paused, setPaused] = useState(false);
   const t = useT();
+
+  useEffect(() => {
+    if (items.length <= 1 || paused || prefersReducedMotion()) return;
+    const id = window.setInterval(() => {
+      setIdx((i) => (i + 1) % items.length);
+    }, intervalMs);
+    return () => window.clearInterval(id);
+  }, [items.length, paused, intervalMs]);
 
   if (items.length === 0) {
     return <p className={`mt-8 text-center ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>{t('Belum ada testimoni.')}</p>;
@@ -14,7 +34,13 @@ export default function TestimoniSlider({ items, dark = true }: { items: Testimo
   const current = items[idx % items.length];
 
   return (
-    <div className="mx-auto mt-8 max-w-3xl">
+    <div
+      className="mx-auto mt-8 max-w-3xl"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+    >
       <figure aria-live="polite" className="min-h-52 rounded-2xl bg-white p-8 text-ink md:p-9">
         <blockquote className="text-base md:text-lg">“{t(current.kutipan)}”</blockquote>
         <figcaption className="mt-4 font-display font-bold">

@@ -1,4 +1,5 @@
 import type { AnggotaTim } from '../data/tim.ts';
+import { aset } from '../lib/basis.ts';
 import { useT } from '../lib/i18n.tsx';
 
 export default function TeamCard({ anggota }: { anggota: AnggotaTim }) {
@@ -9,7 +10,7 @@ export default function TeamCard({ anggota }: { anggota: AnggotaTim }) {
       {anggota.foto ? (
         // Foto asli dari situs lama; alt = nama anggota (nama propre, tak diterjemahkan).
         <img
-          src={anggota.foto}
+          src={aset(anggota.foto)}
           alt={anggota.nama}
           width={80}
           height={80}

@@ -19,6 +19,8 @@ export default function ClientCarousel({
   const pageCount = Math.max(1, Math.ceil(items.length / safePerPage));
   const [page, setPage] = useState(0);
   const [paused, setPaused] = useState(false);
+  // Animasi pindah halaman dimatikan bila pengguna meminta reduced motion.
+  const hematGerak = prefersReducedMotion();
 
   useEffect(() => {
     if (items.length <= safePerPage || paused || prefersReducedMotion()) return;
@@ -46,7 +48,7 @@ export default function ClientCarousel({
       <div role="region" aria-roledescription="carousel" aria-label="Daftar klien AI Center">
         <motion.div
           key={currentPage}
-          initial={{ opacity: 0, y: 12 }}
+          initial={hematGerak ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: 'easeOut' }}
           className="mt-8 grid gap-5 md:grid-cols-3"
@@ -56,7 +58,7 @@ export default function ClientCarousel({
               key={k.nama}
               role="group"
               aria-roledescription="slide"
-              className="rounded-2xl border border-line bg-white p-6 text-center"
+              className="card-accent rounded-2xl border border-line bg-white p-6 text-center"
             >
               <div
                 aria-hidden="true"

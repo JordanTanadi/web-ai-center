@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { BeritaItem } from '../data/berita.ts';
+import { aset } from '../lib/basis.ts';
 import { formatTanggal } from '../lib/formatTanggal.ts';
 import { useT } from '../lib/i18n.tsx';
 
@@ -9,7 +10,7 @@ export function CardImage({ src, alt }: { src?: string; alt: string }) {
   if (src) {
     return (
       <img
-        src={src}
+        src={aset(src)}
         alt={alt}
         width="640"
         height="360"
