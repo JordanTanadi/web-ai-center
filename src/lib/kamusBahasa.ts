@@ -224,21 +224,25 @@ export const kamusBahasa: Record<string, string> = {
   'Lihat detail kursus': 'View course details',
   'Filter kategori kursus': 'Course category filter',
   'Katalog kursus': 'Course catalog',
-  'Belajar sesuai tujuan Anda': 'Learn according to your goals',
-  'Pilih kursus yang relevan, ikuti materi secara bertahap, dan terapkan AI untuk kebutuhan akademik maupun profesional.':
-    'Choose a relevant course, follow the material step by step, and apply AI for academic and professional needs.',
+  'Pilih program sesuai kebutuhan': 'Choose a program for your needs',
+  'Pelajari AI melalui materi bertahap dan latihan yang relevan untuk kegiatan akademik maupun profesional.':
+    'Learn AI through structured material and exercises relevant to academic and professional work.',
   'Belum ada program untuk kategori ini.': 'No programs in this category yet.',
   'Semua program': 'All programs',
-  'Target peserta': 'Target participants',
-  'Berbasis proyek': 'Project-based',
+  Terstruktur: 'Structured',
+  'Materi bertahap': 'Step-by-step material',
+  Praktis: 'Practical',
+  'Latihan berbasis kasus': 'Case-based exercises',
+  Fleksibel: 'Flexible',
   'Online & tatap muka': 'Online & in-person',
-  // Panel hero "Cara belajar di sini" + tombol hero (pelatihan.html aside .hero-panel & .hero-actions)
-  'Cara belajar di sini': 'How to learn here',
-  'Materi yang langsung dipakai sehari-hari.': 'Materials you use every day.',
-  'Setiap program dirancang bersama praktisi dan pengajar agar peserta tidak hanya mengenal tools, tetapi langsung menerapkannya dalam pekerjaan nyata.':
-    'Each program is designed with practitioners and educators so learners apply tools to real work right away.',
-  'Jelajahi katalog': 'Browse the catalog',
-  'Rancang pelatihan untuk tim': 'Design training for your team',
+  'Program Pembelajaran AI': 'AI Learning Programs',
+  'Ringkasan program': 'Program summary',
+  'Pendekatan belajar': 'Learning approach',
+  'Dari konsep menuju penerapan.': 'From concepts to application.',
+  'Setiap program memadukan konsep inti, latihan terarah, dan studi kasus agar peserta dapat menerapkan AI secara bertanggung jawab dalam konteks akademik maupun profesional.':
+    'Each program combines core concepts, guided practice, and case studies so learners can apply AI responsibly in academic and professional contexts.',
+  'Lihat program pelatihan': 'Explore training programs',
+  'Konsultasi pelatihan tim': 'Discuss team training',
   'Ubaya AI Center mendampingi mahasiswa, dosen, guru, profesional, dan masyarakat umum belajar AI — dari pengenalan dasar, praktik dengan studi kasus, sampai penerapan di kerja nyata. Etis, aplikatif, dan berdampak.':
     'Ubaya AI Center guides students, lecturers, teachers, professionals, and the general public in learning AI — from fundamentals, case-based practice, to real-world application. Ethical, applicable, and impactful.',
   'Workshop & bootcamp terjadwal': 'Scheduled workshops & bootcamps',

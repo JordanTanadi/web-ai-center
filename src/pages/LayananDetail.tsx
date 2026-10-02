@@ -299,57 +299,66 @@ export default function LayananDetail() {
     // Pelatihan memakai container lebar agar katalog kursus muat 2 kolom;
     // layanan lain tetap sempit seperti sebelumnya.
     <div className={`mx-auto px-6 py-14 ${isPelatihan ? 'max-w-6xl' : 'max-w-3xl'}`}>
-      {/* Header + deskripsi dipusatkan (ritme halaman lain); daftar fitur & CTA
-          ditata rapi di bawahnya. */}
-      <header className="text-center">
-        <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">{t('Layanan')}</p>
-        <h1 className="mt-2 font-display text-3xl font-bold">{t(item.nama)}</h1>
-        <p className="mt-2 font-medium text-muted">{t(item.tagline)}</p>
-      </header>
-      <p className="mx-auto mt-6 max-w-2xl text-center">{t(item.deskripsi)}</p>
+      {isPelatihan ? (
+        <>
+          <section aria-labelledby="pelatihan-heading" className="rounded-xl bg-navy text-white">
+            <div className="grid gap-8 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:items-center md:p-10">
+              <header>
+                <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-yellow">
+                  {t('Program Pembelajaran AI')}
+                </p>
+                <h1 id="pelatihan-heading" className="mt-3 font-display text-3xl font-bold md:text-4xl">
+                  {t(item.nama)}
+                </h1>
+                <p className="mt-3 text-lg text-white/85">{t(item.tagline)}</p>
+                <p className="mt-4 max-w-2xl text-white/75">{t(item.deskripsi)}</p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  {aksiHeroPelatihan.map((aksi, index) => (
+                    <a
+                      key={aksi.href}
+                      href={aksi.href}
+                      className={
+                        index === 0
+                          ? 'btn-accent rounded-lg px-5 py-3 font-display text-sm font-bold'
+                          : 'rounded-lg border border-white/70 px-5 py-3 font-display text-sm font-bold text-white hover:bg-white hover:text-navy'
+                      }
+                    >
+                      {t(aksi.label)}
+                    </a>
+                  ))}
+                </div>
+              </header>
+              <aside className="rounded-lg bg-white p-6 text-ink md:p-7">
+                <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
+                  {t(panelCaraBelajar.kicker)}
+                </p>
+                <h2 className="mt-2 font-display text-xl font-bold">{t(panelCaraBelajar.judul)}</h2>
+                <p className="mt-3 text-sm leading-relaxed text-muted">{t(panelCaraBelajar.deskripsi)}</p>
+              </aside>
+            </div>
+          </section>
+          <ul aria-label={t('Ringkasan program')} className="mt-6 grid gap-4 sm:grid-cols-3">
+            {statsPelatihan.map((stat) => (
+              <li key={stat.label} className="border-l-2 border-brand py-1 pl-4">
+                <p className="font-display font-bold text-brand">{t(stat.nilai)}</p>
+                <p className="mt-1 text-sm text-muted">{t(stat.label)}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <header className="text-center">
+            <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">{t('Layanan')}</p>
+            <h1 className="mt-2 font-display text-3xl font-bold">{t(item.nama)}</h1>
+            <p className="mt-2 font-medium text-muted">{t(item.tagline)}</p>
+          </header>
+          <p className="mx-auto mt-6 max-w-2xl text-center">{t(item.deskripsi)}</p>
+        </>
+      )}
 
       {/* Penjelasan inference: apa itu + tanda kebutuhan, mengikuti ritme center halaman. */}
       {isInference && <ApaItuInference />}
-
-      {isPelatihan && (
-        <ul className="mt-6 flex flex-wrap justify-center gap-x-8 gap-y-3">
-          {statsPelatihan.map((s) => (
-            <li key={s.label} className="text-center">
-              <p className="font-display text-xl font-bold text-brand">{t(s.nilai)}</p>
-              <p className="text-xs text-muted">{t(s.label)}</p>
-            </li>
-          ))}
-        </ul>
-      )}
-
-      {/* Tombol hero + panel "Cara belajar di sini" — konten pelatihan.html (disetujui user):
-          tombol berupa anchor ke #katalog dan #layanan-kustom, panel ditengah mengikuti ritme halaman. */}
-      {isPelatihan && (
-        <>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            {aksiHeroPelatihan.map((a, i) => (
-              <a
-                key={a.href}
-                href={a.href}
-                className={
-                  i === 0
-                    ? 'btn-primary rounded-lg px-6 py-3 font-display text-sm font-bold text-white'
-                    : 'rounded-lg border border-brand px-6 py-3 font-display text-sm font-bold text-brand hover:bg-brand hover:text-white'
-                }
-              >
-                {t(a.label)}
-              </a>
-            ))}
-          </div>
-          <aside className="mx-auto mt-8 max-w-2xl rounded-2xl border border-line bg-soft p-6 text-center">
-            <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
-              {t(panelCaraBelajar.kicker)}
-            </p>
-            <h2 className="mt-2 font-display text-xl font-bold">{t(panelCaraBelajar.judul)}</h2>
-            <p className="mt-2 text-muted">{t(panelCaraBelajar.deskripsi)}</p>
-          </aside>
-        </>
-      )}
 
       <h2 className="mt-8 text-center font-display text-xl font-bold">{t('Yang Anda dapatkan')}</h2>
       <ul className="mx-auto mt-4 max-w-md space-y-3">
@@ -389,7 +398,7 @@ export default function LayananDetail() {
 
       <div className="mt-8 flex flex-wrap justify-center gap-3">
         <Link
-          to="/tentang-kami"
+          to="/beranda#kontak"
           className="btn-primary rounded-lg px-6 py-3 font-display text-sm font-bold text-white"
         >
           {t('Hubungi Kami')}

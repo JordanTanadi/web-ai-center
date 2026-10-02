@@ -71,35 +71,31 @@ export function kursusCocokFilter(kursus: Kursus, nilai: string): boolean {
 
 /** Statistik hero pelatihan (pelatihan.html, bagian `.stat`). */
 export const statsPelatihan = [
-  { nilai: '5+', label: 'Target peserta' },
-  { nilai: 'Praktis', label: 'Berbasis proyek' },
-  { nilai: 'Hybrid', label: 'Online & tatap muka' },
+  { nilai: 'Terstruktur', label: 'Materi bertahap' },
+  { nilai: 'Praktis', label: 'Latihan berbasis kasus' },
+  { nilai: 'Fleksibel', label: 'Online & tatap muka' },
 ];
 
-/** Panel hero "Cara belajar di sini" (pelatihan.html, aside `.hero-panel`) — teks dari situs lama. */
+/** Panel hero pelatihan dengan ringkasan pendekatan belajar. */
 export const panelCaraBelajar = {
-  kicker: 'Cara belajar di sini',
-  // Copy meniru gaya bahasa web LPPM (konsul PROGRESS 2): menekankan "dipakai sehari-hari".
-  judul: 'Materi yang langsung dipakai sehari-hari.',
+  kicker: 'Pendekatan belajar',
+  judul: 'Dari konsep menuju penerapan.',
   deskripsi:
-    'Setiap program dirancang bersama praktisi dan pengajar agar peserta tidak hanya mengenal tools, ' +
-    'tetapi langsung menerapkannya dalam pekerjaan nyata.',
+    'Setiap program memadukan konsep inti, latihan terarah, dan studi kasus agar peserta dapat ' +
+    'menerapkan AI secara bertanggung jawab dalam konteks akademik maupun profesional.',
 };
 
-/**
- * Tombol hero pelatihan (pelatihan.html, `.hero-actions`) — anchor dalam halaman.
- * href persis anchor lama: #katalog dan #layanan-kustom.
- */
+/** Tombol hero pelatihan yang mengarah ke katalog dan konsultasi tim. */
 export const aksiHeroPelatihan = [
-  { label: 'Jelajahi katalog', href: '#katalog' },
-  { label: 'Rancang pelatihan untuk tim', href: '#layanan-kustom' },
+  { label: 'Lihat program pelatihan', href: '#katalog' },
+  { label: 'Konsultasi pelatihan tim', href: '#layanan-kustom' },
 ] as const;
 
 /** Navigasi & copy bagian Katalog kursus (pelatihan.html, `#katalog`). */
 export const katalogIntro = {
   eyebrow: 'Katalog kursus',
-  judul: 'Belajar sesuai tujuan Anda',
-  sub: 'Pilih kursus yang relevan, ikuti materi secara bertahap, dan terapkan AI untuk kebutuhan akademik maupun profesional.',
+  judul: 'Pilih program sesuai kebutuhan',
+  sub: 'Pelajari AI melalui materi bertahap dan latihan yang relevan untuk kegiatan akademik maupun profesional.',
   kosong: 'Belum ada program untuk kategori ini.',
 };
 

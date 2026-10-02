@@ -134,13 +134,13 @@ describe('konten pelatihan lain', () => {
     expect(decodeURIComponent(institusi)).toContain('tim/institusi');
   });
 
-  it('panel "Cara belajar di sini" & tombol hero memakai teks + anchor persis pelatihan.html', () => {
-    expect(panelCaraBelajar.kicker).toBe('Cara belajar di sini');
-    expect(panelCaraBelajar.judul).toBe('Materi yang langsung dipakai sehari-hari.');
-    expect(panelCaraBelajar.deskripsi).toContain('praktisi dan pengajar');
+  it('copy pendekatan belajar dan tombol hero jelas serta tetap menuju bagian yang tepat', () => {
+    expect(panelCaraBelajar.kicker).toBe('Pendekatan belajar');
+    expect(panelCaraBelajar.judul).toBe('Dari konsep menuju penerapan.');
+    expect(panelCaraBelajar.deskripsi).toContain('studi kasus');
     expect(aksiHeroPelatihan.map((a) => a.label)).toEqual([
-      'Jelajahi katalog',
-      'Rancang pelatihan untuk tim',
+      'Lihat program pelatihan',
+      'Konsultasi pelatihan tim',
     ]);
     expect(aksiHeroPelatihan.map((a) => a.href)).toEqual(['#katalog', '#layanan-kustom']);
   });

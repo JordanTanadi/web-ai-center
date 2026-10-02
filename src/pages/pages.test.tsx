@@ -184,10 +184,11 @@ describe('LayananDetail', () => {
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Pelatihan');
     expect(screen.getByRole('heading', { name: 'Yang Anda dapatkan' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /hubungi kami/i })).toHaveAttribute('href', '/tentang-kami');
-    // Header dipusatkan; baris CTA justify-center (ritme halaman lain)
+    expect(screen.getByRole('link', { name: /hubungi kami/i })).toHaveAttribute('href', '/beranda#kontak');
+    // Hero pelatihan memakai komposisi rata kiri; CTA penutup tetap terpusat.
     const h1 = screen.getByRole('heading', { level: 1 });
-    expect(h1.parentElement?.className).toContain('text-center');
+    expect(h1.parentElement?.tagName).toBe('HEADER');
+    expect(h1.closest('section')?.className).toContain('bg-navy');
     const cta = screen.getByRole('link', { name: /hubungi kami/i });
     expect(cta.parentElement?.className).toContain('justify-center');
   });
@@ -211,10 +212,10 @@ describe('LayananDetail', () => {
         </Routes>
       </MemoryRouter>,
     );
-    // Stats (nilai dari pelatihan.html)
-    expect(screen.getByText('Target peserta')).toBeInTheDocument();
+    // Ringkasan program
+    expect(screen.getByText('Materi bertahap')).toBeInTheDocument();
     // Katalog: intro + ketiga kursus nyata (R01/E01/P01)
-    expect(screen.getByRole('heading', { name: 'Belajar sesuai tujuan Anda' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pilih program sesuai kebutuhan' })).toBeInTheDocument();
     expect(
       screen.getByRole('heading', { name: 'AI untuk Mencari dan Mengelola Referensi Jurnal' }),
     ).toBeInTheDocument();
@@ -269,11 +270,11 @@ describe('LayananDetail', () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Inference Solution');
-    expect(screen.queryByRole('heading', { name: 'Belajar sesuai tujuan Anda' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Pilih program sesuai kebutuhan' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Butuh pelatihan yang sesuai kebutuhan tim?' })).not.toBeInTheDocument();
     // Konten hero khusus pelatihan juga tidak bocor
-    expect(screen.queryByRole('heading', { name: 'Materi yang langsung dipakai sehari-hari.' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Jelajahi katalog' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Dari konsep menuju penerapan.' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Lihat program pelatihan' })).not.toBeInTheDocument();
   });
 
   it('inference-solution: panel "Apa itu", alur 5 langkah, dan contoh penerapan tampil', () => {
@@ -321,7 +322,7 @@ describe('LayananDetail', () => {
     localStorage.clear();
   });
 
-  it('pelatihan: panel "Cara belajar di sini" + tombol hero anchor ke #katalog & #layanan-kustom', () => {
+  it('pelatihan: panel pendekatan dan tombol hero mengarah ke bagian yang tepat', () => {
     render(
       <MemoryRouter initialEntries={['/layanan/pelatihan']}>
         <Routes>
@@ -329,15 +330,11 @@ describe('LayananDetail', () => {
         </Routes>
       </MemoryRouter>,
     );
-    // Panel (pelatihan.html, aside .hero-panel)
-    expect(screen.getByText('Cara belajar di sini')).toBeInTheDocument();
-    expect(
-      screen.getByRole('heading', { name: 'Materi yang langsung dipakai sehari-hari.' }),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/setiap program dirancang bersama praktisi/i)).toBeInTheDocument();
-    // Tombol hero (pelatihan.html, .hero-actions) + target anchor-nya benar-benar ada
-    expect(screen.getByRole('link', { name: 'Jelajahi katalog' })).toHaveAttribute('href', '#katalog');
-    expect(screen.getByRole('link', { name: 'Rancang pelatihan untuk tim' })).toHaveAttribute(
+    expect(screen.getByText('Pendekatan belajar')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Dari konsep menuju penerapan.' })).toBeInTheDocument();
+    expect(screen.getByText(/setiap program memadukan konsep inti/i)).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lihat program pelatihan' })).toHaveAttribute('href', '#katalog');
+    expect(screen.getByRole('link', { name: 'Konsultasi pelatihan tim' })).toHaveAttribute(
       'href',
       '#layanan-kustom',
     );
@@ -345,7 +342,7 @@ describe('LayananDetail', () => {
     expect(document.getElementById('layanan-kustom')).not.toBeNull();
   });
 
-  it('pelatihan: panel & tombol hero diterjemahkan ke EN (pasangan resmi situs lama)', () => {
+  it('pelatihan: panel dan tombol hero diterjemahkan ke EN', () => {
     localStorage.setItem(KEY_BAHASA, 'en');
     render(
       <PenyediaBahasa>
@@ -357,10 +354,10 @@ describe('LayananDetail', () => {
       </PenyediaBahasa>,
     );
     expect(
-      screen.getByRole('heading', { name: 'Materials you use every day.' }),
+      screen.getByRole('heading', { name: 'From concepts to application.' }),
     ).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Browse the catalog' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Design training for your team' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Explore training programs' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Discuss team training' })).toBeInTheDocument();
     localStorage.clear();
   });
 });
