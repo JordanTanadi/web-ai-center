@@ -79,10 +79,11 @@ export const statsPelatihan = [
 /** Panel hero "Cara belajar di sini" (pelatihan.html, aside `.hero-panel`) — teks dari situs lama. */
 export const panelCaraBelajar = {
   kicker: 'Cara belajar di sini',
-  judul: 'Materi yang dekat dengan kebutuhan Anda.',
+  // Copy meniru gaya bahasa web LPPM (konsul PROGRESS 2): menekankan "dipakai sehari-hari".
+  judul: 'Materi yang langsung dipakai sehari-hari.',
   deskripsi:
     'Setiap program dirancang bersama praktisi dan pengajar agar peserta tidak hanya mengenal tools, ' +
-    'tetapi mampu menerapkannya dalam pekerjaan nyata.',
+    'tetapi langsung menerapkannya dalam pekerjaan nyata.',
 };
 
 /**

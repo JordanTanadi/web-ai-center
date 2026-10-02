@@ -3,7 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import SiteLayout, { Footer, Header } from './SiteLayout.tsx';
-import { kontakDummy, petaUrlKontak, waLinkKontak } from '../data/kontak.ts';
+import { kontakDummy, mailLinkKontak, petaUrlKontak, waLinkKontak } from '../data/kontak.ts';
 import { resetFreshDocument } from '../lib/routeScroll.ts';
 import { KEY_BAHASA, PenyediaBahasa } from '../lib/i18n.tsx';
 
@@ -26,7 +26,7 @@ describe('Footer', () => {
 
     expect(screen.getByRole('link', { name: kontakDummy.email })).toHaveAttribute(
       'href',
-      `mailto:${kontakDummy.email}`,
+      mailLinkKontak(kontakDummy),
     );
     expect(screen.getByRole('link', { name: /WhatsApp/ })).toHaveAttribute(
       'href',

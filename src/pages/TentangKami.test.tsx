@@ -21,6 +21,23 @@ describe('TentangKami', () => {
     expect(screen.getByRole('heading', { name: 'Misi' })).toBeInTheDocument();
   });
 
+  it('PROGRESS 2: hero band bg-soft + blok CTA penutup ke layanan & tim', () => {
+    renderPage();
+
+    // Hero band bertema soft; heading h1 tetap (diuji test sebelumnya).
+    const hero = screen.getByRole('heading', { level: 1, name: 'Tentang Kami' }).closest('section');
+    expect(hero?.className).toContain('bg-soft');
+
+    // Blok CTA penutup: region bernama + link ke layanan (beranda) & tim.
+    const cta = screen.getByRole('region', { name: 'Langkah Selanjutnya' });
+    expect(cta).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Lihat Layanan' })).toHaveAttribute(
+      'href',
+      '/beranda#layanan',
+    );
+    expect(screen.getByRole('link', { name: 'Kenali Tim Kami' })).toHaveAttribute('href', '/tim');
+  });
+
   it('menampilkan teks visi & misi resmi (judul, deskripsi, 5 poin, intro)', () => {
     renderPage();
 

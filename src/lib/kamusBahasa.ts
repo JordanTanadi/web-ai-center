@@ -83,7 +83,7 @@ export const kamusBahasa: Record<string, string> = {
 
   // — Beranda: layanan ——————————————————————————————————————————
   Pelatihan: 'Training',
-  'Belajar AI untuk membuat dampak nyata.': 'Learn AI to create real impact.',
+  'Pelatihan AI yang benar-benar dipakai sehari-hari.': 'AI training you actually use every day.',
   'Solusi deployment model untuk kebutuhan industri.':
     'Model deployment solutions for industrial needs.',
   'Pilih Jalur Kolaborasimu': 'Choose Your Collaboration Path',
@@ -185,6 +185,14 @@ export const kamusBahasa: Record<string, string> = {
   Visi: 'Vision',
   Misi: 'Mission',
   'Misi belum tersedia.': 'Mission not available yet.',
+  // — Tentang Kami: blok CTA penutup (PROGRESS 2) ————————————————————
+  'Langkah Selanjutnya': 'Next Step',
+  Kolaborasi: 'Collaboration',
+  'Mulai berkolaborasi dengan AI Center': 'Start collaborating with AI Center',
+  'Pilih jalur yang paling sesuai — pelatihan untuk talenta Anda, atau inference solution untuk produk Anda.':
+    'Pick the path that suits you — training for your talent, or inference solution for your product.',
+  'Lihat Layanan': 'View Services',
+  'Kenali Tim Kami': 'Meet Our Team',
   'Komitmen kami membangun ekosistem kecerdasan buatan yang inovatif, aplikatif, dan berdampak.':
     'Our commitment to building an AI ecosystem that is innovative, applicable, and impactful.',
   'Menjadi AI Solution Factory terdepan': 'To become a leading AI Solution Factory',
@@ -226,13 +234,13 @@ export const kamusBahasa: Record<string, string> = {
   'Online & tatap muka': 'Online & in-person',
   // Panel hero "Cara belajar di sini" + tombol hero (pelatihan.html aside .hero-panel & .hero-actions)
   'Cara belajar di sini': 'How to learn here',
-  'Materi yang dekat dengan kebutuhan Anda.': 'Learning built around your needs.',
-  'Setiap program dirancang bersama praktisi dan pengajar agar peserta tidak hanya mengenal tools, tetapi mampu menerapkannya dalam pekerjaan nyata.':
-    'Each program is designed with practitioners and educators so learners can apply tools to real work.',
+  'Materi yang langsung dipakai sehari-hari.': 'Materials you use every day.',
+  'Setiap program dirancang bersama praktisi dan pengajar agar peserta tidak hanya mengenal tools, tetapi langsung menerapkannya dalam pekerjaan nyata.':
+    'Each program is designed with practitioners and educators so learners apply tools to real work right away.',
   'Jelajahi katalog': 'Browse the catalog',
   'Rancang pelatihan untuk tim': 'Design training for your team',
-  'Program praktis dari Ubaya AI Center untuk mahasiswa, dosen, guru, profesional, dan masyarakat umum yang ingin menggunakan AI secara kritis, produktif, dan bertanggung jawab.':
-    'A practical program from Ubaya AI Center for students, lecturers, teachers, professionals, and the general public who want to use AI critically, productively, and responsibly.',
+  'Ubaya AI Center mendampingi mahasiswa, dosen, guru, profesional, dan masyarakat umum belajar AI — dari pengenalan dasar, praktik dengan studi kasus, sampai penerapan di kerja nyata. Etis, aplikatif, dan berdampak.':
+    'Ubaya AI Center guides students, lecturers, teachers, professionals, and the general public in learning AI — from fundamentals, case-based practice, to real-world application. Ethical, applicable, and impactful.',
   'Workshop & bootcamp terjadwal': 'Scheduled workshops & bootcamps',
   'Pelatihan kustom sesuai kebutuhan': 'Custom training to fit your needs',
   'Sertifikat setelah menyelesaikan program': 'Certificate after completing the program',

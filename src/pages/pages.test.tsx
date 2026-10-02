@@ -272,7 +272,7 @@ describe('LayananDetail', () => {
     expect(screen.queryByRole('heading', { name: 'Belajar sesuai tujuan Anda' })).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Butuh pelatihan yang sesuai kebutuhan tim?' })).not.toBeInTheDocument();
     // Konten hero khusus pelatihan juga tidak bocor
-    expect(screen.queryByRole('heading', { name: 'Materi yang dekat dengan kebutuhan Anda.' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Materi yang langsung dipakai sehari-hari.' })).not.toBeInTheDocument();
     expect(screen.queryByRole('link', { name: 'Jelajahi katalog' })).not.toBeInTheDocument();
   });
 
@@ -332,7 +332,7 @@ describe('LayananDetail', () => {
     // Panel (pelatihan.html, aside .hero-panel)
     expect(screen.getByText('Cara belajar di sini')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'Materi yang dekat dengan kebutuhan Anda.' }),
+      screen.getByRole('heading', { name: 'Materi yang langsung dipakai sehari-hari.' }),
     ).toBeInTheDocument();
     expect(screen.getByText(/setiap program dirancang bersama praktisi/i)).toBeInTheDocument();
     // Tombol hero (pelatihan.html, .hero-actions) + target anchor-nya benar-benar ada
@@ -357,7 +357,7 @@ describe('LayananDetail', () => {
       </PenyediaBahasa>,
     );
     expect(
-      screen.getByRole('heading', { name: 'Learning built around your needs.' }),
+      screen.getByRole('heading', { name: 'Materials you use every day.' }),
     ).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Browse the catalog' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Design training for your team' })).toBeInTheDocument();

@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useEffect, useRef, useState } from 'react';
-import { kontakDummy, petaUrlKontak, waLinkKontak } from '../data/kontak.ts';
+import { kontakDummy, mailLinkKontak, petaUrlKontak, waLinkKontak } from '../data/kontak.ts';
 import { aset } from '../lib/basis.ts';
 import { scrollForRoute } from '../lib/routeScroll.ts';
 import Ikon from './Ikon.tsx';
@@ -236,7 +236,7 @@ export function Footer() {
             </a>
             <br />
             <a
-              href={`mailto:${kontakDummy.email}`}
+              href={mailLinkKontak(kontakDummy)}
               className="inline-block min-h-6 py-1 hover:text-white hover:underline"
             >
               <Ikon nama="email" className="mr-1.5 inline h-4 w-4 align-[-2px]" />

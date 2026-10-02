@@ -77,6 +77,28 @@ export function waLinkKontak(kontak: Kontak): string {
 }
 
 /**
+ * Link email (mailto:) dengan subjek & pesan pembawa terisi otomatis — meniru
+ * pengalaman link WhatsApp (wa.me + greeting) agar klik email langsung membuka
+ * aplikasi email dalam kondisi siap kirim (konsul PROGRESS 2: email "langsung
+ * arah ke email, kayak WA").
+ *
+ * @throws {Error} bila email kosong.
+ */
+export function mailLinkKontak(
+  kontak: Kontak,
+  subjek = 'Kolaborasi dengan AI Center Ubaya',
+): string {
+  if (!kontak.email.trim()) {
+    throw new Error('Email kontak kosong');
+  }
+  return (
+    `mailto:${kontak.email}` +
+    `?subject=${encodeURIComponent(subjek)}` +
+    `&body=${encodeURIComponent(kontak.whatsappGreeting)}`
+  );
+}
+
+/**
  * URL Google Maps yang terkunci ke pin koordinat kontak
  * (mode search resmi `api=1&query=lat,lng` — tepat di titik, bukan hasil search teks).
  */

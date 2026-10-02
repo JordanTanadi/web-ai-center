@@ -136,7 +136,7 @@ describe('konten pelatihan lain', () => {
 
   it('panel "Cara belajar di sini" & tombol hero memakai teks + anchor persis pelatihan.html', () => {
     expect(panelCaraBelajar.kicker).toBe('Cara belajar di sini');
-    expect(panelCaraBelajar.judul).toBe('Materi yang dekat dengan kebutuhan Anda.');
+    expect(panelCaraBelajar.judul).toBe('Materi yang langsung dipakai sehari-hari.');
     expect(panelCaraBelajar.deskripsi).toContain('praktisi dan pengajar');
     expect(aksiHeroPelatihan.map((a) => a.label)).toEqual([
       'Jelajahi katalog',

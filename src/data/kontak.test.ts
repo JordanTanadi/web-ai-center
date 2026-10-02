@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildWaLink, kontakDummy, petaUrlKontak, waLinkKontak } from './kontak.ts';
+import { buildWaLink, kontakDummy, mailLinkKontak, petaUrlKontak, waLinkKontak } from './kontak.ts';
 
 describe('kontakDummy', () => {
   it('memuat semua field wajib dengan nilai valid', () => {
@@ -41,6 +41,26 @@ describe('waLinkKontak', () => {
       `https://wa.me/62${kontakDummy.whatsappNumber.replace(/\D/g, '').slice(1)}` +
         `?text=${encodeURIComponent(kontakDummy.whatsappGreeting)}`,
     );
+  });
+});
+
+describe('mailLinkKontak', () => {
+  it('mailto dengan subjek & pesan pembawa terisi (pengalaman seperti link WA)', () => {
+    const link = mailLinkKontak(kontakDummy);
+    expect(link).toMatch(/^mailto:[^\s?]+@[^\s?]+\.[^\s?]+\?/);
+    const params = new URLSearchParams(link.slice(link.indexOf('?') + 1));
+    expect(params.get('subject')?.length).toBeGreaterThan(0);
+    expect(params.get('body')).toBe(kontakDummy.whatsappGreeting);
+  });
+
+  it('subjek default bisa dioverride', () => {
+    expect(mailLinkKontak(kontakDummy, 'Demo Model')).toContain(
+      `subject=${encodeURIComponent('Demo Model')}`,
+    );
+  });
+
+  it('melempar Error untuk email kosong (bukan gagal diam-diam)', () => {
+    expect(() => mailLinkKontak({ ...kontakDummy, email: '' })).toThrow(/Email/);
   });
 });
 

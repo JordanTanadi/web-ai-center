@@ -13,10 +13,13 @@ export const layananDummy: Layanan[] = [
   {
     slug: 'pelatihan',
     nama: 'Pelatihan',
-    tagline: 'Belajar AI untuk membuat dampak nyata.',
+    // Copy meniru gaya bahasa web LPPM (konsul PROGRESS 2): "dipakai sehari-hari",
+    // "pendampingan", "etis · aplikatif · berdampak".
+    tagline: 'Pelatihan AI yang benar-benar dipakai sehari-hari.',
     deskripsi:
-      'Program praktis dari Ubaya AI Center untuk mahasiswa, dosen, guru, profesional, dan masyarakat umum ' +
-      'yang ingin menggunakan AI secara kritis, produktif, dan bertanggung jawab.',
+      'Ubaya AI Center mendampingi mahasiswa, dosen, guru, profesional, dan masyarakat umum ' +
+      'belajar AI — dari pengenalan dasar, praktik dengan studi kasus, sampai penerapan di kerja nyata. ' +
+      'Etis, aplikatif, dan berdampak.',
     fitur: [
       'Workshop & bootcamp terjadwal',
       'Pelatihan kustom sesuai kebutuhan',
