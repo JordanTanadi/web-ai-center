@@ -49,6 +49,5 @@ export const heroSlidesDummy: HeroSlide[] = [
     image: '/hero-2-1600.webp',
     srcSet: '/hero-2-800.webp 800w, /hero-2-1600.webp 1600w',
     sizes: '100vw',
-    layout: 'image-left',
   },
 ];

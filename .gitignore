@@ -23,10 +23,8 @@ coverage/
 # data DB dev (PGlite) — lokal saja
 .pglite/
 
-# laporan lighthouse + unit test hanya lokal, tidak ikut repo
+# laporan lighthouse hanya lokal, tidak ikut repo
 lighthouse_report/
-*.test.ts
-*.test.tsx
 
 # artefak tool lokal (opencode + cache TS), bukan bagian proyek
 .agents/
