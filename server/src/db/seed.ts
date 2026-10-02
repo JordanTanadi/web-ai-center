@@ -175,6 +175,8 @@ export const SEED_HERO: HeroSeed[] = [
     image: '/hero-2-1600.webp',
     srcSet: '/hero-2-800.webp 800w, /hero-2-1600.webp 1600w',
     sizes: '100vw',
+    // Sinkron dengan src/data/hero.ts: teks di KANAN, gambar di kiri.
+    layout: 'image-left',
   },
 ];
 

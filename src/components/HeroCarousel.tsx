@@ -55,6 +55,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
   const current = slides[index % slides.length];
   // Animasi entrance dimatikan bila pengguna meminta reduced motion.
   const hematGerak = prefersReducedMotion();
+  const isImageLeft = current.layout === 'image-left';
 
   return (
     <section
@@ -75,66 +76,128 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
           transition={{ duration: 0.6, ease: 'easeOut' }}
           aria-roledescription="slide"
           aria-label={t(`Slide ${index + 1} dari ${slides.length}`)}
-          /* flex items-center: konten teks vertikal-centered di dalam min-height hero */
-          className="absolute inset-0 flex items-center"
+          className={isImageLeft ? 'absolute inset-0 flex items-stretch' : 'absolute inset-0 flex items-center'}
         >
-            {current.image && imgOk[index] !== false && (
-              <div className="absolute inset-0" aria-hidden="true">
-                <img
-                  src={current.image ? aset(current.image) : undefined}
-                  srcSet={srcSetBerbasis(current.srcSet)}
-                  sizes={current.sizes}
-                  alt=""
-                  width="1600"
-                  height="900"
-                  className="h-full w-full object-cover"
-                  fetchPriority="high"
-                  onError={() => setImgOk((m) => ({ ...m, [index]: false }))}
-                />
-              </div>
-            )}
-            {/* Overlay gelap agar kontras teks ≥ 4.5:1 di atas foto */}
-            <div
-              className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/60 to-brand-bright/40"
-              aria-hidden="true"
-            />
-            {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}
-            <div className="relative z-10 w-full mx-auto max-w-6xl px-6 py-20 md:py-24">
-              <motion.div
-                initial={hematGerak ? false : { opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
-              >
-                <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
-                  {t(current.eyebrow)}
-                </span>
-                <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold text-white md:text-5xl">
-                  {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
-                </h1>
-                <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <CtaButton cta={current.ctaPrimer} aksen />
-                  <CtaButton cta={current.ctaSekunder} />
+            {isImageLeft ? (
+              // Layout image-left: grid dengan gambar di kiri (40%), teks di kanan (60%)
+              <>
+                {current.image && imgOk[index] !== false && (
+                  // Sembunyikan kolom gambar di layar kecil — ruang teks jangan sampai sempit.
+                  <div className="hidden w-2/5 flex-shrink-0 md:block" aria-hidden="true">
+                    <img
+                      src={current.image ? aset(current.image) : undefined}
+                      srcSet={srcSetBerbasis(current.srcSet)}
+                      sizes={current.sizes}
+                      alt=""
+                      width="1600"
+                      height="900"
+                      className="h-full w-full object-cover"
+                      fetchPriority="high"
+                      onError={() => setImgOk((m) => ({ ...m, [index]: false }))}
+                    />
+                  </div>
+                )}
+                <div className="flex-1 flex items-center justify-end bg-gradient-to-r from-navy via-navy/80 to-navy/60">
+                  <div className="relative z-10 w-full max-w-2xl px-6 py-20 md:py-24">
+                    <motion.div
+                      initial={hematGerak ? false : { opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
+                    >
+                      <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
+                        {t(current.eyebrow)}
+                      </span>
+                      <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold text-white md:text-5xl">
+                        {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
+                      </h1>
+                      <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
+                      <div className="mt-6 flex flex-wrap gap-3">
+                        <CtaButton cta={current.ctaPrimer} aksen />
+                        <CtaButton cta={current.ctaSekunder} />
+                      </div>
+                      {/* Tagpill ala situs patokan: emblem + judul tebal + sub mono. */}
+                      <p className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-lg">
+                        <img
+                          src={aset('/AI-Center_Logo.png')}
+                          alt=""
+                          aria-hidden="true"
+                          width="440"
+                          height="116"
+                          className="h-8 w-auto"
+                        />
+                        <span>
+                          <b className="block font-display text-sm font-bold text-brand">{t(current.badgeJudul)}</b>
+                          <small className="block font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted">
+                            {t(current.badgeSub)}
+                          </small>
+                        </span>
+                      </p>
+                    </motion.div>
+                  </div>
                 </div>
-                {/* Tagpill ala situs patokan: emblem + judul tebal + sub mono. */}
-                <p className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-lg">
-                  <img
-                    src={aset('/AI-Center_Logo.png')}
-                    alt=""
-                    aria-hidden="true"
-                    width="440"
-                    height="116"
-                    className="h-8 w-auto"
-                  />
-                  <span>
-                    <b className="block font-display text-sm font-bold text-brand">{t(current.badgeJudul)}</b>
-                    <small className="block font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted">
-                      {t(current.badgeSub)}
-                    </small>
-                  </span>
-                </p>
-              </motion.div>
-            </div>
+              </>
+            ) : (
+              // Layout default: gambar sebagai background overlay, teks di atas
+              <>
+                {current.image && imgOk[index] !== false && (
+                  <div className="absolute inset-0" aria-hidden="true">
+                    <img
+                      src={current.image ? aset(current.image) : undefined}
+                      srcSet={srcSetBerbasis(current.srcSet)}
+                      sizes={current.sizes}
+                      alt=""
+                      width="1600"
+                      height="900"
+                      className="h-full w-full object-cover"
+                      fetchPriority="high"
+                      onError={() => setImgOk((m) => ({ ...m, [index]: false }))}
+                    />
+                  </div>
+                )}
+                {/* Overlay gelap agar kontras teks ≥ 4.5:1 di atas foto */}
+                <div
+                  className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/60 to-brand-bright/40"
+                  aria-hidden="true"
+                />
+                {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}
+                <div className="relative z-10 w-full mx-auto max-w-6xl px-6 py-20 md:py-24">
+                  <motion.div
+                    initial={hematGerak ? false : { opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
+                  >
+                    <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
+                      {t(current.eyebrow)}
+                    </span>
+                    <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold text-white md:text-5xl">
+                      {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
+                    </h1>
+                    <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
+                    <div className="mt-6 flex flex-wrap gap-3">
+                      <CtaButton cta={current.ctaPrimer} aksen />
+                      <CtaButton cta={current.ctaSekunder} />
+                    </div>
+                    {/* Tagpill ala situs patokan: emblem + judul tebal + sub mono. */}
+                    <p className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-lg">
+                      <img
+                        src={aset('/AI-Center_Logo.png')}
+                        alt=""
+                        aria-hidden="true"
+                        width="440"
+                        height="116"
+                        className="h-8 w-auto"
+                      />
+                      <span>
+                        <b className="block font-display text-sm font-bold text-brand">{t(current.badgeJudul)}</b>
+                        <small className="block font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted">
+                          {t(current.badgeSub)}
+                        </small>
+                      </span>
+                    </p>
+                  </motion.div>
+                </div>
+              </>
+            )}
           </motion.div>
       </div>
 

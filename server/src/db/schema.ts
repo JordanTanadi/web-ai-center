@@ -83,6 +83,8 @@ export const heroSlides = pgTable('hero_slides', {
   image: text('image'),
   srcSet: text('src_set'),
   sizes: text('sizes'),
+  /** Layout tampil: 'default' (bg penuh) / 'image-left' (gambar kiri, teks kanan) — ↔ hero.ts */
+  layout: text('layout').$type<'default' | 'image-left'>(),
 });
 
 /** Klien — interface frontend: Klien. */

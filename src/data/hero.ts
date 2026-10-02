@@ -19,6 +19,8 @@ export interface HeroSlide {
   /** Srcset responsif (opsional) — dikirim kolom `src_set` tabel hero_slides. */
   srcSet?: string;
   sizes?: string;
+  /** Layout: 'default' (image bg overlay) atau 'image-left' (image kiri, teks kanan) */
+  layout?: 'default' | 'image-left';
 }
 
 export const heroSlidesDummy: HeroSlide[] = [
@@ -47,5 +49,6 @@ export const heroSlidesDummy: HeroSlide[] = [
     image: '/hero-2-1600.webp',
     srcSet: '/hero-2-800.webp 800w, /hero-2-1600.webp 1600w',
     sizes: '100vw',
+    layout: 'image-left',
   },
 ];

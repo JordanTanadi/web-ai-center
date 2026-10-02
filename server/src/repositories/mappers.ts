@@ -82,6 +82,7 @@ export function toHeroSlide(row: HeroRow): HeroSlide {
     ...(row.image !== null ? { image: row.image } : {}),
     ...(row.srcSet !== null ? { srcSet: row.srcSet } : {}),
     ...(row.sizes !== null ? { sizes: row.sizes } : {}),
+    ...(row.layout !== null ? { layout: row.layout } : {}),
   };
 }
 
