@@ -17,6 +17,8 @@ import type {
 } from './api/types';
 import type { ListParams, Repositories, DokumentasiListParams } from './repositories/types';
 import type { Pagination } from './lib/query';
+import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput } from './lib/tulis';
+import { buatTokenAdmin } from './auth';
 
 const NO_PAGINATION: Pagination = { page: null, limit: null, offset: null };
 
@@ -98,11 +100,23 @@ function createFakeRepos(): FakeHandle {
       list: rec('berita.list', async (_params: ListParams): Promise<BeritaItem[]> => [sampleBerita]),
       findBySlug: rec('berita.findBySlug', async (slug: string): Promise<BeritaItem | null> =>
         slug === sampleBerita.slug ? sampleBerita : null),
+      create: rec('berita.create', async (slug: string, data: BeritaInput): Promise<BeritaItem> =>
+        ({ slug, ...data, gambar: data.gambar ?? undefined })),
+      update: rec('berita.update', async (slug: string, data: BeritaInput): Promise<BeritaItem | null> =>
+        slug === sampleBerita.slug ? { slug, ...data, gambar: data.gambar ?? undefined } : null),
+      remove: rec('berita.remove', async (slug: string): Promise<boolean> =>
+        slug === sampleBerita.slug),
     },
     dokumentasi: {
       list: rec('dokumentasi.list', async (_params: DokumentasiListParams): Promise<DokumentasiItem[]> => [sampleDok]),
       findBySlug: rec('dokumentasi.findBySlug', async (slug: string): Promise<DokumentasiItem | null> =>
         slug === sampleDok.slug ? sampleDok : null),
+      create: rec('dokumentasi.create', async (slug: string, data: DokumentasiInput): Promise<DokumentasiItem> =>
+        ({ slug, ...data, gambar: data.gambar ?? undefined })),
+      update: rec('dokumentasi.update', async (slug: string, data: DokumentasiInput): Promise<DokumentasiItem | null> =>
+        slug === sampleDok.slug ? { slug, ...data, gambar: data.gambar ?? undefined } : null),
+      remove: rec('dokumentasi.remove', async (slug: string): Promise<boolean> =>
+        slug === sampleDok.slug),
     },
     tim: {
       list: rec('tim.list', async (_params: ListParams): Promise<AnggotaTim[]> => [sampleTim]),
@@ -126,9 +140,16 @@ function createFakeRepos(): FakeHandle {
 }
 
 const CORS_ORIGINS = ['http://localhost:5173'];
+/** Password admin khusus test — token di-buat langsung dengan `buatTokenAdmin`. */
+const ADMIN_PASSWORD_TEST = 'rahasia-admin-test';
+const TOKEN_ADMIN = buatTokenAdmin(ADMIN_PASSWORD_TEST);
 
 function createTestApp(handle = createFakeRepos()) {
-  const app = createApp({ repos: handle.repos, corsOrigins: CORS_ORIGINS });
+  const app = createApp({
+    repos: handle.repos,
+    corsOrigins: CORS_ORIGINS,
+    adminPassword: ADMIN_PASSWORD_TEST,
+  });
   return { app, calls: handle.calls };
 }
 
@@ -338,8 +359,242 @@ describe('CORS', () => {
       }),
     );
     expect(res.status).toBe(204);
-    expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET,OPTIONS');
-    expect(res.headers.get('Access-Control-Allow-Headers')).toBe('content-type');
+    expect(res.headers.get('Access-Control-Allow-Methods')).toBe('GET,POST,PUT,DELETE,OPTIONS');
+    expect(res.headers.get('Access-Control-Allow-Headers')).toBe('content-type,authorization');
     expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:5173');
+  });
+});
+
+/** Kirim request tulis JSON (POST/PUT/DELETE) — opsi token: `Bearer <TOKEN_ADMIN>`. */
+const kirimTulis = async (
+  app: ReturnType<typeof createApp>,
+  method: 'POST' | 'PUT' | 'DELETE',
+  path: string,
+  body: unknown,
+  token: string | null = TOKEN_ADMIN,
+) => {
+  const res = await app.handle(
+    new Request(`http://localhost${path}`, {
+      method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token === null ? {} : { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(body),
+    }),
+  );
+  return { status: res.status, body: (await res.json()) as unknown };
+};
+
+const BODY_DOK = {
+  judul: 'Dokumentasi Baru',
+  deskripsi: 'Deskripsi baru.',
+  tanggal: '2026-10-01',
+  kategori: 'Workshop',
+};
+
+const BODY_BERITA = {
+  judul: 'Berita Baru',
+  ringkasan: 'Ringkasan.',
+  isi: 'Isi lengkap.',
+  tanggal: '2026-10-01',
+  penulis: 'Admin',
+};
+
+describe('POST /api/admin/login', () => {
+  test('password benar → 200 { token } yang valid', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/admin/login', {
+      password: ADMIN_PASSWORD_TEST,
+    });
+    expect(status).toBe(200);
+    const token = (body as { token: string }).token;
+    expect(typeof token).toBe('string');
+    // Token yang diterbitkan diterima guard route tulis.
+    const cek = await kirimTulis(app, 'DELETE', `/api/dokumentasi/${sampleDok.slug}`, null, token);
+    expect(cek.status).toBe(200);
+  });
+
+  test('password salah / body bukan objek → 401', async () => {
+    const { app } = createTestApp();
+    const salah = await kirimTulis(app, 'POST', '/api/admin/login', { password: 'salah' });
+    expect(salah.status).toBe(401);
+    expect(salah.body).toEqual({ error: 'Password salah' });
+
+    const bukanObjek = await kirimTulis(app, 'POST', '/api/admin/login', 'halo');
+    expect(bukanObjek.status).toBe(401);
+  });
+});
+
+describe('guard route tulis (dokumentasi & berita)', () => {
+  test('tanpa Authorization → 401; token salah → 401', async () => {
+    const { app } = createTestApp();
+    const tanpaToken = await kirimTulis(app, 'POST', '/api/dokumentasi', BODY_DOK, null);
+    expect(tanpaToken.status).toBe(401);
+
+    const tokenSalah = await kirimTulis(
+      app,
+      'POST',
+      '/api/dokumentasi',
+      BODY_DOK,
+      '1700000000000.abc',
+    );
+    expect(tokenSalah.status).toBe(401);
+  });
+});
+
+describe('POST /api/dokumentasi', () => {
+  test('token valid + body valid → 201, slug dibuat dari judul, repo.create dipanggil', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/dokumentasi', BODY_DOK);
+    expect(status).toBe(201);
+    expect((body as { slug: string }).slug).toBe('dokumentasi-baru');
+
+    const create = calls.find((c) => c.method === 'dokumentasi.create');
+    expect(create).toBeDefined();
+    expect(create?.args[0]).toBe('dokumentasi-baru');
+  });
+
+  test('slug bentrok dengan konten ada → 409', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/dokumentasi', {
+      ...BODY_DOK,
+      judul: 'dok-1', // slugDariJudul → 'dok-1' = sampleDok.slug yang sudah ada
+    });
+    expect(status).toBe(409);
+    expect(body).toEqual({ error: 'Slug sudah dipakai — judul bentrok dengan konten lain' });
+  });
+
+  test('field wajib hilang → 400 dengan pesan field', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/dokumentasi', {
+      ...BODY_DOK,
+      kategori: '',
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "kategori" wajib diisi' });
+  });
+
+  test('slug hasil judul kosong (tanda baca semua) → 400', async () => {
+    const { app } = createTestApp();
+    const { status } = await kirimTulis(app, 'POST', '/api/dokumentasi', {
+      ...BODY_DOK,
+      judul: '!!! ???',
+    });
+    expect(status).toBe(400);
+  });
+});
+
+describe('PUT /api/dokumentasi/:slug', () => {
+  test('slug ada + body valid → 200, repo.update dipanggil dengan slug yang sama', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(
+      app,
+      'PUT',
+      `/api/dokumentasi/${sampleDok.slug}`,
+      BODY_DOK,
+    );
+    expect(status).toBe(200);
+    expect((body as { slug: string }).slug).toBe(sampleDok.slug);
+
+    const update = calls.find((c) => c.method === 'dokumentasi.update');
+    expect(update?.args[0]).toBe(sampleDok.slug);
+  });
+
+  test('slug tidak ada → 404', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/dokumentasi/tidak-ada', BODY_DOK);
+    expect(status).toBe(404);
+    expect(body).toEqual({ error: 'Dokumentasi tidak ditemukan' });
+  });
+
+  test('body tidak valid → 400 tanpa menyentuh repository', async () => {
+    const { app, calls } = createTestApp();
+    const { status } = await kirimTulis(app, 'PUT', `/api/dokumentasi/${sampleDok.slug}`, {
+      ...BODY_DOK,
+      tanggal: 'besok',
+    });
+    expect(status).toBe(400);
+    expect(calls.some((c) => c.method === 'dokumentasi.update')).toBe(false);
+  });
+});
+
+describe('DELETE /api/dokumentasi/:slug', () => {
+  test('slug ada → 200 { ok: true }', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(
+      app,
+      'DELETE',
+      `/api/dokumentasi/${sampleDok.slug}`,
+      null,
+    );
+    expect(status).toBe(200);
+    expect(body).toEqual({ ok: true });
+    expect(calls.some((c) => c.method === 'dokumentasi.remove')).toBe(true);
+  });
+
+  test('slug tidak ada → 404', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'DELETE', '/api/dokumentasi/hilang', null);
+    expect(status).toBe(404);
+    expect(body).toEqual({ error: 'Dokumentasi tidak ditemukan' });
+  });
+});
+
+describe('POST /api/berita (mirror dokumentasi)', () => {
+  test('token valid + body valid → 201 + slug dari judul', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/berita', BODY_BERITA);
+    expect(status).toBe(201);
+    expect((body as { slug: string }).slug).toBe('berita-baru');
+    expect(calls.some((c) => c.method === 'berita.create')).toBe(true);
+  });
+
+  test('tanpa token → 401; field hilang → 400', async () => {
+    const { app } = createTestApp();
+    const tanpaToken = await kirimTulis(app, 'POST', '/api/berita', BODY_BERITA, null);
+    expect(tanpaToken.status).toBe(401);
+
+    const tanpaPenulis = await kirimTulis(app, 'POST', '/api/berita', {
+      ...BODY_BERITA,
+      penulis: '  ',
+    });
+    expect(tanpaPenulis.status).toBe(400);
+    expect(tanpaPenulis.body).toEqual({ error: 'Field "penulis" wajib diisi' });
+  });
+
+  test('slug bentrok → 409', async () => {
+    const { app } = createTestApp();
+    const { status } = await kirimTulis(app, 'POST', '/api/berita', {
+      ...BODY_BERITA,
+      judul: 'berita-1', // slugDariJudul → 'berita-1' = sampleBerita.slug
+    });
+    expect(status).toBe(409);
+  });
+});
+
+describe('PUT & DELETE /api/berita', () => {
+  test('PUT slug ada → 200; tidak ada → 404', async () => {
+    const { app } = createTestApp();
+    const ada = await kirimTulis(app, 'PUT', `/api/berita/${sampleBerita.slug}`, BODY_BERITA);
+    expect(ada.status).toBe(200);
+    expect((ada.body as { slug: string }).slug).toBe(sampleBerita.slug);
+
+    const tidakAda = await kirimTulis(app, 'PUT', '/api/berita/tidak-ada', BODY_BERITA);
+    expect(tidakAda.status).toBe(404);
+    expect(tidakAda.body).toEqual({ error: 'Berita tidak ditemukan' });
+  });
+
+  test('DELETE ada → 200; tidak ada → 404; tanpa token → 401', async () => {
+    const { app } = createTestApp();
+    const ada = await kirimTulis(app, 'DELETE', `/api/berita/${sampleBerita.slug}`, null);
+    expect(ada.status).toBe(200);
+    expect(ada.body).toEqual({ ok: true });
+
+    const tidakAda = await kirimTulis(app, 'DELETE', '/api/berita/hilang', null);
+    expect(tidakAda.status).toBe(404);
+
+    const tanpaToken = await kirimTulis(app, 'DELETE', `/api/berita/${sampleBerita.slug}`, null, null);
+    expect(tanpaToken.status).toBe(401);
   });
 });

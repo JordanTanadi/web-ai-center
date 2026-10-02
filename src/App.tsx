@@ -13,6 +13,8 @@ const Berita = lazy(() => import('./pages/Berita.tsx'));
 const BeritaDetail = lazy(() => import('./pages/BeritaDetail.tsx'));
 const Dokumentasi = lazy(() => import('./pages/Dokumentasi.tsx'));
 const DokumentasiDetail = lazy(() => import('./pages/DokumentasiDetail.tsx'));
+// Admin DI LUAR SiteLayout: tanpa navbar/footer publik.
+const Admin = lazy(() => import('./pages/Admin.tsx'));
 const NotFound = lazy(() => import('./pages/NotFound.tsx'));
 
 function PageFallback() {
@@ -31,6 +33,8 @@ export default function App() {
         <Routes>
           {/* Redirect root ke /beranda sesuai struktur folder existing */}
           <Route path="/" element={<Navigate to="/beranda" replace />} />
+          {/* Dashboard admin — rute sendiri di luar layout publik. */}
+          <Route path="/admin" element={<Admin />} />
           <Route element={<SiteLayout />}>
             <Route path="/beranda" element={<Beranda />} />
             {/* Detail kursus lebih spesifik dari /layanan/:slug — didaftarkan di atasnya. */}

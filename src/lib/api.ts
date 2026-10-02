@@ -82,3 +82,62 @@ export async function ambilDaftar<T>(
     return fallback;
   }
 }
+
+/** Error request tulis admin — membawa status HTTP (0 = jaringan/tidak terkonfigurasi). */
+export class ErrorApi extends Error {
+  constructor(
+    message: string,
+    readonly status: number,
+  ) {
+    super(message);
+    this.name = 'ErrorApi';
+  }
+}
+
+/**
+ * Request tulis admin (POST/PUT/DELETE) dengan header Authorization bila token diberikan.
+ *
+ * BERBEDA dengan ambilJson/ambilDaftar: kegagalan MELEMPAR `ErrorApi`
+ * (pesan dari field `error` server, atau `HTTP <status>`) — admin harus tahu
+ * operasinya gagal, bukan diam-diam memakai fallback. Status 401 dipakai UI
+ * untuk auto-logout saat token kedaluwarsa.
+ */
+export async function kirimJsonAdmin<T>(
+  path: string,
+  opsi: {
+    method: 'POST' | 'PUT' | 'DELETE';
+    /** Body JSON; `undefined` = tanpa body. */
+    body?: unknown;
+    /** Token sesi admin → header `Authorization: Bearer <token>`. */
+    token?: string;
+    /** Override base URL (khusus test); default `BASE_URL_API`. */
+    baseUrl?: string;
+  },
+): Promise<T> {
+  const baseUrl = opsi.baseUrl ?? BASE_URL_API;
+  if (baseUrl === '') {
+    throw new ErrorApi('Backend belum dikonfigurasi — set VITE_API_BASE_URL di .env', 0);
+  }
+  let res: Response;
+  try {
+    res = await fetch(bangunUrlApi(baseUrl, path), {
+      method: opsi.method,
+      headers: {
+        'Content-Type': 'application/json',
+        ...(opsi.token !== undefined ? { Authorization: `Bearer ${opsi.token}` } : {}),
+      },
+      body: opsi.body !== undefined ? JSON.stringify(opsi.body) : undefined,
+    });
+  } catch (error) {
+    throw new ErrorApi(`Tidak bisa terhubung ke backend (${String(error)})`, 0);
+  }
+  const data: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const pesanServer = (data as { error?: unknown } | null)?.error;
+    throw new ErrorApi(
+      typeof pesanServer === 'string' ? pesanServer : `HTTP ${res.status}`,
+      res.status,
+    );
+  }
+  return data as T;
+}

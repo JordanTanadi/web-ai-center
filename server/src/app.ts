@@ -11,9 +11,11 @@ export interface AppDeps {
   repos: Repositories;
   /** Origin frontend yang diizinkan CORS. */
   corsOrigins: string[];
+  /** Password admin (env ADMIN_PASSWORD) — dipakai login & verifikasi token tulis. */
+  adminPassword: string;
 }
 
-export function createApp({ repos, corsOrigins }: AppDeps): AnyElysia {
+export function createApp({ repos, corsOrigins, adminPassword }: AppDeps): AnyElysia {
   const allowedOrigins = new Set(corsOrigins);
 
   const app = new Elysia()
@@ -39,8 +41,8 @@ export function createApp({ repos, corsOrigins }: AppDeps): AnyElysia {
     .options('/*', ({ request, set }) => {
       const origin = request.headers.get('Origin');
       set.status = 204;
-      set.headers['Access-Control-Allow-Methods'] = 'GET,OPTIONS';
-      set.headers['Access-Control-Allow-Headers'] = 'content-type';
+      set.headers['Access-Control-Allow-Methods'] = 'GET,POST,PUT,DELETE,OPTIONS';
+      set.headers['Access-Control-Allow-Headers'] = 'content-type,authorization';
       set.headers['Access-Control-Max-Age'] = '86400';
       if (origin !== null && allowedOrigins.has(origin)) {
         set.headers['Access-Control-Allow-Origin'] = origin;
@@ -49,5 +51,5 @@ export function createApp({ repos, corsOrigins }: AppDeps): AnyElysia {
       return null;
     });
 
-  return registerRoutes(app, repos);
+  return registerRoutes(app, repos, adminPassword);
 }

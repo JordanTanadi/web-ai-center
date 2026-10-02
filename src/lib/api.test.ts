@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ambilDaftar, ambilJson, bangunUrlApi, harusFetch, resolveBaseUrl } from './api.ts';
+import { ErrorApi, ambilDaftar, ambilJson, bangunUrlApi, harusFetch, kirimJsonAdmin, resolveBaseUrl } from './api.ts';
 
 const BASE = 'http://api.test';
 
@@ -118,5 +118,73 @@ describe('ambilDaftar', () => {
     expect(hasil).toEqual([{ slug: 'fb' }]);
     expect(fetchMock).not.toHaveBeenCalled();
     expect(console.error).toHaveBeenCalled();
+  });
+});
+
+describe('kirimJsonAdmin', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const WRITE_OPTS = { method: 'POST' as const, baseUrl: BASE };
+
+  it('sukses → data dikembalikan; URL/method/body/token terpasang benar', async () => {
+    const fetchMock = stubFetch({ slug: 'baru' }, 201);
+    const hasil = await kirimJsonAdmin('/dokumentasi', {
+      ...WRITE_OPTS,
+      body: { judul: 'Baru' },
+      token: 'tok123',
+    });
+    expect(hasil).toEqual({ slug: 'baru' });
+    expect(fetchMock).toHaveBeenCalledWith('http://api.test/dokumentasi', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: 'Bearer tok123',
+      },
+      body: JSON.stringify({ judul: 'Baru' }),
+    });
+  });
+
+  it('tanpa token → tanpa header Authorization', async () => {
+    const fetchMock = stubFetch({ ok: true });
+    await kirimJsonAdmin('/dokumentasi/x/hapus', { method: 'DELETE', baseUrl: BASE });
+    const init = fetchMock.mock.calls[0][1] as { headers: Record<string, string> };
+    expect(init.headers.Authorization).toBeUndefined();
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'DELETE', body: undefined });
+  });
+
+  it('HTTP non-2xx → melempar ErrorApi dengan pesan field `error` server + status', async () => {
+    stubFetch({ error: 'Password salah' }, 401);
+    const menunggu = kirimJsonAdmin('/admin/login', { ...WRITE_OPTS, body: {} });
+    await expect(menunggu).rejects.toBeInstanceOf(ErrorApi);
+    await expect(
+      kirimJsonAdmin('/admin/login', { ...WRITE_OPTS, body: {} }),
+    ).rejects.toMatchObject({ message: 'Password salah', status: 401 });
+  });
+
+  it('HTTP non-2xx tanpa field error → pesan `HTTP <status>`', async () => {
+    stubFetch(null, 500);
+    await expect(kirimJsonAdmin('/dokumentasi', WRITE_OPTS)).rejects.toMatchObject({
+      message: 'HTTP 500',
+      status: 500,
+    });
+  });
+
+  it('fetch melempar (network) → ErrorApi status 0, bukan error liar', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    await expect(kirimJsonAdmin('/dokumentasi', WRITE_OPTS)).rejects.toMatchObject({
+      status: 0,
+    });
+  });
+
+  it('edge: base kosong → ErrorApi status 0 tanpa request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(
+      kirimJsonAdmin('/admin/login', { method: 'POST', baseUrl: '' }),
+    ).rejects.toMatchObject({ status: 0, message: expect.stringContaining('VITE_API_BASE_URL') });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

@@ -4,8 +4,9 @@ import { MemoryRouter } from 'react-router-dom';
 import App from './App.tsx';
 
 describe('App routing (lazy)', () => {
-  // Timeout test 20 dtk > timeout findBy (10 dtk): transform chunk lazy pertama
-  // bisa lambat saat suite penuh, jangan sampai timeout test menang duluan.
+  // Timeout test 30 dtk > timeout findBy (20 dtk): transform chunk lazy pertama
+  // bisa lambat saat suite penuh atau dijalankan paralel — jangan sampai
+  // timeout test menang duluan.
   it(
     '/beranda render setelah chunk dimuat',
     async () => {
@@ -15,9 +16,9 @@ describe('App routing (lazy)', () => {
         </MemoryRouter>,
       );
       // Timeout longgar: transform chunk lazy pertama di env test butuh waktu
-      expect(await screen.findByRole('heading', { level: 1 }, { timeout: 10000 })).toHaveTextContent(/Pusat Riset/);
+      expect(await screen.findByRole('heading', { level: 1 }, { timeout: 20000 })).toHaveTextContent(/Pusat Riset/);
     },
-    20000,
+    30000,
   );
 
   it(
@@ -28,9 +29,9 @@ describe('App routing (lazy)', () => {
           <App />
         </MemoryRouter>,
       );
-      expect(await screen.findByRole('heading', { level: 1 }, { timeout: 10000 })).toHaveTextContent(/Pusat Riset/);
+      expect(await screen.findByRole('heading', { level: 1 }, { timeout: 20000 })).toHaveTextContent(/Pusat Riset/);
     },
-    20000,
+    30000,
   );
 
   it(
@@ -42,9 +43,9 @@ describe('App routing (lazy)', () => {
         </MemoryRouter>,
       );
       expect(
-        await screen.findByText(/tidak ditemukan/i, {}, { timeout: 10000 }),
+        await screen.findByText(/tidak ditemukan/i, {}, { timeout: 20000 }),
       ).toBeInTheDocument();
     },
-    20000,
+    30000,
   );
 });

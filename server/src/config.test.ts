@@ -1,7 +1,9 @@
 import { describe, expect, test } from 'bun:test';
 import {
+  DEFAULT_ADMIN_PASSWORD,
   DEFAULT_CORS_ORIGINS,
   DEFAULT_PORT,
+  parseAdminPassword,
   parseCorsOrigins,
   parseDatabaseUrl,
   parsePort,
@@ -57,12 +59,26 @@ describe('parseDatabaseUrl', () => {
   });
 });
 
+describe('parseAdminPassword', () => {
+  test('nilai terisi dipertahankan (di-trim)', () => {
+    expect(parseAdminPassword('  rahasia-lokal  ')).toBe('rahasia-lokal');
+  });
+
+  test('edge: undefined / kosong / whitespace jatuh ke fallback', () => {
+    expect(parseAdminPassword(undefined)).toBe(DEFAULT_ADMIN_PASSWORD);
+    expect(parseAdminPassword('')).toBe(DEFAULT_ADMIN_PASSWORD);
+    expect(parseAdminPassword('   ')).toBe(DEFAULT_ADMIN_PASSWORD);
+    expect(parseAdminPassword(undefined, 'khusus-test')).toBe('khusus-test');
+  });
+});
+
 describe('resolveConfig', () => {
   test('env kosong → konfigurasi default siap dev', () => {
     expect(resolveConfig({})).toEqual({
       port: DEFAULT_PORT,
       databaseUrl: null,
       corsOrigins: DEFAULT_CORS_ORIGINS,
+      adminPassword: DEFAULT_ADMIN_PASSWORD,
     });
   });
 
@@ -72,11 +88,13 @@ describe('resolveConfig', () => {
         PORT: '4000',
         DATABASE_URL: 'postgres://u:p@localhost:5432/ai',
         CORS_ORIGIN: 'https://ai-center.ubaya.ac.id',
+        ADMIN_PASSWORD: 'katasandi-lokal',
       }),
     ).toEqual({
       port: 4000,
       databaseUrl: 'postgres://u:p@localhost:5432/ai',
       corsOrigins: ['https://ai-center.ubaya.ac.id'],
+      adminPassword: 'katasandi-lokal',
     });
   });
 });

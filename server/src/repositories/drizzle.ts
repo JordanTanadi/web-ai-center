@@ -66,6 +66,43 @@ export function createRepositories(db: Db): Repositories {
       const rows = await db.select().from(berita).where(eq(berita.slug, slug)).limit(1);
       return rows[0] !== undefined ? toBeritaItem(rows[0]) : null;
     },
+    async create(slug, data) {
+      const rows = await db
+        .insert(berita)
+        .values({
+          slug,
+          judul: data.judul,
+          ringkasan: data.ringkasan,
+          isi: data.isi,
+          tanggal: data.tanggal,
+          penulis: data.penulis,
+          gambar: data.gambar,
+        })
+        .returning();
+      return toBeritaItem(rows[0]);
+    },
+    async update(slug, data) {
+      const rows = await db
+        .update(berita)
+        .set({
+          judul: data.judul,
+          ringkasan: data.ringkasan,
+          isi: data.isi,
+          tanggal: data.tanggal,
+          penulis: data.penulis,
+          gambar: data.gambar,
+        })
+        .where(eq(berita.slug, slug))
+        .returning();
+      return rows[0] !== undefined ? toBeritaItem(rows[0]) : null;
+    },
+    async remove(slug) {
+      const rows = await db
+        .delete(berita)
+        .where(eq(berita.slug, slug))
+        .returning({ id: berita.id });
+      return rows.length > 0;
+    },
   };
 
   const dokumentasiRepo: DokumentasiRepository = {
@@ -100,6 +137,41 @@ export function createRepositories(db: Db): Repositories {
         .where(eq(dokumentasi.slug, slug))
         .limit(1);
       return rows[0] !== undefined ? toDokumentasiItem(rows[0]) : null;
+    },
+    async create(slug, data) {
+      const rows = await db
+        .insert(dokumentasi)
+        .values({
+          slug,
+          judul: data.judul,
+          deskripsi: data.deskripsi,
+          tanggal: data.tanggal,
+          kategori: data.kategori,
+          gambar: data.gambar,
+        })
+        .returning();
+      return toDokumentasiItem(rows[0]);
+    },
+    async update(slug, data) {
+      const rows = await db
+        .update(dokumentasi)
+        .set({
+          judul: data.judul,
+          deskripsi: data.deskripsi,
+          tanggal: data.tanggal,
+          kategori: data.kategori,
+          gambar: data.gambar,
+        })
+        .where(eq(dokumentasi.slug, slug))
+        .returning();
+      return rows[0] !== undefined ? toDokumentasiItem(rows[0]) : null;
+    },
+    async remove(slug) {
+      const rows = await db
+        .delete(dokumentasi)
+        .where(eq(dokumentasi.slug, slug))
+        .returning({ id: dokumentasi.id });
+      return rows.length > 0;
     },
   };
 

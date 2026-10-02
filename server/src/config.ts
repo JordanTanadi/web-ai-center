@@ -6,6 +6,11 @@
 
 export const DEFAULT_PORT = 3000;
 export const DEFAULT_CORS_ORIGINS = ['http://localhost:5173'];
+/**
+ * Fallback password admin HANYA untuk development tanpa `.env`.
+ * index.ts mencetak peringatan bila fallback ini yang terpakai.
+ */
+export const DEFAULT_ADMIN_PASSWORD = 'admin-dev';
 
 export interface ServerConfig {
   /** Port HTTP backend. */
@@ -17,6 +22,8 @@ export interface ServerConfig {
   databaseUrl: string | null;
   /** Origin frontend yang diizinkan CORS. */
   corsOrigins: string[];
+  /** Password admin login sederhana (konsul PROGRESS 2). */
+  adminPassword: string;
 }
 
 type RawEnv = Record<string, string | undefined>;
@@ -46,11 +53,26 @@ export function parseDatabaseUrl(raw: string | undefined): string | null {
   return trimmed === '' ? null : trimmed;
 }
 
+/**
+ * Baca ADMIN_PASSWORD; kosong/tidak di-set → fallback (default: 'admin-dev').
+ * Sengaja fallback, bukan error, supaya dev tanpa `.env` tetap bisa jalan —
+ * index.ts memberi peringatan bila fallback terpakai.
+ */
+export function parseAdminPassword(
+  raw: string | undefined,
+  fallback: string = DEFAULT_ADMIN_PASSWORD,
+): string {
+  if (raw === undefined) return fallback;
+  const trimmed = raw.trim();
+  return trimmed === '' ? fallback : trimmed;
+}
+
 /** Susun konfigurasi server dari env mentah. */
 export function resolveConfig(env: RawEnv): ServerConfig {
   return {
     port: parsePort(env.PORT),
     databaseUrl: parseDatabaseUrl(env.DATABASE_URL),
     corsOrigins: parseCorsOrigins(env.CORS_ORIGIN),
+    adminPassword: parseAdminPassword(env.ADMIN_PASSWORD),
   };
 }

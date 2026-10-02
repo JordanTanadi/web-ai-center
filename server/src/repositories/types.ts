@@ -15,6 +15,13 @@ import type {
   Testimoni,
 } from '../api/types';
 import type { Pagination } from '../lib/query';
+// Input tulis admin (PROGRESS 2) hidup di lib/tulis — satu sumber kontrak
+// validasi body, dipakai route & repository.
+import type { InputBerita, InputDokumentasi } from '../lib/tulis';
+
+/** Alias agar interface repository tidak perlu import langsung dari lib/tulis. */
+export type BeritaInput = InputBerita;
+export type DokumentasiInput = InputDokumentasi;
 
 export interface ListParams {
   /** Kata kunci pencarian; `null` = tanpa filter. */
@@ -33,11 +40,23 @@ export interface DokumentasiListParams extends ListParams {
 export interface BeritaRepository {
   list(params: ListParams): Promise<BeritaItem[]>;
   findBySlug(slug: string): Promise<BeritaItem | null>;
+  /** Buat item baru (slug unik sudah dipastikan route); balikan item tersimpan. */
+  create(slug: string, data: BeritaInput): Promise<BeritaItem>;
+  /** Perbarui item berdasarkan slug; `null` bila slug tidak ditemukan. */
+  update(slug: string, data: BeritaInput): Promise<BeritaItem | null>;
+  /** Hapus item berdasarkan slug; `true` bila ada baris yang terhapus. */
+  remove(slug: string): Promise<boolean>;
 }
 
 export interface DokumentasiRepository {
   list(params: DokumentasiListParams): Promise<DokumentasiItem[]>;
   findBySlug(slug: string): Promise<DokumentasiItem | null>;
+  /** Buat item baru (slug unik sudah dipastikan route); balikan item tersimpan. */
+  create(slug: string, data: DokumentasiInput): Promise<DokumentasiItem>;
+  /** Perbarui item berdasarkan slug; `null` bila slug tidak ditemukan. */
+  update(slug: string, data: DokumentasiInput): Promise<DokumentasiItem | null>;
+  /** Hapus item berdasarkan slug; `true` bila ada baris yang terhapus. */
+  remove(slug: string): Promise<boolean>;
 }
 
 export interface TimRepository {
