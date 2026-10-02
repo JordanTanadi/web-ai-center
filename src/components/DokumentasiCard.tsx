@@ -19,7 +19,7 @@ export default function DokumentasiCard({
         <p className="text-xs text-muted">
           {t(item.kategori)} · <time dateTime={item.tanggal}>{t(formatTanggal(item.tanggal))}</time>
         </p>
-        <h3 className="mt-2 font-display font-bold text-brand">{t(item.judul)}</h3>
+        <h3 className="mt-2 font-display font-bold">{t(item.judul)}</h3>
         <p className="mt-2 flex-1 text-sm text-muted">{t(item.deskripsi)}</p>
         {showLink ? (
           <Link to={`/dokumentasi/${item.slug}`} className="mt-4 text-sm font-bold text-brand hover:underline">

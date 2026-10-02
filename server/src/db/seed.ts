@@ -75,6 +75,60 @@ export const SEED_DOKUMENTASI: DokumentasiSeed[] = [
     kategori: 'Demo',
     gambar: null,
   },
+  // Konsul PROGRESS 2: karya portofolio jadi entri dokumentasi (tanggal = terbit karya).
+  {
+    slug: 'klasifikasi-xray-pneumonia',
+    judul: 'Klasifikasi X-Ray Pneumonia',
+    deskripsi: 'Mengklasifikasi citra rontgen dada untuk indikasi pneumonia menggunakan ResNet152V2 + SVM.',
+    tanggal: '2026-09-15',
+    kategori: 'Kesehatan',
+    gambar: '/portofolio/xray-pneumonia.jpg',
+  },
+  {
+    slug: 'implan-gigi-otomatis',
+    judul: 'Rekomendasi Implan Gigi Otomatis',
+    deskripsi:
+      'Menganalisis citra CBCT 3D untuk merekomendasikan ukuran, posisi, dan sudut implan gigi secara otomatis.',
+    tanggal: '2026-08-20',
+    kategori: 'Kesehatan',
+    gambar: '/portofolio/implan-gigi.jpg',
+  },
+  {
+    slug: 'algae-finder',
+    judul: 'Algae Finder',
+    deskripsi:
+      'Mendeteksi dan menghitung jenis mikroalga di perairan (mis. Thalassiosira & Nannochloropsis) dari citra mikroskop.',
+    tanggal: '2026-07-28',
+    kategori: 'Lingkungan',
+    gambar: '/portofolio/algae-finder.jpg',
+  },
+  {
+    slug: 'translator-bahasa-isyarat',
+    judul: 'Translator Bahasa Isyarat',
+    deskripsi:
+      'Menerjemahkan gerakan bahasa isyarat menjadi teks secara real-time melalui kamera, lengkap dengan skor keyakinan.',
+    tanggal: '2026-07-02',
+    kategori: 'Aksesibilitas',
+    gambar: '/portofolio/gesture-translator.jpg',
+  },
+  {
+    slug: 'deteksi-cacat-las',
+    judul: 'Deteksi Cacat Las (Welding)',
+    deskripsi:
+      'Menilai kualitas hasil pengelasan — Good Weld, Bad Weld, atau Defect — langsung dari foto sambungan las.',
+    tanggal: '2026-05-28',
+    kategori: 'Industri',
+    gambar: '/portofolio/cacat-las.jpg',
+  },
+  {
+    slug: 'deteksi-kesegaran-ikan',
+    judul: 'Deteksi Kesegaran Ikan',
+    deskripsi:
+      'Mengenali jenis ikan dan tingkat kesegarannya dari foto, langsung dari ponsel, beserta informasi nutrisi.',
+    tanggal: '2026-04-15',
+    kategori: 'Pangan',
+    gambar: '/portofolio/kesegaran-ikan.jpg',
+  },
 ];
 
 export const SEED_TIM: TimSeed[] = [

@@ -1,34 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import type { HeroSlide } from '../data/hero.ts';
 import { aset, srcSetBerbasis } from '../lib/basis.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
 import { useT } from '../lib/i18n.tsx';
 
-// Tombol CTA hero: primer memakai aksen konversi oranye; tujuan eksternal
-// (http…) dirender sebagai <a> tab baru (mis. link konsultasi WhatsApp),
-// internal tetap <Link> agar SPA + akses keyboard tetap benar.
-function CtaButton({ cta, aksen = false }: { cta: HeroSlide['ctaPrimer']; aksen?: boolean }) {
-  const t = useT();
-  const cls = aksen
-    ? 'btn-accent rounded-lg px-6 py-3 font-display text-sm font-bold'
-    : 'rounded-lg border border-white px-6 py-3 font-display text-sm font-bold text-white hover:bg-white hover:text-ink';
-  if (/^https?:\/\//i.test(cta.to)) {
-    return (
-      <a href={cta.to} target="_blank" rel="noreferrer" className={cls}>
-        {t(cta.label)}
-      </a>
-    );
-  }
-  return (
-    <Link to={cta.to} className={cls}>
-      {t(cta.label)}
-    </Link>
-  );
-}
-
 // Slider hero otomatis + dots, diadaptasi dari hero di beranda/index.html
+// PROGRESS 2: tombol CTA & tagpill logo dicabut dari tampilan (data cta/badge di
+// `hero.ts` dipertahankan agar bisa dipakai lagi tanpa migrasi seed).
 // (interval 7 detik, dots bar di bawah).
 // Hanya satu slide yang di-mount dalam satu waktu agar tidak ada duplikat
 // heading/link tersembunyi bagi keyboard & screen reader.
@@ -55,7 +34,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
   const current = slides[index % slides.length];
   // Animasi entrance dimatikan bila pengguna meminta reduced motion.
   const hematGerak = prefersReducedMotion();
-  const isImageLeft = current.layout === 'image-left';
+  const isImageLeft = (current.layout ?? 'default') === 'image-left';
 
   return (
     <section
@@ -97,8 +76,8 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                     />
                   </div>
                 )}
-                <div className="flex-1 flex items-center justify-end bg-gradient-to-r from-navy via-navy/80 to-navy/60">
-                  <div className="relative z-10 w-full max-w-2xl px-6 py-20 md:py-24">
+                <div className="flex-1 flex items-center bg-gradient-to-r from-navy via-navy/80 to-navy/60">
+                  <div className="relative z-10 w-full max-w-2xl px-6 py-20 md:py-24 ml-auto">
                     <motion.div
                       initial={hematGerak ? false : { opacity: 0, y: 16 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -111,27 +90,6 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                         {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
                       </h1>
                       <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
-                      <div className="mt-6 flex flex-wrap gap-3">
-                        <CtaButton cta={current.ctaPrimer} aksen />
-                        <CtaButton cta={current.ctaSekunder} />
-                      </div>
-                      {/* Tagpill ala situs patokan: emblem + judul tebal + sub mono. */}
-                      <p className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-lg">
-                        <img
-                          src={aset('/AI-Center_Logo.png')}
-                          alt=""
-                          aria-hidden="true"
-                          width="440"
-                          height="116"
-                          className="h-8 w-auto"
-                        />
-                        <span>
-                          <b className="block font-display text-sm font-bold text-brand">{t(current.badgeJudul)}</b>
-                          <small className="block font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted">
-                            {t(current.badgeSub)}
-                          </small>
-                        </span>
-                      </p>
                     </motion.div>
                   </div>
                 </div>
@@ -173,27 +131,6 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                       {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
                     </h1>
                     <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
-                    <div className="mt-6 flex flex-wrap gap-3">
-                      <CtaButton cta={current.ctaPrimer} aksen />
-                      <CtaButton cta={current.ctaSekunder} />
-                    </div>
-                    {/* Tagpill ala situs patokan: emblem + judul tebal + sub mono. */}
-                    <p className="mt-8 inline-flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-left shadow-lg">
-                      <img
-                        src={aset('/AI-Center_Logo.png')}
-                        alt=""
-                        aria-hidden="true"
-                        width="440"
-                        height="116"
-                        className="h-8 w-auto"
-                      />
-                      <span>
-                        <b className="block font-display text-sm font-bold text-brand">{t(current.badgeJudul)}</b>
-                        <small className="block font-mono text-[0.65rem] uppercase tracking-[0.12em] text-muted">
-                          {t(current.badgeSub)}
-                        </small>
-                      </span>
-                    </p>
                   </motion.div>
                 </div>
               </>

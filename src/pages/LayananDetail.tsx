@@ -230,7 +230,7 @@ function ContohPenerapanInference() {
       </ul>
       <div className="mt-5 flex flex-wrap justify-center gap-3">
         <Link
-          to="/beranda#portofolio"
+          to="/dokumentasi"
           className="rounded-lg border border-brand px-6 py-3 font-display text-sm font-bold text-brand hover:bg-brand hover:text-white"
         >
           {t('Lihat portofolio lengkap')}

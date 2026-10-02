@@ -7,12 +7,12 @@ import NewsCard from '../components/NewsCard.tsx';
 import DokumentasiCard from '../components/DokumentasiCard.tsx';
 import TestimoniSlider from '../components/TestimoniSlider.tsx';
 import { heroSlidesDummy } from '../data/hero.ts';
-import { kontakDummy, waLinkKontak } from '../data/kontak.ts';
 import { layananDummy } from '../data/layanan.ts';
-import { aset } from '../lib/basis.ts';
-import Ikon from '../components/Ikon.tsx';
-import { portofolioDummy } from '../data/portofolio.ts';
-import { fasilitasDummy } from '../data/fasilitas.ts';
+// PROGRESS 2: section Tentang/Portofolio/Kontak dihapus dari home (andalan
+// navbar & footer) dan Fasilitas dikomentari — datanya tetap dipakai halaman lain.
+// import { kontakDummy, waLinkKontak } from '../data/kontak.ts';
+// import { portofolioDummy } from '../data/portofolio.ts';
+// import { fasilitasDummy } from '../data/fasilitas.ts';
 import { useT } from '../lib/i18n.tsx';
 import { useApiDaftar } from '../lib/useApiData.ts';
 import { beritaDummy } from '../data/berita.ts';
@@ -60,9 +60,9 @@ function SectionBar({
   );
 }
 
-// Struktur section mengikuti beranda/index.html (hero carousel → layanan →
-// portofolio → fasilitas → dokumentasi → testimoni → berita), konten di-rewrite
-// untuk AI Center Ubaya. File lama tetap ada sebagai referensi di ./beranda/index.html.
+// Struktur home (PROGRESS 2): hero → layanan → dokumentasi → testimoni → berita.
+// Tentang Kami, Portofolio, Kontak dihapus dari home (dialihkan ke navbar/footer);
+// Fasilitas dikomentari (keep code, jangan tampil dulu di home).
 export default function Beranda() {
   const t = useT();
 
@@ -70,7 +70,11 @@ export default function Beranda() {
   // kalau tidak (atau gagal) tetap memakai data dummy di src/data/.
   const slidesHero = useApiDaftar('/hero-slides', heroSlidesDummy);
   const daftarLayanan = useApiDaftar('/layanan', layananDummy);
-  const highlightDokumentasi = useApiDaftar('/dokumentasi', dokumentasiDummy);
+  // Urut tanggal terbaru dulu supaya slice(0, 3) benar-benar "3 terbaru"
+  // (konsul PROGRESS 2; karya portofolio ikut sebagai entri dokumentasi ber-tanggal).
+  const highlightDokumentasi = [...useApiDaftar('/dokumentasi', dokumentasiDummy)].sort((a, b) =>
+    b.tanggal.localeCompare(a.tanggal),
+  );
   // Klien dari GET /api/klien; fallback dummy FTB/CAW/Ubaya (lihat src/data/klien.ts).
   // Dikomentari bersama section Our Client di bawah — aktifkan lagi bila dibutuhkan.
   // const daftarKlien = useApiDaftar('/klien', klienDummy);
@@ -102,66 +106,9 @@ export default function Beranda() {
         </div>
       </section>
 
-      {/* Tentang singkat — "Provide what we are, who we are" (statis dari kontakDummy). */}
-      <section aria-label={t('Tentang Kami')} className="py-16">
-        <div className="mx-auto grid max-w-6xl items-center gap-8 px-6 md:grid-cols-[1.2fr_0.8fr]">
-          <SectionHeading
-            kicker={t('Siapa Kami')}
-            title={t('Tentang Kami')}
-            sub={t(kontakDummy.deskripsiSingkat)}
-            align="left"
-          />
-          <div className="md:text-right">
-            <Link
-              to="/tentang-kami"
-              className="btn-primary inline-block rounded-lg px-5 py-2.5 font-display text-sm font-bold text-white"
-            >
-              {t('Selengkapnya →')}
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* Portofolio: 6 karya dari index.html situs lama (#portofolio). */}
-      <section id="portofolio" aria-label={t('Portofolio')} className="scroll-mt-20 py-16">
-        <div className="mx-auto max-w-6xl px-6">
-          <SectionHeading
-            kicker={t('Karya Kami')}
-            title={t('Portofolio produk AI')}
-            sub={t('Sebagian solusi AI yang telah dikembangkan Ubaya AI Center untuk berbagai bidang.')}
-          />
-          <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {portofolioDummy.map((k) => (
-              <li key={k.slug} className="card-accent overflow-hidden rounded-2xl border border-line bg-white">
-                <img
-                  src={aset(k.gambar)}
-                  alt={k.alt}
-                  width={k.lebar}
-                  height={k.tinggi}
-                  loading="lazy"
-                  className="aspect-[16/10] w-full object-cover"
-                />
-                <div className="p-5">
-                  <p className="text-xs font-bold uppercase tracking-wider text-brand">
-                    {t(`${k.kategori} · ${k.teknologi}`)}
-                  </p>
-                  <h3 className="mt-2 font-display font-bold">{t(k.judul)}</h3>
-                  <p className="mt-2 text-sm text-muted">{t(k.deskripsi)}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-6 text-center text-sm text-muted">
-            {t('Ingin membangun solusi AI seperti ini untuk organisasi Anda?')}{' '}
-            <Link to="/tentang-kami" className="font-bold text-brand hover:underline">
-              {t('Hubungi kami →')}
-            </Link>
-          </p>
-        </div>
-      </section>
-
-      {/* Fasilitas: 3 ruang dari index.html situs lama (#fasilitas). */}
-      <section aria-label={t('Fasilitas')} className="bg-soft py-16">
+      {/* Fasilitas: dikomentari sesuai konsul PROGRESS 2 ("keep codenya namun
+          jangan tampil di home"). Aktifkan kembali dengan menghapus komentar. */}
+      {/* <section aria-label={t('Fasilitas')} className="bg-soft py-16">
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading
             kicker={t('Lihat Ruangnya')}
@@ -188,7 +135,7 @@ export default function Beranda() {
             ))}
           </ul>
         </div>
-      </section>
+      </section> */}
 
       {/* aria-label langsung pada <section> (jadi region bernama); tanpa wrapper div. */}
       <section aria-label={t('Dokumentasi Kegiatan')} className="bg-brand py-16 text-white">
@@ -242,78 +189,6 @@ export default function Beranda() {
             {highlightBerita.slice(0, 3).map((b) => (
               <NewsCard key={b.slug} item={b} showLink={false} />
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Kontak ala situs patokan: kartu gradient navy, heading kiri + daftar kanal kanan. */}
-      <section aria-label={t('Kontak')} className="py-16">
-        <div className="mx-auto max-w-6xl px-6">
-          <div className="grid items-center gap-10 rounded-3xl bg-gradient-to-br from-brand to-navy p-8 text-white shadow-xl md:grid-cols-[1.2fr_1fr] md:p-14">
-            <SectionHeading
-              kicker={t('Hubungi Kami')}
-              title={t('Kontak')}
-              sub={t('Sapa kami lewat kanal favoritmu.')}
-              align="left"
-              tone="dark"
-            />
-            <ul className="flex flex-col gap-3">
-              <li>
-                <a
-                  href={`mailto:${kontakDummy.email}`}
-                  aria-label={t('Email AI Center')}
-                  className="flex min-h-11 items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 hover:bg-white/15"
-                >
-                  <span aria-hidden="true" className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-white/15">
-                    <Ikon nama="email" className="h-6 w-6" />
-                  </span>
-                  <span>
-                    <small className="block font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[#dbe3ff]">
-                      Email
-                    </small>
-                    <b className="block font-body text-base font-bold">{kontakDummy.email}</b>
-                  </span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={waLinkKontak(kontakDummy)}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={t('WhatsApp AI Center')}
-                  className="flex min-h-11 items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 hover:bg-white/15"
-                >
-                  <span aria-hidden="true" className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-[#1faa54]">
-                    <Ikon nama="whatsapp" className="h-6 w-6" />
-                  </span>
-                  <span>
-                    <small className="block font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[#dbe3ff]">
-                      WhatsApp
-                    </small>
-                    <b className="block font-body text-base font-bold">{kontakDummy.whatsappDisplay}</b>
-                  </span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={kontakDummy.instagramUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label={t('Instagram AI Center')}
-                  className="flex min-h-11 items-center gap-4 rounded-2xl border border-white/15 bg-white/10 p-4 hover:bg-white/15"
-                >
-                  <span aria-hidden="true" className="grid h-11 w-11 flex-none place-items-center rounded-xl bg-white/15">
-                    <Ikon nama="instagram" className="h-6 w-6" />
-                  </span>
-                  <span>
-                    <small className="block font-mono text-[0.62rem] uppercase tracking-[0.16em] text-[#dbe3ff]">
-                      Instagram
-                    </small>
-                    <b className="block font-body text-base font-bold">{kontakDummy.instagramLabel}</b>
-                  </span>
-                </a>
-              </li>
-            </ul>
           </div>
         </div>
       </section>

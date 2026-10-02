@@ -135,7 +135,7 @@ export function Header() {
             <NavLink to="/tentang-kami" className={navLinkCls}>
               {t('Tentang Kami')}
             </NavLink>
-            <NavLink to="/tentang-kami#kontak" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white md:fine-pointer:max-lg:px-3 lg:px-4">
+            <NavLink to="#kontak" className="btn-primary whitespace-nowrap rounded-lg px-4 py-2 text-sm font-bold text-white md:fine-pointer:max-lg:px-3 lg:px-4">
               {t('Kontak')}
             </NavLink>
           </nav>
@@ -190,7 +190,7 @@ export function Header() {
             {t('Tentang Kami')}
           </NavLink>
           <NavLink
-            to="/tentang-kami#kontak"
+            to="#kontak"
             onClick={() => setOpen(false)}
             className="btn-primary mt-1 rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
           >
