@@ -50,6 +50,13 @@
   font-style: normal;
   font-display: swap;
 }
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 @theme {
   /* Warna primer — persis daftar dari Figma (visual identity "Nuansa Biru") */
@@ -69,9 +76,9 @@
   --color-line: #E3EAF3; /* hairline border/divider */
   --font-display: 'Cabinet Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-body: 'General Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  /* Font pelengkap teknis (kicker/tag/snippet): Geist Mono bila tersedia,
-     fallback ke monospace sistem. TODO_ASSET: self-host
-     public/fonts/GeistMono-Regular.woff2 + @font-face bila file resmi ada. */
+  /* Font pelengkap teknis (kicker/tag/snippet): Geist Mono — sudah di-self-host
+     di public/fonts (Google Fonts, subset latin, lisensi OFL); fallback ke
+     monospace sistem bila file gagal dimuat. */
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
