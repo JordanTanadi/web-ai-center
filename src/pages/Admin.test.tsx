@@ -1,19 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Admin, { KEY_TOKEN_ADMIN } from './Admin.tsx';
-import { ambilDaftar, kirimJsonAdmin } from '../lib/api.ts';
+import { ambilDaftar, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { BeritaItem } from '../data/berita.ts';
+import type { Kursus } from '../data/pelatihan.ts';
 
 // Mock modul api: test deterministik tanpa backend (Admin hanya memakai
-// ambilDaftar untuk read & kirimJsonAdmin untuk write).
+// ambilDaftar untuk read & kirimJsonAdmin/kirimFileAdmin untuk write).
 vi.mock('../lib/api.ts', () => ({
   ambilDaftar: vi.fn(),
   kirimJsonAdmin: vi.fn(),
+  kirimFileAdmin: vi.fn(),
 }));
 
 const mockDaftar = vi.mocked(ambilDaftar);
 const mockKirim = vi.mocked(kirimJsonAdmin);
+const mockUnggah = vi.mocked(kirimFileAdmin);
 
 const TOKEN = 'tok-abc';
 const DOK: DokumentasiItem = {
@@ -37,6 +40,21 @@ const BERITA: BeritaItem = {
   isi: 'Isi lengkap.',
   tanggal: '2026-08-01',
   penulis: 'Humas',
+};
+const KURSUS: Kursus = {
+  kode: 'R01',
+  target: ['Mahasiswa'],
+  judul: 'Dasar ML',
+  deskripsi: 'Deskripsi.',
+  tentang: 'Tentang.',
+  durasi: '4 sesi',
+  level: 'Pemula',
+  format: 'Online',
+  instruktur: 'Tim',
+  peran: 'Pengajar',
+  inisial: 'T',
+  hasil: ['Hasil 1'],
+  modul: [{ judul: 'M1', deskripsi: 'D1', meta: '2 video' }],
 };
 
 /** Render dengan sesi sudah ada di localStorage (langsung ke dashboard). */
@@ -196,5 +214,97 @@ describe('Admin — dashboard', () => {
     expect(screen.getByRole('heading', { name: 'Masuk Admin' })).toBeInTheDocument();
     expect(localStorage.getItem(KEY_TOKEN_ADMIN)).toBeNull();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
+  });
+
+  it('form dokumentasi memakai input FILE gambar (bukan URL)', async () => {
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+    const input = screen.getByLabelText(/gambar/i);
+    expect(input).toHaveAttribute('type', 'file');
+    expect(input).toHaveAttribute('accept', expect.stringContaining('image/png'));
+  });
+
+  it('simpan dengan file → unggah dulu, URL hasil masuk body', async () => {
+    mockUnggah.mockResolvedValue({ url: '/uploads/abc.png' });
+    mockKirim.mockResolvedValue({ ...DOK, slug: 'karya-baru', judul: 'Karya Baru' } as never);
+    await renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+    fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Karya Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-02' } });
+    fireEvent.change(screen.getByLabelText(/^Kategori/), { target: { value: 'Project' } });
+    fireEvent.change(screen.getByLabelText(/^Deskripsi/), { target: { value: 'Deskripsi karya.' } });
+    const file = new File([new Uint8Array([1])], 'foto.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/gambar/i), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockUnggah).toHaveBeenCalledWith('/admin/upload', file, { token: TOKEN });
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/dokumentasi',
+      expect.objectContaining({ body: expect.objectContaining({ gambar: '/uploads/abc.png' }) }),
+    );
+  });
+});
+
+describe('Admin — tab Kursus', () => {
+  it('tab Kursus → daftar kursus dimuat & tampil', async () => {
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/kursus' ? [KURSUS] : [DOK, DOK2],
+    );
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    expect(await screen.findByText('Dasar ML')).toBeInTheDocument();
+    expect(mockDaftar).toHaveBeenCalledWith('/kursus', []);
+  });
+
+  it('tambah kursus + modul → POST /kursus dengan modul terisi', async () => {
+    mockDaftar.mockResolvedValue([]);
+    mockKirim.mockResolvedValue({ ...KURSUS, kode: 'P02', judul: 'Kursus Baru' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/kode/i), { target: { value: 'P02' } });
+    fireEvent.change(screen.getByLabelText('Judul *'), { target: { value: 'Kursus Baru' } });
+    fireEvent.change(screen.getByLabelText(/deskripsi singkat/i), {
+      target: { value: 'Deskripsi.' },
+    });
+    fireEvent.change(screen.getByLabelText(/tentang kursus/i), { target: { value: 'Tentang.' } });
+    fireEvent.change(screen.getByLabelText(/durasi/i), { target: { value: '2 sesi' } });
+    fireEvent.change(screen.getByLabelText(/level/i), { target: { value: 'Pemula' } });
+    fireEvent.change(screen.getByLabelText(/format/i), { target: { value: 'Online' } });
+    fireEvent.change(screen.getByLabelText('Instruktur *'), { target: { value: 'Tim' } });
+    fireEvent.change(screen.getByLabelText(/peran instruktur/i), { target: { value: 'Pengajar' } });
+    fireEvent.change(screen.getByLabelText(/inisial/i), { target: { value: 'T' } });
+    fireEvent.change(screen.getByLabelText(/target peserta/i), { target: { value: 'Mahasiswa' } });
+    fireEvent.change(screen.getByLabelText(/hasil belajar/i), { target: { value: 'Hasil 1' } });
+    fireEvent.change(screen.getByLabelText('Judul modul 1'), { target: { value: 'M1' } });
+    fireEvent.change(screen.getByLabelText('Meta modul 1'), { target: { value: '2 video' } });
+    fireEvent.change(screen.getByLabelText('Deskripsi modul 1'), { target: { value: 'D1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/kursus',
+      expect.objectContaining({
+        method: 'POST',
+        token: TOKEN,
+        body: expect.objectContaining({
+          kode: 'P02',
+          target: ['Mahasiswa'],
+          modul: [{ judul: 'M1', deskripsi: 'D1', meta: '2 video' }],
+        }),
+      }),
+    );
+  });
+
+  it('tambah modul → baris modul 2 muncul', async () => {
+    mockDaftar.mockResolvedValue([]);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah modul' }));
+    expect(screen.getByLabelText('Judul modul 2')).toBeInTheDocument();
   });
 });

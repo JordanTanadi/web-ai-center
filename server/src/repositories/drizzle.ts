@@ -261,6 +261,59 @@ export function createRepositories(db: Db): Repositories {
       const rows = await db.select().from(kursus).where(eq(kursus.kode, bersih)).limit(1);
       return rows[0] !== undefined ? toKursus(rows[0]) : null;
     },
+    async create(data) {
+      const rows = await db
+        .insert(kursus)
+        .values({
+          kode: data.kode,
+          judul: data.judul,
+          deskripsi: data.deskripsi,
+          tentang: data.tentang,
+          durasi: data.durasi,
+          level: data.level,
+          format: data.format,
+          instruktur: data.instruktur,
+          peran: data.peran,
+          inisial: data.inisial,
+          target: data.target,
+          hasil: data.hasil,
+          modul: data.modul,
+        })
+        .returning();
+      return toKursus(rows[0]);
+    },
+    async update(kode, data) {
+      const bersih = kode.trim().toUpperCase();
+      if (bersih === '') return null;
+      const rows = await db
+        .update(kursus)
+        .set({
+          judul: data.judul,
+          deskripsi: data.deskripsi,
+          tentang: data.tentang,
+          durasi: data.durasi,
+          level: data.level,
+          format: data.format,
+          instruktur: data.instruktur,
+          peran: data.peran,
+          inisial: data.inisial,
+          target: data.target,
+          hasil: data.hasil,
+          modul: data.modul,
+        })
+        .where(eq(kursus.kode, bersih))
+        .returning();
+      return rows[0] !== undefined ? toKursus(rows[0]) : null;
+    },
+    async remove(kode) {
+      const bersih = kode.trim().toUpperCase();
+      if (bersih === '') return false;
+      const rows = await db
+        .delete(kursus)
+        .where(eq(kursus.kode, bersih))
+        .returning({ id: kursus.id });
+      return rows.length > 0;
+    },
   };
 
   return {

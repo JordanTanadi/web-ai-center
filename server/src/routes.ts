@@ -10,7 +10,15 @@
 import type { Elysia } from 'elysia';
 import { buatTokenAdmin, passwordCocok, tokenAdminValid, tokenDariHeader } from './auth';
 import { normalizeSearch, parseOrder, parsePagination, trimOrNull } from './lib/query';
-import { slugDariJudul, validasiBerita, validasiDokumentasi } from './lib/tulis';
+import { slugDariJudul, validasiBerita, validasiDokumentasi, validasiKursus } from './lib/tulis';
+import {
+  namaFileAman,
+  resolveUploadDir,
+  simpanFileGambar,
+  tipeKontenGambar,
+  urlFileUnggahan,
+  validasiFileGambar,
+} from './lib/upload';
 import type { Repositories } from './repositories/types';
 
 /**
@@ -30,12 +38,15 @@ export function registerRoutes(
   repos: Repositories,
   /** Password admin dari env ADMIN_PASSWORD — kunci verifikasi token tulis. */
   adminPassword: string,
+  /** Override direktori unggahan (khusus test; default dari UPLOAD_DIR/cwd). */
+  opsi?: { uploadDir?: string },
 ): AnyElysia {
   /** True bila header Authorization membawa token valid untuk password ini. */
   const terautentikasi = (request: Request): boolean => {
     const token = tokenDariHeader(request.headers.get('Authorization'));
     return token !== null && tokenAdminValid(token, adminPassword);
   };
+  const dirUnggahan = opsi?.uploadDir ?? resolveUploadDir();
 
   return app
     .get('/api/health', () => ({ status: 'ok' as const }))
@@ -191,8 +202,7 @@ export function registerRoutes(
     })
 
     // — Tulis berita (CRUD admin; butuh Authorization: Bearer) ——————————
-    .post('/api/berita', async ({ body, request, set }) => {
-      if (!terautentikasi(request)) {
+    .post('/api/berita', async ({ body, request, set }) => {      if (!terautentikasi(request)) {
         set.status = 401;
         return { error: PESAN_BELUM_LOGIN };
       }
@@ -241,5 +251,93 @@ export function registerRoutes(
         return { error: 'Berita tidak ditemukan' };
       }
       return { ok: true as const };
+    })
+
+    // — Tulis kursus (CRUD admin; kunci = kode, mis. 'R01') ————————————
+    .post('/api/kursus', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiKursus(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      if ((await repos.kursus.findByKode(hasil.data.kode)) !== null) {
+        set.status = 409;
+        return { error: 'Kode sudah dipakai — gunakan kode lain' };
+      }
+      set.status = 201;
+      return await repos.kursus.create(hasil.data);
+    })
+    .put('/api/kursus/:kode', async ({ params, body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiKursus(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      // Kode kunci tidak boleh diganti saat edit — samakan dengan path.
+      if (hasil.data.kode !== params.kode.trim().toUpperCase()) {
+        set.status = 400;
+        return { error: 'Kode tidak boleh diganti — samakan dengan kode di URL' };
+      }
+      const item = await repos.kursus.update(params.kode, hasil.data);
+      if (item === null) {
+        set.status = 404;
+        return { error: 'Kursus tidak ditemukan' };
+      }
+      return item;
+    })
+    .delete('/api/kursus/:kode', async ({ params, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const terhapus = await repos.kursus.remove(params.kode);
+      if (!terhapus) {
+        set.status = 404;
+        return { error: 'Kursus tidak ditemukan' };
+      }
+      return { ok: true as const };
+    })
+
+    // — Unggah gambar admin (multipart `gambar`; butuh Bearer) —————————
+    .post('/api/admin/upload', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const file = (body as { gambar?: unknown } | null)?.gambar;
+      const valid = validasiFileGambar(file);
+      if (!valid.ok) {
+        set.status = 400;
+        return { error: valid.error };
+      }
+      const nama = await simpanFileGambar(file as File, valid.ext, dirUnggahan);
+      set.status = 201;
+      return { url: urlFileUnggahan(nama) };
+    })
+
+    // — Sajikan file unggahan (publik, tanpa auth) —————————————————————
+    .get('/uploads/:nama', async ({ params, set }) => {
+      const aman = namaFileAman(params.nama);
+      if (aman === null) {
+        set.status = 404;
+        return { error: 'File tidak ditemukan' };
+      }
+      const lokasi = `${dirUnggahan.replace(/\/+$/, '')}/${aman}`;
+      const berkas = Bun.file(lokasi);
+      if (!(await berkas.exists())) {
+        set.status = 404;
+        return { error: 'File tidak ditemukan' };
+      }
+      set.headers['Content-Type'] = tipeKontenGambar(aman.slice(aman.lastIndexOf('.') + 1));
+      set.headers['Cache-Control'] = 'public, max-age=31536000, immutable';
+      return berkas;
     });
 }

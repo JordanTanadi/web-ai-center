@@ -35,6 +35,9 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
   // Animasi entrance dimatikan bila pengguna meminta reduced motion.
   const hematGerak = prefersReducedMotion();
   const isImageLeft = (current.layout ?? 'default') === 'image-left';
+  // 'teks-kanan' (konsul 2 Okt): teks dipindah ke samping kanan pada area foto
+  // yang kosong — subjek/kiri background tetap terlihat, tanpa memecah jadi kolom.
+  const teksKanan = (current.layout ?? 'default') === 'teks-kanan';
 
   return (
     <section
@@ -112,14 +115,21 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                     />
                   </div>
                 )}
-                {/* Overlay gelap agar kontras teks ≥ 4.5:1 di atas foto */}
+                {/* Overlay gelap agar kontras teks ≥ 4.5:1 di atas foto —
+                    arahnya mengikuti posisi teks (teks kanan → gelap di kanan);
+                    di layar kecil tetap kiri-kanan seperti default (teks full-width). */}
                 <div
-                  className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/60 to-brand-bright/40"
+                  className={`absolute inset-0 ${
+                    teksKanan
+                      ? 'bg-gradient-to-r md:bg-gradient-to-l from-navy/90 via-navy/60 to-brand-bright/40'
+                      : 'bg-gradient-to-r from-navy/90 via-navy/60 to-brand-bright/40'
+                  }`}
                   aria-hidden="true"
                 />
                 {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}
                 <div className="relative z-10 w-full mx-auto max-w-6xl px-6 py-20 md:py-24">
                   <motion.div
+                    className={teksKanan ? 'md:ml-auto md:max-w-2xl' : undefined}
                     initial={hematGerak ? false : { opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}

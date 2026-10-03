@@ -38,6 +38,14 @@ describe('Footer', () => {
     );
   });
 
+  it('tautan email membuka compose Gmail di tab baru', () => {
+    renderWithRouter(<Footer />);
+
+    const email = screen.getByRole('link', { name: kontakDummy.email });
+    expect(email).toHaveAttribute('target', '_blank');
+    expect(email.getAttribute('rel')).toContain('noreferrer');
+  });
+
   it('footer memuat link Instagram dari data kontak (target blank + noreferrer)', () => {
     renderWithRouter(<Footer />);
 
@@ -118,6 +126,15 @@ describe('Header', () => {
     expect(screen.getByRole('navigation', { name: 'Navigasi utama' })).toBeInTheDocument();
     const tombolMenu = screen.getByRole('button', { name: 'Buka menu' });
     expect(tombolMenu).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('tombol burger punya hover terlihat (border + background + teks)', () => {
+    renderWithRouter(<Header />);
+
+    const tombolMenu = screen.getByRole('button', { name: 'Buka menu' });
+    expect(tombolMenu.className).toContain('hover:border-brand');
+    expect(tombolMenu.className).toContain('hover:bg-soft');
+    expect(tombolMenu.className).toContain('hover:text-brand');
   });
 
   it('navbar desktop aktif untuk pointer presisi (desktop); burger untuk layar sentuh/sempit', () => {

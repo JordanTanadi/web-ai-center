@@ -28,7 +28,26 @@ export interface InputBerita {
   gambar: string | null;
 }
 
+/** Input tulis kursus (kode jadi kunci unik ala slug; modul jsonb). */
+export interface InputKursus {
+  /** Kode ternormalisasi UPPERCASE, mis. 'R01'. */
+  kode: string;
+  judul: string;
+  deskripsi: string;
+  tentang: string;
+  durasi: string;
+  level: string;
+  format: string;
+  instruktur: string;
+  peran: string;
+  inisial: string;
+  target: string[];
+  hasil: string[];
+  modul: Array<{ judul: string; deskripsi: string; meta: string }>;
+}
+
 const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
+const POLA_KODE = /^[A-Za-z0-9-]{1,12}$/;
 
 /**
  * Ubah judul menjadi slug URL — mirror `src/lib/slug.ts` (frontend) supaya
@@ -144,4 +163,79 @@ export function validasiBerita(body: unknown): HasilValidasi<InputBerita> {
       gambar: gambar.nilai,
     },
   };
+}
+
+/** Baca array string (trim, buang kosong); gagal bila kosong/hasil kosong. */
+function bacaDaftarTeks(
+  body: Record<string, unknown>,
+  kunci: string,
+  min: number,
+  maks: number,
+): { nilai: string[] } | { error: string } {
+  const mentah = body[kunci];
+  if (!Array.isArray(mentah)) {
+    return { error: `Field "${kunci}" harus array teks` };
+  }
+  const nilai = mentah
+    .filter((e): e is string => typeof e === 'string')
+    .map((e) => e.trim())
+    .filter((e) => e !== '');
+  if (nilai.length < min) {
+    return { error: `Field "${kunci}" minimal ${min} item` };
+  }
+  if (nilai.length > maks) {
+    return { error: `Field "${kunci}" maksimal ${maks} item` };
+  }
+  return { nilai };
+}
+
+/** Validasi body tulis kursus (termasuk daftar modul). */
+export function validasiKursus(body: unknown): HasilValidasi<InputKursus> {
+  if (body === null || typeof body !== 'object') {
+    return { ok: false, error: 'Body harus objek JSON' };
+  }
+  const b = body as Record<string, unknown>;
+  const kodeMentah = bacaTeks(b, 'kode');
+  if ('error' in kodeMentah) return { ok: false, error: kodeMentah.error };
+  if (!POLA_KODE.test(kodeMentah.nilai)) {
+    return { ok: false, error: 'Field "kode" hanya huruf/angka/- (maks 12)' };
+  }
+  const kode = kodeMentah.nilai.toUpperCase();
+  const teksWajib = ['judul', 'deskripsi', 'tentang', 'durasi', 'level', 'format', 'instruktur', 'peran', 'inisial'] as const;
+  const bersih: Record<(typeof teksWajib)[number], string> = {} as Record<(typeof teksWajib)[number], string>;
+  for (const kunci of teksWajib) {
+    const hasil = bacaTeks(b, kunci);
+    if ('error' in hasil) return { ok: false, error: hasil.error };
+    bersih[kunci] = hasil.nilai;
+  }
+  const target = bacaDaftarTeks(b, 'target', 1, 10);
+  if ('error' in target) return { ok: false, error: target.error };
+  const hasil = bacaDaftarTeks(b, 'hasil', 1, 30);
+  if ('error' in hasil) return { ok: false, error: hasil.error };
+  const mentahModul = b.modul;
+  if (!Array.isArray(mentahModul) || mentahModul.length === 0) {
+    return { ok: false, error: 'Field "modul" minimal 1 modul' };
+  }
+  if (mentahModul.length > 50) {
+    return { ok: false, error: 'Field "modul" maksimal 50 modul' };
+  }
+  const modul: Array<{ judul: string; deskripsi: string; meta: string }> = [];
+  for (let i = 0; i < mentahModul.length; i++) {
+    const m = mentahModul[i] as Record<string, unknown>;
+    if (m === null || typeof m !== 'object') {
+      return { ok: false, error: `Modul ke-${i + 1} tidak valid` };
+    }
+    for (const kunci of ['judul', 'deskripsi', 'meta'] as const) {
+      const nilai = m[kunci];
+      if (typeof nilai !== 'string' || nilai.trim() === '') {
+        return { ok: false, error: `Modul ke-${i + 1}: field "${kunci}" wajib diisi` };
+      }
+    }
+    modul.push({
+      judul: (m.judul as string).trim(),
+      deskripsi: (m.deskripsi as string).trim(),
+      meta: (m.meta as string).trim(),
+    });
+  }
+  return { ok: true, data: { kode, ...bersih, target: target.nilai, hasil: hasil.nilai, modul } };
 }

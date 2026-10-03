@@ -18,7 +18,7 @@ const populerLinks = [
   { to: '/beranda#layanan', label: 'Layanan' },
   { to: '/berita', label: 'Berita' },
   { to: '/dokumentasi', label: 'Dokumentasi' },
-  { to: '/tentang-kami', label: 'Hubungi Kami' },
+  { to: '/tentang-kami', label: 'Tentang Kami' },
 ];
 
 const layananLinks = [
@@ -141,7 +141,7 @@ export function Header() {
           </nav>
           <LanguageToggle />
           <button
-            className="rounded-lg border border-line px-3 py-2 md:fine-pointer:hidden lg:hidden"
+            className="rounded-lg border border-line px-3 py-2 transition-colors hover:border-brand hover:bg-soft hover:text-brand md:fine-pointer:hidden lg:hidden"
             aria-label={t(open ? 'Tutup menu' : 'Buka menu')}
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
@@ -237,6 +237,8 @@ export function Footer() {
             <br />
             <a
               href={mailLinkKontak(kontakDummy)}
+              target="_blank"
+              rel="noreferrer"
               className="inline-block min-h-6 py-1 hover:text-white hover:underline"
             >
               <Ikon nama="email" className="mr-1.5 inline h-4 w-4 align-[-2px]" />

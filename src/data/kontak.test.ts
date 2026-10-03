@@ -45,17 +45,18 @@ describe('waLinkKontak', () => {
 });
 
 describe('mailLinkKontak', () => {
-  it('mailto dengan subjek & pesan pembawa terisi (pengalaman seperti link WA)', () => {
+  it('compose Gmail langsung dengan tujuan, subjek & pesan pembawa terisi', () => {
     const link = mailLinkKontak(kontakDummy);
-    expect(link).toMatch(/^mailto:[^\s?]+@[^\s?]+\.[^\s?]+\?/);
+    expect(link).toMatch(/^https:\/\/mail\.google\.com\/mail\/\?view=cm&fs=1/);
     const params = new URLSearchParams(link.slice(link.indexOf('?') + 1));
-    expect(params.get('subject')?.length).toBeGreaterThan(0);
+    expect(params.get('to')).toBe(kontakDummy.email);
+    expect(params.get('su')?.length).toBeGreaterThan(0);
     expect(params.get('body')).toBe(kontakDummy.whatsappGreeting);
   });
 
   it('subjek default bisa dioverride', () => {
     expect(mailLinkKontak(kontakDummy, 'Demo Model')).toContain(
-      `subject=${encodeURIComponent('Demo Model')}`,
+      `su=${encodeURIComponent('Demo Model')}`,
     );
   });
 

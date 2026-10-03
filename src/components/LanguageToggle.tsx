@@ -13,7 +13,7 @@ export default function LanguageToggle() {
       onClick={() => setBahasa(bahasa === 'id' ? 'en' : 'id')}
       aria-label="Switch language"
       title="Bahasa / Language"
-      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line px-2.5 py-2 text-xs font-bold text-ink hover:border-brand hover:text-brand"
+      className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line px-2.5 py-2 text-xs font-bold text-ink transition-colors hover:border-brand hover:bg-soft hover:text-brand"
     >
       <svg
         aria-hidden="true"

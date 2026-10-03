@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { slugDariJudul, validasiBerita, validasiDokumentasi } from './tulis';
+import { slugDariJudul, validasiBerita, validasiDokumentasi, validasiKursus } from './tulis';
 
 describe('slugDariJudul', () => {
   test('judul normal → slug lowercase dengan strip', () => {
@@ -94,5 +94,52 @@ describe('validasiBerita', () => {
     });
     const { isi: _isiDibuang, ...tanpaIsi } = BODY_BERITA_VALID;
     expect(validasiBerita(tanpaIsi)).toEqual({ ok: false, error: 'Field "isi" wajib diisi' });
+  });
+});
+
+const BODY_KURSUS_VALID = {
+  kode: 'r01',
+  judul: 'Dasar Machine Learning',
+  deskripsi: 'Deskripsi singkat.',
+  tentang: 'Tentang panjang.',
+  durasi: '4 sesi',
+  level: 'Pemula',
+  format: 'Online',
+  instruktur: 'Budi',
+  peran: 'Pengajar',
+  inisial: 'B',
+  target: ['Mahasiswa', ''],
+  hasil: ['Mampu regresi'],
+  modul: [{ judul: 'M1', deskripsi: 'D1', meta: '4 video' }],
+};
+
+describe('validasiKursus', () => {
+  test('body valid → kode di-uppercase + array dibersihkan', () => {
+    const hasil = validasiKursus(BODY_KURSUS_VALID);
+    expect(hasil.ok).toBe(true);
+    if (hasil.ok) {
+      expect(hasil.data.kode).toBe('R01');
+      expect(hasil.data.target).toEqual(['Mahasiswa']);
+    }
+  });
+
+  test('kode pola salah / teks wajib kosong → error eksplisit', () => {
+    expect(validasiKursus({ ...BODY_KURSUS_VALID, kode: 'r 01!' }).ok).toBe(false);
+    expect(validasiKursus({ ...BODY_KURSUS_VALID, judul: '  ' })).toEqual({
+      ok: false,
+      error: 'Field "judul" wajib diisi',
+    });
+  });
+
+  test('target/hasil harus array berisi; modul minimal 1 lengkap', () => {
+    expect(validasiKursus({ ...BODY_KURSUS_VALID, target: [] }).ok).toBe(false);
+    expect(validasiKursus({ ...BODY_KURSUS_VALID, hasil: 'teks' }).ok).toBe(false);
+    expect(validasiKursus({ ...BODY_KURSUS_VALID, modul: [] })).toEqual({
+      ok: false,
+      error: 'Field "modul" minimal 1 modul',
+    });
+    expect(
+      validasiKursus({ ...BODY_KURSUS_VALID, modul: [{ judul: 'M1', deskripsi: '', meta: 'x' }] }),
+    ).toEqual({ ok: false, error: 'Modul ke-1: field "deskripsi" wajib diisi' });
   });
 });

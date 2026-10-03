@@ -76,11 +76,14 @@ describe('SEED_HERO', () => {
     expect(uniqueValues(urutan.map(String))).toBe(true);
   });
 
-  test('layout image-left dicabut dari data (konsul 2 Okt): slide Inference ikut default', () => {
+  test('layout teks-kanan hanya di slide Inference (konsul 2 Okt: teks disamping)', () => {
     const inferensi = SEED_HERO.find((s) => s.eyebrow === 'Inference Solution');
-    expect(inferensi?.layout).toBeUndefined();
+    expect(inferensi?.layout).toBe('teks-kanan');
+    // Slide lain tetap default (null) — image-left tetap sah sebagai nilai schema.
+    const lain = SEED_HERO.filter((s) => s.eyebrow !== 'Inference Solution');
+    for (const slide of lain) expect(slide.layout).toBeUndefined();
     for (const slide of SEED_HERO) {
-      expect([null, undefined, 'default', 'image-left']).toContain(slide.layout);
+      expect([null, undefined, 'default', 'image-left', 'teks-kanan']).toContain(slide.layout);
     }
   });
 });

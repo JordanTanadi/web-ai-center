@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ErrorApi, ambilDaftar, ambilJson, bangunUrlApi, harusFetch, kirimJsonAdmin, resolveBaseUrl } from './api.ts';
+import { ErrorApi, ambilDaftar, ambilJson, bangunUrlApi, harusFetch, kirimFileAdmin, kirimJsonAdmin, resolveBaseUrl } from './api.ts';
 
 const BASE = 'http://api.test';
 
@@ -49,7 +49,7 @@ describe('bangunUrlApi', () => {
 
 describe('ambilJson', () => {
   beforeEach(() => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -63,11 +63,11 @@ describe('ambilJson', () => {
     expect(fetchMock).toHaveBeenCalledWith('http://api.test/berita/berita-1');
   });
 
-  it('HTTP non-2xx → fallback + console.error', async () => {
+  it('HTTP non-2xx → fallback + peringatan dev (tanpa console.error)', async () => {
     stubFetch({ error: 'x' }, 500);
     const hasil = await ambilJson('/kursus/R01', { kode: 'fallback' }, BASE);
     expect(hasil).toEqual({ kode: 'fallback' });
-    expect(console.error).toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalled();
   });
 
   it('respons non-objek (null/angka) → dianggap tidak valid → fallback', async () => {
@@ -86,7 +86,7 @@ describe('ambilJson', () => {
 
 describe('ambilDaftar', () => {
   beforeEach(() => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(console, 'warn').mockImplementation(() => undefined);
   });
   afterEach(() => {
     vi.unstubAllGlobals();
@@ -99,11 +99,11 @@ describe('ambilDaftar', () => {
     expect(hasil).toEqual([{ slug: 'a' }, { slug: 'b' }]);
   });
 
-  it('bentuk respons salah (tanpa items) → fallback + console.error', async () => {
+  it('bentuk respons salah (tanpa items) → fallback + peringatan dev', async () => {
     stubFetch({ data: 'bukan-items' });
     const hasil = await ambilDaftar('/berita', [{ slug: 'fallback' }], BASE);
     expect(hasil).toEqual([{ slug: 'fallback' }]);
-    expect(console.error).toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalled();
   });
 
   it('items bukan array → fallback (validasi bentuk eksplisit)', async () => {
@@ -111,13 +111,13 @@ describe('ambilDaftar', () => {
     expect(await ambilDaftar('/berita', [{ slug: 'fb' }], BASE)).toEqual([{ slug: 'fb' }]);
   });
 
-  it('edge: base kosong → fallback + error tercatat (tanpa request)', async () => {
+  it('edge: base kosong → fallback + peringatan tercatat (tanpa request)', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
     const hasil = await ambilDaftar('/berita', [{ slug: 'fb' }], '');
     expect(hasil).toEqual([{ slug: 'fb' }]);
     expect(fetchMock).not.toHaveBeenCalled();
-    expect(console.error).toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalled();
   });
 });
 
@@ -185,6 +185,52 @@ describe('kirimJsonAdmin', () => {
     await expect(
       kirimJsonAdmin('/admin/login', { method: 'POST', baseUrl: '' }),
     ).rejects.toMatchObject({ status: 0, message: expect.stringContaining('VITE_API_BASE_URL') });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('kirimFileAdmin', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
+  const file = () => new File([new Uint8Array([1, 2, 3])], 'foto.png', { type: 'image/png' });
+
+  it('FormData + token terkirim; balikan url dipakai', async () => {
+    const fetchMock = stubFetch({ url: '/uploads/123-ab.png' }, 201);
+    const hasil = await kirimFileAdmin('/admin/upload', file(), { token: 'tok123', baseUrl: BASE });
+    expect(hasil).toEqual({ url: '/uploads/123-ab.png' });
+    expect(fetchMock).toHaveBeenCalledWith(
+      'http://api.test/admin/upload',
+      expect.objectContaining({
+        method: 'POST',
+        headers: { Authorization: 'Bearer tok123' },
+      }),
+    );
+    const body = fetchMock.mock.calls[0][1].body as FormData;
+    expect(body).toBeInstanceOf(FormData);
+    expect((body.get('gambar') as File).name).toBe('foto.png');
+  });
+
+  it('server menolak → ErrorApi; respons tanpa url → ErrorApi', async () => {
+    stubFetch({ error: 'Tipe file harus JPEG, PNG, atau WebP' }, 400);
+    await expect(kirimFileAdmin('/admin/upload', file(), { baseUrl: BASE })).rejects.toMatchObject({
+      message: 'Tipe file harus JPEG, PNG, atau WebP',
+      status: 400,
+    });
+    stubFetch({ ok: true }, 201);
+    await expect(kirimFileAdmin('/admin/upload', file(), { baseUrl: BASE })).rejects.toMatchObject({
+      message: expect.stringContaining('tanpa url'),
+    });
+  });
+
+  it('edge: base kosong → ErrorApi tanpa request', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(kirimFileAdmin('/admin/upload', file(), { baseUrl: '' })).rejects.toMatchObject({
+      status: 0,
+    });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

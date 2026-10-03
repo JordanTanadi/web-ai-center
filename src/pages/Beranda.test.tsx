@@ -50,6 +50,13 @@ describe('Beranda — keputusan rapat', () => {
     expect(section?.querySelectorAll('article.card-accent')).toHaveLength(2);
   });
 
+  it('kartu layanan bernomor mono 01/02 (aksen Figma, tidak polos)', () => {
+    renderBeranda();
+
+    expect(screen.getByText('01')).toBeInTheDocument();
+    expect(screen.getByText('02')).toBeInTheDocument();
+  });
+
   it('CTA kartu layanan memakai aksen konversi (btn-accent)', () => {
     renderBeranda();
 

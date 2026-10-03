@@ -228,8 +228,10 @@ export const SEED_HERO: HeroSeed[] = [
     badgeSub: 'Integrasi model + dukungan teknis',
     image: '/hero-2-1600.webp',
     srcSet: '/hero-2-800.webp 800w, /hero-2-1600.webp 1600w',
-    // PROGRESS 2: layout image-left dicabut dari data (konsul 2 Okt — user memutuskan
-    // slide 2 kembali default; kolom `layout` di DB tetap ada, semua isinya null).
+    // Konsul 2 Okt: teks slide Inference dipindah ke samping kanan (layout
+    // 'teks-kanan', kolom `layout` di DB dipakai lagi) supaya subjek foto di
+    // kiri tidak tertutup teks. Slide 1 tetap default (null).
+    layout: 'teks-kanan',
     sizes: '100vw',
   },
 ];

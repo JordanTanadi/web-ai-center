@@ -1,5 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { getBeritaBySlug, type BeritaItem } from '../data/berita.ts';
+import { CardImage } from '../components/NewsCard.tsx';
 import { formatTanggal } from '../lib/formatTanggal.ts';
 import { useT } from '../lib/i18n.tsx';
 import { useApiObjek } from '../lib/useApiData.ts';
@@ -34,6 +35,10 @@ export default function BeritaDetail() {
         <h1 className="mt-2 font-display text-3xl font-bold">{t(item.judul)}</h1>
         <p className="mt-2 font-medium text-muted">{t(item.ringkasan)}</p>
       </header>
+      {/* Banner visual: foto asli bila ada, panel gradient branded bila tidak. */}
+      <div className="mt-8 overflow-hidden rounded-2xl border border-line">
+        <CardImage src={item.gambar} alt={item.judul} label="Berita" />
+      </div>
       <p className="mt-6">{t(item.isi)}</p>
       <div className="mt-8 text-center">
         <Link to="/berita" className="inline-block text-sm font-bold text-brand hover:underline">
