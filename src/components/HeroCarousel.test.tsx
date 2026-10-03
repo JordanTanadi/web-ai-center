@@ -103,6 +103,22 @@ describe('HeroCarousel', () => {
     expect(slideLayer?.className).toContain('items-center');
   });
 
+  it("layout 'teks-kanan' (konsul 2 Okt): teks ke kanan & gradient dibalik agar foto kiri terlihat", () => {
+    const pertama = renderHero([{ ...slides[0], layout: 'teks-kanan' }]);
+    const teks = screen.getByRole('heading', { level: 1 }).parentElement;
+    expect(teks?.className).toContain('md:ml-auto');
+    expect(teks?.className).toContain('md:max-w-2xl');
+    const overlay = [...document.querySelectorAll('section div')].find((el) =>
+      el.className.includes('bg-gradient'),
+    );
+    expect(overlay?.className).toContain('md:bg-gradient-to-l');
+    // Slide default (tanpa layout) tetap teks kiri — arah gradient tak berubah.
+    pertama.unmount();
+    renderHero([slides[0]]);
+    const teksDefault = screen.getByRole('heading', { level: 1 }).parentElement;
+    expect(teksDefault?.className ?? '').not.toContain('md:ml-auto');
+  });
+
   it('slide berganti sendiri tiap interval dan wrap-around', () => {
     renderHero(slides, 1000);
     act(() => {

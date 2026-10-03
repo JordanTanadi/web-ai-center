@@ -168,10 +168,12 @@ export const SEED_LAYANAN: LayananSeed[] = [
   {
     slug: 'pelatihan',
     nama: 'Pelatihan',
-    tagline: 'Belajar AI untuk membuat dampak nyata.',
+    // Copy disinkronkan dengan src/data/layanan.ts (konsul PROGRESS 2 — gaya LPPM).
+    tagline: 'Pelatihan AI yang benar-benar dipakai sehari-hari.',
     deskripsi:
-      'Program praktis dari Ubaya AI Center untuk mahasiswa, dosen, guru, profesional, dan masyarakat umum ' +
-      'yang ingin menggunakan AI secara kritis, produktif, dan bertanggung jawab.',
+      'Ubaya AI Center mendampingi mahasiswa, dosen, guru, profesional, dan masyarakat umum ' +
+      'belajar AI — dari pengenalan dasar, praktik dengan studi kasus, sampai penerapan di kerja nyata. ' +
+      'Etis, aplikatif, dan berdampak.',
     fitur: [
       'Workshop & bootcamp terjadwal',
       'Pelatihan kustom sesuai kebutuhan',
@@ -228,8 +230,10 @@ export const SEED_HERO: HeroSeed[] = [
     badgeSub: 'Integrasi model + dukungan teknis',
     image: '/hero-2-1600.webp',
     srcSet: '/hero-2-800.webp 800w, /hero-2-1600.webp 1600w',
-    // PROGRESS 2: layout image-left dicabut dari data (konsul 2 Okt — user memutuskan
-    // slide 2 kembali default; kolom `layout` di DB tetap ada, semua isinya null).
+    // Konsul 2 Okt: teks slide Inference dipindah ke samping kanan (layout
+    // 'teks-kanan', kolom `layout` di DB dipakai lagi) supaya subjek foto di
+    // kiri tidak tertutup teks. Slide 1 tetap default (null).
+    layout: 'teks-kanan',
     sizes: '100vw',
   },
 ];

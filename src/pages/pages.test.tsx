@@ -8,6 +8,7 @@ import Dokumentasi from './Dokumentasi.tsx';
 import DokumentasiDetail from './DokumentasiDetail.tsx';
 import LayananDetail from './LayananDetail.tsx';
 import { beritaDummy } from '../data/berita.ts';
+import { dokumentasiDummy } from '../data/dokumentasi.ts';
 import { timDummy } from '../data/tim.ts';
 import { KEY_BAHASA, PenyediaBahasa } from '../lib/i18n.tsx';
 
@@ -120,17 +121,16 @@ describe('BeritaDetail', () => {
 });
 
 describe('Dokumentasi', () => {
-  it('tanpa pencarian hanya menampilkan 3 dokumentasi terbaru (urut tanggal turun)', () => {
+  it('tanpa pencarian menampilkan SELURUH data (urut tanggal turun; konsul: 3 terbaru hanya di home)', () => {
     renderWithRouter(<Dokumentasi />);
     const cards = screen.getAllByRole('article');
-    expect(cards).toHaveLength(3);
-    expect(screen.getAllByRole('link', { name: /lihat detail/i })).toHaveLength(3);
-    // 3 terbaru dari 9 entri (3 kegiatan + 6 karya portofolio) — karya & kegiatan tercampur.
-    expect(screen.getByText('Klasifikasi X-Ray Pneumonia')).toBeInTheDocument();
-    expect(screen.getByText('Demo Inference Solution untuk Mitra')).toBeInTheDocument();
-    expect(screen.getByText('Rekomendasi Implan Gigi Otomatis')).toBeInTheDocument();
-    // Entri lebih lama baru muncul lewat pencarian.
-    expect(screen.queryByText('Workshop Pengenalan GPU Lab')).not.toBeInTheDocument();
+    expect(cards).toHaveLength(dokumentasiDummy.length);
+    expect(screen.getAllByRole('link', { name: /lihat detail/i })).toHaveLength(dokumentasiDummy.length);
+    // Terbaru di urutan paling atas…
+    expect(cards[0]).toHaveTextContent('Klasifikasi X-Ray Pneumonia');
+    // …termasuk entri lama — ikut tampil tanpa pencarian.
+    expect(screen.getByText('Workshop Pengenalan GPU Lab')).toBeInTheDocument();
+    expect(screen.getByText('Kunjungan Industri Semester Genap')).toBeInTheDocument();
   });
 
   it('filter pencarian menelusuri seluruh arsip (edge: query tanpa hasil)', () => {

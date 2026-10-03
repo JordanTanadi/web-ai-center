@@ -64,7 +64,7 @@ export interface HeroSlide {
   srcSet?: string;
   sizes?: string;
   /** Layout tampil slide — ↔ src/data/hero.ts HeroSlide.layout. */
-  layout?: 'default' | 'image-left';
+  layout?: 'default' | 'image-left' | 'teks-kanan';
 }
 
 /** ↔ src/data/klien.ts Klien */
