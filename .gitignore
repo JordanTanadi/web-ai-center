@@ -23,6 +23,10 @@ coverage/
 # data DB dev (PGlite) — lokal saja
 .pglite/
 
+# file unggahan admin (lokal saja, bukan bagian repo)
+uploads/
+server/uploads/
+
 # laporan lighthouse hanya lokal, tidak ikut repo
 lighthouse_report/
 

@@ -17,11 +17,12 @@ import type {
 import type { Pagination } from '../lib/query';
 // Input tulis admin (PROGRESS 2) hidup di lib/tulis — satu sumber kontrak
 // validasi body, dipakai route & repository.
-import type { InputBerita, InputDokumentasi } from '../lib/tulis';
+import type { InputBerita, InputDokumentasi, InputKursus } from '../lib/tulis';
 
 /** Alias agar interface repository tidak perlu import langsung dari lib/tulis. */
 export type BeritaInput = InputBerita;
 export type DokumentasiInput = InputDokumentasi;
+export type KursusInput = InputKursus;
 
 export interface ListParams {
   /** Kata kunci pencarian; `null` = tanpa filter. */
@@ -89,6 +90,12 @@ export interface KursusRepository {
   list(params: ListParams): Promise<Kursus[]>;
   /** Detail kursus; kode case-insensitive (URL lama memakai 'r01'). */
   findByKode(kode: string): Promise<Kursus | null>;
+  /** Buat kursus (kode unik sudah dipastikan route). */
+  create(data: KursusInput): Promise<Kursus>;
+  /** Perbarui kursus berdasarkan kode; `null` bila tidak ditemukan. */
+  update(kode: string, data: KursusInput): Promise<Kursus | null>;
+  /** Hapus kursus berdasarkan kode; `true` bila ada baris yang terhapus. */
+  remove(kode: string): Promise<boolean>;
 }
 
 /** Kumpulan semua repository yang disuntikkan ke route. */

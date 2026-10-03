@@ -17,7 +17,7 @@ import type {
 } from './api/types';
 import type { ListParams, Repositories, DokumentasiListParams } from './repositories/types';
 import type { Pagination } from './lib/query';
-import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput } from './lib/tulis';
+import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputKursus as KursusInput } from './lib/tulis';
 import { buatTokenAdmin } from './auth';
 
 const NO_PAGINATION: Pagination = { page: null, limit: null, offset: null };
@@ -134,6 +134,12 @@ function createFakeRepos(): FakeHandle {
       list: rec('kursus.list', async (_params: ListParams): Promise<Kursus[]> => [sampleKursus]),
       findByKode: rec('kursus.findByKode', async (kode: string): Promise<Kursus | null> =>
         kode.toUpperCase() === sampleKursus.kode ? sampleKursus : null),
+      create: rec('kursus.create', async (data: KursusInput): Promise<Kursus> =>
+        ({ ...sampleKursus, ...data })),
+      update: rec('kursus.update', async (kode: string, data: KursusInput): Promise<Kursus | null> =>
+        kode.toUpperCase() === sampleKursus.kode ? { ...sampleKursus, ...data } : null),
+      remove: rec('kursus.remove', async (kode: string): Promise<boolean> =>
+        kode.toUpperCase() === sampleKursus.kode),
     },
   };
   return { repos, calls };
@@ -596,5 +602,138 @@ describe('PUT & DELETE /api/berita', () => {
 
     const tanpaToken = await kirimTulis(app, 'DELETE', `/api/berita/${sampleBerita.slug}`, null, null);
     expect(tanpaToken.status).toBe(401);
+  });
+});
+
+const BODY_KURSUS = {
+  kode: 'p02',
+  judul: 'Kursus Baru',
+  deskripsi: 'Deskripsi.',
+  tentang: 'Tentang.',
+  durasi: '2 sesi',
+  level: 'Pemula',
+  format: 'Online',
+  instruktur: 'Tim',
+  peran: 'Pengajar',
+  inisial: 'T',
+  target: ['Mahasiswa'],
+  hasil: ['Hasil 1'],
+  modul: [{ judul: 'M1', deskripsi: 'D1', meta: '2 video' }],
+};
+
+describe('CRUD /api/kursus (admin)', () => {
+  test('POST valid → 201 + kode di-uppercase; duplikat → 409; invalid → 400; tanpa token → 401', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/kursus', BODY_KURSUS);
+    expect(status).toBe(201);
+    expect((body as { kode: string }).kode).toBe('P02');
+    expect(calls.find((c) => c.method === 'kursus.create')).toBeDefined();
+
+    const duplikat = await kirimTulis(app, 'POST', '/api/kursus', { ...BODY_KURSUS, kode: 'R01' });
+    expect(duplikat.status).toBe(409);
+
+    const invalid = await kirimTulis(app, 'POST', '/api/kursus', { ...BODY_KURSUS, modul: [] });
+    expect(invalid.status).toBe(400);
+
+    const tanpaToken = await kirimTulis(app, 'POST', '/api/kursus', BODY_KURSUS, null);
+    expect(tanpaToken.status).toBe(401);
+  });
+
+  test('PUT cocok → 200; kode beda dengan path → 400; tidak ada → 404', async () => {
+    const { app } = createTestApp();
+    const { status } = await kirimTulis(app, 'PUT', '/api/kursus/R01', { ...BODY_KURSUS, kode: 'r01' });
+    expect(status).toBe(200);
+
+    const beda = await kirimTulis(app, 'PUT', '/api/kursus/R01', BODY_KURSUS);
+    expect(beda.status).toBe(400);
+
+    const hilang = await kirimTulis(app, 'PUT', '/api/kursus/Z99', { ...BODY_KURSUS, kode: 'Z99' });
+    expect(hilang.status).toBe(404);
+  });
+
+  test('DELETE ada → 200; tidak ada → 404; tanpa token → 401', async () => {
+    const { app } = createTestApp();
+    expect((await kirimTulis(app, 'DELETE', '/api/kursus/R01', null)).status).toBe(200);
+    expect((await kirimTulis(app, 'DELETE', '/api/kursus/Z99', null)).status).toBe(404);
+    expect((await kirimTulis(app, 'DELETE', '/api/kursus/R01', null, null)).status).toBe(401);
+  });
+});
+
+describe('POST /api/admin/upload + GET /uploads/:nama', () => {
+  const filePng = () => new File([new Uint8Array([137, 80, 78, 71])], 'foto.png', { type: 'image/png' });
+
+  async function kirimFile(
+    app: ReturnType<typeof createApp>,
+    file: unknown,
+    token: string | null = TOKEN_ADMIN,
+  ) {
+    const form = new FormData();
+    form.append('gambar', file as Blob);
+    const res = await app.handle(
+      new Request('http://localhost/api/admin/upload', {
+        method: 'POST',
+        headers: token === null ? {} : { Authorization: `Bearer ${token}` },
+        body: form,
+      }),
+    );
+    return { status: res.status, body: (await res.json()) as unknown };
+  }
+
+  test('tanpa token → 401; file bukan gambar → 400', async () => {
+    const { mkdtemp, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = await mkdtemp(join(tmpdir(), 'rute-unggah-'));
+    const lama = process.env.UPLOAD_DIR;
+    process.env.UPLOAD_DIR = dir;
+    try {
+      const { app } = createTestApp();
+      const tanpaToken = await kirimFile(app, filePng(), null);
+      expect(tanpaToken.status).toBe(401);
+
+      const form = new FormData();
+      form.append('gambar', new File(['halo'], 'a.txt', { type: 'text/plain' }));
+      const res = await app.handle(
+        new Request('http://localhost/api/admin/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${TOKEN_ADMIN}` },
+          body: form,
+        }),
+      );
+      expect(res.status).toBe(400);
+    } finally {
+      if (lama === undefined) delete process.env.UPLOAD_DIR;
+      else process.env.UPLOAD_DIR = lama;
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('file valid → 201 { url } + GET menyajikan file; traversal → 404', async () => {
+    const { mkdtemp, rm } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = await mkdtemp(join(tmpdir(), 'rute-unggah-'));
+    const lama = process.env.UPLOAD_DIR;
+    process.env.UPLOAD_DIR = dir;
+    try {
+      const { app } = createTestApp();
+      const { status, body } = await kirimFile(app, filePng());
+      expect(status).toBe(201);
+      const url = (body as { url: string }).url;
+      expect(url).toMatch(/^\/uploads\/[A-Za-z0-9_-]+\.png$/);
+
+      const ambil = await app.handle(new Request(`http://localhost${url}`));
+      expect(ambil.status).toBe(200);
+      expect(ambil.headers.get('Content-Type')).toBe('image/png');
+
+      const hilang = await app.handle(new Request('http://localhost/uploads/tidak-ada.png'));
+      expect(hilang.status).toBe(404);
+      const jahat = await app.handle(new Request('http://localhost/uploads/..%2Fapp.ts'));
+      expect(jahat.status).toBe(404);
+    } finally {
+      if (lama === undefined) delete process.env.UPLOAD_DIR;
+      else process.env.UPLOAD_DIR = lama;
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

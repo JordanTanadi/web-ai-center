@@ -90,9 +90,17 @@ export default function Beranda() {
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading kicker={t('Layanan')} title={t('Pilih Jalur Kolaborasimu')} sub={t('Pelatihan dan inference solution untuk kebutuhan nyata.')} />
           <div className="mt-8 grid gap-5 md:grid-cols-2">
-            {daftarLayanan.map((c) => (
+            {daftarLayanan.map((c, i) => (
               <article key={c.slug} className="card-accent flex flex-col rounded-2xl border border-line bg-white p-6 text-center">
-                <h3 className="font-display font-bold">{t(c.nama)}</h3>
+                <span
+                  aria-hidden="true"
+                  className={`mx-auto inline-block rounded-full px-3 py-1 font-mono text-[11px] font-bold tracking-[0.2em] ${
+                    i % 2 === 0 ? 'bg-yellow text-navy' : 'bg-mint text-navy'
+                  }`}
+                >
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <h3 className="mt-3 font-display font-bold">{t(c.nama)}</h3>
                 <p className="mt-2 flex-1 text-sm text-muted">{t(c.tagline)}</p>
                 <Link
                   to={`/layanan/${c.slug}`}
@@ -138,8 +146,12 @@ export default function Beranda() {
       </section> */}
 
       {/* aria-label langsung pada <section> (jadi region bernama); tanpa wrapper div. */}
-      <section aria-label={t('Dokumentasi Kegiatan')} className="bg-brand py-16 text-white">
-        <div className="mx-auto max-w-6xl px-6">
+      <section aria-label={t('Dokumentasi Kegiatan')} className="relative overflow-hidden bg-gradient-to-br from-brand via-brand to-navy py-16 text-white">
+        {/* Dekorasi gradient profesional: blob terang + aksen mint/kuning di atas navy. */}
+        <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-bright opacity-50 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-mint opacity-25 blur-3xl" />
+        <div aria-hidden="true" className="pointer-events-none absolute right-1/4 top-8 h-20 w-20 rounded-full bg-yellow opacity-30 blur-2xl" />
+        <div className="relative mx-auto max-w-6xl px-6">
           {/* Highlight 3 dokumentasi teratas — GET /api/dokumentasi (limit penampilan di frontend). */}
           <SectionBar
             kicker="Kegiatan"
@@ -175,7 +187,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      <section aria-label={t('Berita Terkini')} className="py-16">
+      <section aria-label={t('Berita Terkini')} className="bg-gradient-to-b from-white to-sky/60 py-16">
         <div className="mx-auto max-w-6xl px-6">
           {/* Highlight 3 berita teratas — GET /api/berita (limit penampilan di frontend). */}
           <SectionBar

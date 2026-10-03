@@ -4,7 +4,7 @@ import PetaEmbed from './PetaEmbed.tsx';
 import { kontakDummy } from '../data/kontak.ts';
 
 describe('PetaEmbed', () => {
-  it('iframe memakai mode embed + pin koordinat kontak', () => {
+  it('iframe langsung tampil memakai mode embed + pin koordinat kontak', () => {
     render(<PetaEmbed latitude={kontakDummy.latitude} longitude={kontakDummy.longitude} />);
     const frame = screen.getByTitle('Peta lokasi AI Center');
     expect(frame).toHaveAttribute(

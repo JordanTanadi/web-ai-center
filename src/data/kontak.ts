@@ -77,10 +77,12 @@ export function waLinkKontak(kontak: Kontak): string {
 }
 
 /**
- * Link email (mailto:) dengan subjek & pesan pembawa terisi otomatis — meniru
- * pengalaman link WhatsApp (wa.me + greeting) agar klik email langsung membuka
- * aplikasi email dalam kondisi siap kirim (konsul PROGRESS 2: email "langsung
- * arah ke email, kayak WA").
+ * Link compose Gmail langsung (bukan `mailto:`) — klik membuka tab tulis Gmail
+ * dengan tujuan, subjek & pesan pembawa terisi otomatis, meniru pengalaman
+ * link WhatsApp (wa.me + greeting). Dipakai agar pengunjung tanpa aplikasi
+ * email desktop tetap langsung sampai ke form pengiriman (konsul: email
+ * "langsung arah ke email, kayak WA" — ternyata `mailto:` tidak membuka
+ * apa-apa bila tidak ada mail client terdaftar, jadi ganti ke Gmail web).
  *
  * @throws {Error} bila email kosong.
  */
@@ -92,8 +94,9 @@ export function mailLinkKontak(
     throw new Error('Email kontak kosong');
   }
   return (
-    `mailto:${kontak.email}` +
-    `?subject=${encodeURIComponent(subjek)}` +
+    `https://mail.google.com/mail/?view=cm&fs=1` +
+    `&to=${encodeURIComponent(kontak.email)}` +
+    `&su=${encodeURIComponent(subjek)}` +
     `&body=${encodeURIComponent(kontak.whatsappGreeting)}`
   );
 }

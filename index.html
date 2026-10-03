@@ -14,14 +14,9 @@
       content="AI Center Universitas Surabaya — riset AI, pelatihan, inference solution, dan publikasi."
     />
     <title>AI Center Universitas Surabaya</title>
-    <link
-      rel="preload"
-      as="image"
-      href="/hero-1-1600.webp"
-      imagesrcset="/hero-1-800.webp 800w, /hero-1-1600.webp 1600w"
-      imagesizes="100vw"
-      fetchpriority="high"
-    />
+    <!-- Catatan performa: JANGAN preload gambar hero di sini — index.html dipakai
+         SEMUA rute, preload global menghukum halaman tanpa hero (tentang-kami,
+         tim, …). LCP beranda sudah ditangani fetchpriority="high" di HeroCarousel. -->
   </head>
   <body>
     <div id="root"></div>

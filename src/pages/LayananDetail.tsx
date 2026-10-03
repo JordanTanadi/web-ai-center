@@ -59,7 +59,7 @@ function KatalogKursus() {
             className={`rounded-full px-4 py-1.5 text-sm font-medium ${
               filter === kat.nilai
                 ? 'bg-brand text-white'
-                : 'border border-line bg-white text-ink hover:border-brand hover:text-brand'
+                : 'border border-line bg-white text-ink transition-colors hover:border-brand hover:bg-soft hover:text-brand'
             }`}
           >
             {t(kat.label)}

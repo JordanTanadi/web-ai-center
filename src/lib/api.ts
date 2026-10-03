@@ -8,12 +8,21 @@
  * tanpa prefix `/api`.
  *
  * Kegagalan (network, HTTP non-2xx, respons tidak valid) TIDAK melempar ke
- * pemanggil: dicatat eksplisit via console.error lalu data fallback dipakai,
- * supaya halaman tetap tampil (konten dummy) meski backend mati.
+ * pemanggil: fallback dipakai supaya halaman tetap tampil (konten dummy)
+ * meski backend mati. Fallback hanya dicatat via console.warn saat DEV —
+ * build produksi diam total agar console bebas error (skor Best Practices
+ * Lighthouse menghukum setiap console.error).
  */
 
 /** Root API dari env; `''` = integrasi belum dikonfigurasi (pakai data dummy). */
 export const BASE_URL_API = resolveBaseUrl(import.meta.env.VITE_API_BASE_URL);
+
+/** Catat pemakaian fallback — DEV saja (console.warn, bukan error). */
+function laporkanFallback(path: string, error: unknown): void {
+  if (import.meta.env.DEV) {
+    console.warn(`[api] gagal memuat ${path} — memakai data fallback:`, error);
+  }
+}
 
 /** Normalisasi base URL: trim + buang slash berlebih di akhir. */
 export function resolveBaseUrl(raw: string | undefined): string {
@@ -57,7 +66,7 @@ export async function ambilJson<T>(
     }
     return data as T;
   } catch (error) {
-    console.error(`[api] gagal memuat ${path} — memakai data fallback:`, error);
+    laporkanFallback(path, error);
     return fallback;
   }
 }
@@ -78,7 +87,7 @@ export async function ambilDaftar<T>(
     }
     return items as T[];
   } catch (error) {
-    console.error(`[api] gagal memuat ${path} — memakai data fallback:`, error);
+    laporkanFallback(path, error);
     return fallback;
   }
 }
@@ -140,4 +149,55 @@ export async function kirimJsonAdmin<T>(
     );
   }
   return data as T;
+}
+
+/** Respons `POST /api/admin/upload`: path publik file tersimpan. */
+export interface HasilUnggahan {
+  url: string;
+}
+
+/**
+ * Unggah file gambar admin (multipart `gambar`) — MELEMPAR `ErrorApi` saat
+ * gagal, seperti kirimJsonAdmin. Balikan `url` (`/uploads/…`) disimpan ke
+ * kolom `gambar` konten.
+ */
+export async function kirimFileAdmin(
+  path: string,
+  file: File,
+  opsi: {
+    /** Token sesi admin → header `Authorization: Bearer <token>`. */
+    token?: string;
+    /** Override base URL (khusus test); default `BASE_URL_API`. */
+    baseUrl?: string;
+  } = {},
+): Promise<HasilUnggahan> {
+  const baseUrl = opsi.baseUrl ?? BASE_URL_API;
+  if (baseUrl === '') {
+    throw new ErrorApi('Backend belum dikonfigurasi — set VITE_API_BASE_URL di .env', 0);
+  }
+  const form = new FormData();
+  form.append('gambar', file);
+  let res: Response;
+  try {
+    res = await fetch(bangunUrlApi(baseUrl, path), {
+      method: 'POST',
+      headers: opsi.token !== undefined ? { Authorization: `Bearer ${opsi.token}` } : {},
+      body: form,
+    });
+  } catch (error) {
+    throw new ErrorApi(`Tidak bisa terhubung ke backend (${String(error)})`, 0);
+  }
+  const data: unknown = await res.json().catch(() => null);
+  if (!res.ok) {
+    const pesanServer = (data as { error?: unknown } | null)?.error;
+    throw new ErrorApi(
+      typeof pesanServer === 'string' ? pesanServer : `HTTP ${res.status}`,
+      res.status,
+    );
+  }
+  const url = (data as { url?: unknown } | null)?.url;
+  if (typeof url !== 'string' || url === '') {
+    throw new ErrorApi('Respons upload tidak valid (tanpa url)', res.status);
+  }
+  return { url };
 }

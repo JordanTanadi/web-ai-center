@@ -97,6 +97,11 @@ describe('Gradient tombol utama (.btn-primary)', () => {
     // hover/active memberi umpan balik → filter brightness
     expect(css).toMatch(/\.btn-primary:hover\s*\{[^}]*brightness/);
   });
+
+  it('hover terasa: tombol terangkat + bayangan (bukan cuma brightness)', () => {
+    expect(css).toMatch(/\.btn-primary:hover\s*\{[^}]*translateY\(-2px\)/);
+    expect(css).toMatch(/\.btn-primary:hover\s*\{[^}]*box-shadow/);
+  });
 });
 
 describe('Tombol aksen konversi (.btn-accent, CTA berani)', () => {
@@ -108,6 +113,20 @@ describe('Tombol aksen konversi (.btn-accent, CTA berani)', () => {
 
   it('kontras teks navy di atas oranye ≥ 4.5 (WCAG AA)', () => {
     expect(contrast(token('--color-navy'), token('--color-orange'))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('hover terasa: tombol terangkat + bayangan (bukan cuma brightness)', () => {
+    expect(css).toMatch(/\.btn-accent:hover\s*\{[^}]*translateY\(-2px\)/);
+    expect(css).toMatch(/\.btn-accent:hover\s*\{[^}]*box-shadow/);
+  });
+
+  it('konsisten: SEMUA tombol lain ikut terangkat + berbayang saat hover', () => {
+    expect(css).toMatch(
+      /button:not\(:disabled\):not\(\.btn-primary\):not\(\.btn-accent\):hover\s*\{[^}]*translateY\(-2px\)/,
+    );
+    expect(css).toMatch(
+      /button:not\(:disabled\):not\(\.btn-primary\):not\(\.btn-accent\):hover\s*\{[^}]*box-shadow/,
+    );
   });
 });
 

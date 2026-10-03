@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SectionHeading from './SectionHeading.tsx';
-import NewsCard from './NewsCard.tsx';
+import NewsCard, { aksenKategori } from './NewsCard.tsx';
 import { aset } from '../lib/basis.ts';
 import DokumentasiCard from './DokumentasiCard.tsx';
 import TeamCard from './TeamCard.tsx';
@@ -140,6 +140,39 @@ describe('DokumentasiCard', () => {
       </MemoryRouter>,
     );
     expect(screen.queryByRole('img')).toBeNull();
+  });
+
+  it('chip kategori memakai aksen Figma + font mono (Geist Mono)', () => {
+    render(
+      <MemoryRouter>
+        <DokumentasiCard item={{ ...item, kategori: 'Demo' }} />
+      </MemoryRouter>,
+    );
+    const chip = screen
+      .getAllByText('Demo')
+      .find((el) => el.tagName === 'SPAN' && el.className.includes('font-mono'));
+    expect(chip).not.toBeUndefined();
+    expect(chip?.className).toMatch(/bg-orange/);
+  });
+
+  it('placeholder tanpa gambar: panel gradient + label kategori (tetap tanpa img)', () => {
+    render(
+      <MemoryRouter>
+        <DokumentasiCard item={item} showLink={false} />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole('img')).toBeNull();
+    // Kategori muncul 2x: chip + label panel placeholder.
+    expect(screen.getAllByText('Workshop').length).toBeGreaterThanOrEqual(2);
+  });
+});
+
+describe('aksenKategori (token Figma)', () => {
+  it('memetakan kategori ke warna pelengkap', () => {
+    expect(aksenKategori('Workshop')).toContain('bg-yellow');
+    expect(aksenKategori('Demo')).toContain('bg-orange');
+    expect(aksenKategori('Kunjungan')).toContain('bg-mint');
+    expect(aksenKategori('Kesehatan')).toContain('bg-teal');
   });
 });
 

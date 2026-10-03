@@ -29,4 +29,14 @@ describe('TeamCard', () => {
     expect(screen.queryByRole('img')).not.toBeInTheDocument();
     expect(screen.getByText('B')).toBeInTheDocument();
   });
+
+  it('foto tampil utuh tanpa potong (bingkai 4/5 + object-top, bukan lingkaran crop)', () => {
+    const anggota = timDummy[0];
+    render(<TeamCard anggota={anggota} />);
+
+    const foto = screen.getByRole('img', { name: anggota.nama });
+    expect(foto.className).toContain('aspect-[4/5]');
+    expect(foto.className).toContain('object-top');
+    expect(foto.className).not.toContain('rounded-full');
+  });
 });

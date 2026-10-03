@@ -154,7 +154,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                     className={`mt-3 block w-full rounded-lg border px-4 py-2 text-left text-sm ${
                       state.quizPassed[aktif]
                         ? 'border-brand bg-sky font-bold text-brand'
-                        : 'border-line hover:border-brand'
+                        : 'border-line hover:border-brand hover:bg-soft'
                     }`}
                   >
                     {state.quizPassed[aktif]
@@ -164,7 +164,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                   <button
                     type="button"
                     onClick={() => setFeedback(FEEDBACK_SALAH)}
-                    className="mt-2 block w-full rounded-lg border border-line px-4 py-2 text-left text-sm hover:border-brand"
+                    className="mt-2 block w-full rounded-lg border border-line px-4 py-2 text-left text-sm transition-colors hover:border-brand hover:bg-soft"
                   >
                     {t(OPSI_QUIZ_SALAH)}
                   </button>
@@ -206,7 +206,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                           className={`block w-full rounded-lg px-3 py-2 text-left text-sm disabled:cursor-not-allowed disabled:opacity-60 ${
                             aktifIni
                               ? 'bg-brand font-bold text-white'
-                              : 'border border-line hover:border-brand'
+                              : 'border border-line transition-colors hover:border-brand hover:bg-soft'
                           }`}
                         >
                           {t(state.completed[i] ? '✓ ' : terkunci ? '[TERKUNCI] ' : '')}

@@ -118,6 +118,12 @@ describe('BeritaDetail', () => {
     renderDetail('slug-aneh');
     expect(screen.getByText(/tidak ditemukan/i)).toBeInTheDocument();
   });
+
+  it('banner visual selalu ada: placeholder branded bila tanpa foto', () => {
+    const { container } = renderDetail(beritaDummy[0].slug);
+    expect(container.querySelector('.aspect-video')).not.toBeNull();
+    expect(screen.queryByRole('img')).toBeNull();
+  });
 });
 
 describe('Dokumentasi', () => {
@@ -170,6 +176,27 @@ describe('DokumentasiDetail', () => {
       </MemoryRouter>,
     );
     expect(screen.getByText(/tidak ditemukan/i)).toBeInTheDocument();
+  });
+
+  it('banner visual selalu ada: foto asli bila ada, placeholder bila tidak', () => {
+    const { container, unmount } = render(
+      <MemoryRouter initialEntries={['/dokumentasi/workshop-pengenalan-gpu-lab']}>
+        <Routes>
+          <Route path="/dokumentasi/:slug" element={<DokumentasiDetail />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(container.querySelector('.aspect-video')).not.toBeNull();
+    expect(screen.queryByRole('img')).toBeNull();
+    unmount();
+    render(
+      <MemoryRouter initialEntries={['/dokumentasi/klasifikasi-xray-pneumonia']}>
+        <Routes>
+          <Route path="/dokumentasi/:slug" element={<DokumentasiDetail />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByRole('img', { name: /klasifikasi x-ray pneumonia/i })).toBeInTheDocument();
   });
 });
 

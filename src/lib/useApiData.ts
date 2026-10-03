@@ -7,7 +7,7 @@
  * - Integrasi mati (`VITE_API_BASE_URL` kosong, atau mode test) → selalu
  *   `fallback`, tidak ada request sama sekali.
  * - Gagal memuat → `ambilJson`/`ambilDaftar` sudah mengembalikan `fallback`
- *   (dengan console.error), jadi halaman tidak pernah kosong.
+ *   (fallback hanya dicatat via console.warn saat DEV), jadi halaman tidak pernah kosong.
  * - `path` berubah (navigasi antar detail) → state ikut di-reset ke `fallback`
  *   baru saat render juga, supaya tidak ada konten lama yang tersisa.
  *
