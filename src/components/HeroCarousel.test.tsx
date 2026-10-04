@@ -158,4 +158,18 @@ describe('HeroCarousel', () => {
     renderHero(slides.slice(0, 1));
     expect(screen.queryByRole('tablist')).toBeNull();
   });
+
+  it('dekorasi atmosfer referensi: 2 glow radial + 2 cincin, semua aria-hidden', () => {
+    renderHero();
+    const section = document.querySelector('section');
+    expect(section).not.toBeNull();
+    const dekor = [...(section?.querySelectorAll('div') ?? [])].filter((el) =>
+      el.className.includes('pointer-events-none'),
+    );
+    expect(dekor).toHaveLength(4);
+    for (const d of dekor) expect(d).toHaveAttribute('aria-hidden', 'true');
+    // Dekorasi tak menambah tautan (hero tetap tanpa CTA) dan heading tetap utuh.
+    expect(section?.querySelectorAll('a')).toHaveLength(0);
+    expect(screen.getByRole('heading', { level: 1 })).toBeInTheDocument();
+  });
 });

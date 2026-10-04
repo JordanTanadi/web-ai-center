@@ -205,7 +205,13 @@ export function Header() {
 export function Footer() {
   const t = useT();
   return (
-    <footer id="kontak" className="footer-legacy-font scroll-mt-20 bg-navy text-sm text-[#c9cde6]">
+    <footer id="kontak" className="footer-legacy-font relative isolate scroll-mt-20 overflow-hidden bg-navy text-sm text-[#c9cde6]">
+      {/* Glow biru dari atas (dekoratif; -z-10) — meredam potongan section terang → footer. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-44"
+        style={{ background: 'linear-gradient(to bottom, rgb(37 71 244 / 0.3), transparent)' }}
+      />
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.7fr_0.7fr_1fr]">
         <div>
           <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-surface px-4 py-2 lg:flex-nowrap">

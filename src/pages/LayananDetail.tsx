@@ -301,7 +301,18 @@ export default function LayananDetail() {
     <div className={`mx-auto px-6 py-14 ${isPelatihan ? 'max-w-6xl' : 'max-w-3xl'}`}>
       {isPelatihan ? (
         <>
-          <section aria-labelledby="pelatihan-heading" className="rounded-xl bg-navy text-white">
+          <section aria-labelledby="pelatihan-heading" className="relative isolate overflow-hidden rounded-xl bg-navy text-white">
+            {/* Atmosfer gradasi ala referensi: glow radial biru + cincin di atas navy
+                (dekoratif, aria-hidden; -z-10 → di bawah konten, di atas bg). */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-10"
+              style={{
+                background:
+                  'radial-gradient(90% 110% at 5% 0%, rgb(37 71 244 / 0.55), transparent 60%), radial-gradient(70% 80% at 100% 10%, rgb(6 116 253 / 0.35), transparent 65%)',
+              }}
+            />
+            <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -right-24 h-72 w-72 rounded-full border border-white/10" />
             <div className="grid gap-8 px-6 py-8 md:grid-cols-[1.2fr_0.8fr] md:items-center md:p-10">
               <header>
                 <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-yellow">

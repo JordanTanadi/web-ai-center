@@ -150,4 +150,23 @@ describe('Beranda — PROGRESS 2 (konsul 2 Okt)', () => {
     expect(screen.getByText('Rekomendasi Implan Gigi Otomatis')).toBeInTheDocument();
     expect(screen.queryByText('Workshop Pengenalan GPU Lab')).not.toBeInTheDocument();
   });
+
+  it('transisi antar section dihaluskan (fade -z + berita menyatu ke footer navy)', () => {
+    renderBeranda();
+
+    // Section layanan/dokumentasi ber-isolate agar fade & cincin dekoratif (-z-10)
+    // berada di bawah konten, di atas background section.
+    const layanan = screen.getByRole('heading', { name: 'Pilih Jalur Kolaborasimu' }).closest('section');
+    expect(layanan?.className).toContain('isolate');
+    expect(layanan?.querySelectorAll('div[style*="linear-gradient"]')).toHaveLength(1);
+
+    const dok = screen.getByRole('heading', { name: 'Dokumentasi Kegiatan' }).closest('section');
+    expect(dok?.className).toContain('isolate');
+    expect(dok?.className).toContain('bg-gradient-to-br');
+    expect(dok?.querySelectorAll('div[style*="linear-gradient"]')).toHaveLength(2);
+
+    // Section berita berakhir navy agar menyambung mulus ke footer.
+    const berita = screen.getByRole('heading', { name: 'Berita Terkini' }).closest('section');
+    expect(berita?.className).toContain('to-navy');
+  });
 });

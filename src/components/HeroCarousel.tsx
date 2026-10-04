@@ -51,6 +51,20 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
     >
       {/* Background: min-height dicadangkan agar tidak layout-shift (CLS) */}
       <div className="relative min-h-[520px] md:min-h-[560px]">
+        {/* Atmosfer gradasi ala referensi desain: glow radial biru + cincin konsentris
+            (dekoratif, aria-hidden; di belakang lapisan slide sehingga teks tak terganggu). */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(75% 65% at 15% 0%, rgb(37 71 244 / 0.5), transparent 62%)' }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0"
+          style={{ background: 'radial-gradient(65% 55% at 90% 25%, rgb(6 116 253 / 0.35), transparent 65%)' }}
+        />
+        <div aria-hidden="true" className="pointer-events-none absolute -left-40 -top-36 h-96 w-96 rounded-full border border-white/10" />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-10 h-[460px] w-[460px] rounded-full border border-white/10" />
         <motion.div
           key={index % slides.length}
           initial={hematGerak ? false : { opacity: 0 }}

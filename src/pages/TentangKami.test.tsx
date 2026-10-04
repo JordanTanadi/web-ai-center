@@ -31,6 +31,10 @@ describe('TentangKami', () => {
     // Blok CTA penutup: region bernama + link ke layanan (beranda) & tim.
     const cta = screen.getByRole('region', { name: 'Langkah Selanjutnya' });
     expect(cta).toBeInTheDocument();
+    // Aliran biru ala referensi: gradasi brand → navy, bukan bidang datar.
+    expect(cta.className).toContain('bg-gradient-to-br');
+    expect(cta.className).toContain('from-brand');
+    expect(cta.className).toContain('to-navy');
     expect(screen.getByRole('link', { name: 'Lihat Layanan' })).toHaveAttribute(
       'href',
       '/beranda#layanan',

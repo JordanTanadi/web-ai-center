@@ -86,7 +86,15 @@ export default function Beranda() {
       {/* Slide hero — GET /api/hero-slides. */}
       <HeroCarousel slides={slidesHero} />
 
-      <section id="layanan" className="scroll-mt-20 bg-sky py-16">
+      <section id="layanan" className="relative isolate scroll-mt-20 overflow-hidden bg-sky py-16">
+        {/* Transisi hero → sky dihaluskan (fade navy, -z-10 di bawah konten) + cincin ala referensi. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-16"
+          style={{ background: 'linear-gradient(to bottom, #0A2240, transparent)' }}
+        />
+        <div aria-hidden="true" className="pointer-events-none absolute -right-28 -top-24 h-72 w-72 rounded-full border border-brand/15" />
+        <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-brand/10" />
         <div className="mx-auto max-w-6xl px-6">
           <SectionHeading kicker={t('Layanan')} title={t('Pilih Jalur Kolaborasimu')} sub={t('Pelatihan dan inference solution untuk kebutuhan nyata.')} />
           <div className="mt-8 grid gap-5 md:grid-cols-2">
@@ -146,7 +154,18 @@ export default function Beranda() {
       </section> */}
 
       {/* aria-label langsung pada <section> (jadi region bernama); tanpa wrapper div. */}
-      <section aria-label={t('Dokumentasi Kegiatan')} className="relative overflow-hidden bg-gradient-to-br from-brand via-brand to-navy py-16 text-white">
+      <section aria-label={t('Dokumentasi Kegiatan')} className="relative isolate overflow-hidden bg-gradient-to-br from-brand via-brand to-navy py-16 text-white">
+        {/* Jembatan warna antar section (atas: sky → gradasi, bawah: gradasi → krem). */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-16"
+          style={{ background: 'linear-gradient(to bottom, #D8EBF8, transparent)' }}
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-16"
+          style={{ background: 'linear-gradient(to top, #FAF7F0, transparent)' }}
+        />
         {/* Dekorasi gradient profesional: blob terang + aksen mint/kuning di atas navy. */}
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-bright opacity-50 blur-3xl" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-mint opacity-25 blur-3xl" />
@@ -187,7 +206,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      <section aria-label={t('Berita Terkini')} className="bg-gradient-to-b from-white to-sky/60 py-16">
+      <section aria-label={t('Berita Terkini')} className="bg-gradient-to-b from-white via-sky to-navy py-16">
         <div className="mx-auto max-w-6xl px-6">
           {/* Highlight 3 berita teratas — GET /api/berita (limit penampilan di frontend). */}
           <SectionBar
