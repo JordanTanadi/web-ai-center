@@ -115,7 +115,7 @@ export default function PelatihanDetail() {
           </div>
           {/* Progress/status belajar dari state LMS (localStorage); TODO_BACKEND:
               progress per user + rating dari backend ketika akun peserta ada. */}
-          <aside className="h-fit rounded-2xl border border-line bg-white p-6 shadow-sm">
+          <aside className="h-fit rounded-2xl border border-line bg-surface p-6 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{t(aksesKursus.label)}</p>
             <h2 className="mt-2 font-display text-xl font-bold">{t(label.judul)}</h2>
             {belajar.ratingSubmitted ? (
@@ -189,7 +189,7 @@ export default function PelatihanDetail() {
             <h2 id="materi-heading" className="font-display text-xl font-bold">
               {t('Materi yang akan dipelajari')}
             </h2>
-            <ol className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-white">
+            <ol className="mt-4 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
               {kursus.modul.map((m, idx) => (
                 <li key={m.judul} className="flex gap-4 p-5">
                   <span
@@ -214,7 +214,7 @@ export default function PelatihanDetail() {
             <div className="flex items-center gap-4">
               <span
                 aria-hidden="true"
-                className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand font-display font-bold text-white"
+                className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand/10 font-display font-bold text-brand"
               >
                 {kursus.inisial}
               </span>
@@ -231,7 +231,7 @@ export default function PelatihanDetail() {
 
         <aside
           aria-labelledby="info-heading"
-          className="h-fit rounded-2xl border border-line bg-white p-6 lg:sticky lg:top-24"
+          className="h-fit rounded-2xl border border-line bg-surface p-6 lg:sticky lg:top-24"
         >
           <h3 id="info-heading" className="font-display text-lg font-bold">
             {t('Informasi kursus')}

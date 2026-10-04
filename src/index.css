@@ -6,7 +6,7 @@
 @custom-variant fine-pointer (@media (pointer: fine));
 
 /* Font identitas di-self-host di public/fonts (sumber: Fontshare, lisensi gratis)
-   supaya pasti termuat tanpa CDN eksternal — sebelumnya API Fontshare membalas
+   supaya pasti tanpa CDN eksternal — sebelumnya API Fontshare membalas
    Satoshi untuk permintaan gabungan sehingga General Sans gagal & jatuh ke Helvetica. */
 @font-face {
   font-family: 'General Sans';
@@ -74,6 +74,9 @@
   /* Turunan (tidak ada di daftar Figma; dibuat agar kontras WCAG terpenuhi) */
   --color-muted: #526275; /* teks sekunder: ~6.2:1 di putih */
   --color-line: #E3EAF3; /* hairline border/divider */
+  --color-surface: #FCFBF7; /* permukaan kartu/panel: putih dihangatkan supaya
+                               menyatu dengan section krem (permintaan: UI kurang
+                               kontras / lebih menyatu) — bukan putih menyilaukan */
   --font-display: 'Cabinet Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-body: 'General Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   /* Font pelengkap teknis (kicker/tag/snippet): Geist Mono — sudah di-self-host
@@ -123,7 +126,7 @@ input {
 .btn-primary:hover {
   filter: brightness(1.15);
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px -12px rgb(10 34 64 / 0.6);
+  box-shadow: 0 12px 26px -12px rgb(10 34 64 / 0.26);
 }
 
 .btn-primary:active {
@@ -143,7 +146,7 @@ input {
 .btn-accent:hover {
   filter: brightness(1.1);
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px -12px rgb(10 34 64 / 0.5);
+  box-shadow: 0 12px 26px -12px rgb(10 34 64 / 0.22);
 }
 
 .btn-accent:active {
@@ -163,7 +166,7 @@ button:not(:disabled):not(.btn-primary):not(.btn-accent) {
 
 button:not(:disabled):not(.btn-primary):not(.btn-accent):hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 26px -12px rgb(10 34 64 / 0.45);
+  box-shadow: 0 12px 26px -12px rgb(10 34 64 / 0.2);
 }
 
 button:not(:disabled):not(.btn-primary):not(.btn-accent):active {
@@ -181,7 +184,7 @@ button:not(:disabled):not(.btn-primary):not(.btn-accent):active {
 
 .card-accent:hover {
   transform: translateY(-6px);
-  box-shadow: 0 22px 45px -28px rgb(10 34 64 / 0.35);
+  box-shadow: 0 22px 45px -28px rgb(10 34 64 / 0.14);
 }
 
 @media (prefers-reduced-motion: reduce) {

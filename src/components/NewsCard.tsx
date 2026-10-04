@@ -78,7 +78,7 @@ export function CardImage({
 export default function NewsCard({ item, showLink = true }: { item: BeritaItem; showLink?: boolean }) {
   const t = useT();
   return (
-    <article className="card-accent flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+    <article className="card-accent flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
       <CardImage src={item.gambar} alt={item.judul} label="Berita" />
       <div className="flex flex-1 flex-col p-6">
         <p className="font-mono text-[11px] font-bold uppercase tracking-[0.14em] text-muted">

@@ -41,7 +41,7 @@ export default function TestimoniSlider({
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
     >
-      <figure aria-live="polite" className="min-h-52 rounded-2xl bg-white p-8 text-ink md:p-9">
+      <figure aria-live="polite" className="min-h-52 rounded-2xl bg-surface p-8 text-ink md:p-9">
         <blockquote className="text-base md:text-lg">“{t(current.kutipan)}”</blockquote>
         <figcaption className="mt-4 font-display font-bold">
           {t(current.nama)} <span className="font-body font-normal text-muted">· {t(current.peran)}</span>

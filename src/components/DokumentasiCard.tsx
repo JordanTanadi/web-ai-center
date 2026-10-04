@@ -14,7 +14,7 @@ export default function DokumentasiCard({
   const t = useT();
   const aksen = aksenKategori(item.kategori);
   return (
-    <article className="card-accent flex flex-col overflow-hidden rounded-2xl border border-line bg-white shadow-sm">
+    <article className="card-accent flex flex-col overflow-hidden rounded-2xl border border-line bg-surface shadow-sm">
       <CardImage src={item.gambar} alt={item.judul} aksen={aksen} label={item.kategori} />
       <div className="flex flex-1 flex-col p-6">
         <div className="flex flex-wrap items-center gap-2">

@@ -7,7 +7,7 @@ export default function TeamCard({ anggota }: { anggota: AnggotaTim }) {
   const initial = anggota.nama.charAt(0) || '?';
   const foto = urlGambar(anggota.foto);
   return (
-    <article className="card-accent rounded-2xl border border-line bg-white p-6 text-center">
+    <article className="card-accent rounded-2xl border border-line bg-surface p-6 text-center">
       {foto ? (
         // Foto UTUH tanpa potong: bingkai aspect-[4/5] persis rasio foto asli
         // (520×650) + object-cover, jadi tidak ada crop; object-top menjaga

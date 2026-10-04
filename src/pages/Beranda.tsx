@@ -91,7 +91,7 @@ export default function Beranda() {
           <SectionHeading kicker={t('Layanan')} title={t('Pilih Jalur Kolaborasimu')} sub={t('Pelatihan dan inference solution untuk kebutuhan nyata.')} />
           <div className="mt-8 grid gap-5 md:grid-cols-2">
             {daftarLayanan.map((c, i) => (
-              <article key={c.slug} className="card-accent flex flex-col rounded-2xl border border-line bg-white p-6 text-center">
+              <article key={c.slug} className="card-accent flex flex-col rounded-2xl border border-line bg-surface p-6 text-center">
                 <span
                   aria-hidden="true"
                   className={`mx-auto inline-block rounded-full px-3 py-1 font-mono text-[11px] font-bold tracking-[0.2em] ${
@@ -125,7 +125,7 @@ export default function Beranda() {
           />
           <ul className="mt-8 grid gap-5 md:grid-cols-3">
             {fasilitasDummy.map((r) => (
-              <li key={r.slug} className="card-accent overflow-hidden rounded-2xl border border-line bg-white">
+              <li key={r.slug} className="card-accent overflow-hidden rounded-2xl border border-line bg-surface">
                 <img
                   src={aset(r.gambar)}
                   alt={r.alt}

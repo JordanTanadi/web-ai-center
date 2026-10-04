@@ -63,7 +63,7 @@ export function Header() {
   }, [kontenOpen]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-white">
+    <header className="sticky top-0 z-50 border-b border-line bg-surface">
       <div className="mx-auto flex max-w-6xl items-center gap-6 px-6 py-3 md:fine-pointer:max-lg:gap-4">
         <NavLink to="/beranda" className="flex items-center gap-3" aria-label="AI Center Ubaya beranda">
           {/* Logo kompak: besar di <640px & ≥1024px; mengecil di 640–767px (header burger)
@@ -111,7 +111,7 @@ export function Header() {
                 <div
                   role="menu"
                   aria-label={t('Submenu konten')}
-                  className="absolute left-0 top-full min-w-44 rounded-xl border border-line bg-white py-2 shadow-lg"
+                  className="absolute left-0 top-full min-w-44 rounded-xl border border-line bg-surface py-2 shadow-lg"
                 >
                   {kontenLinks.map((l) => (
                     <NavLink
@@ -208,7 +208,7 @@ export function Footer() {
     <footer id="kontak" className="footer-legacy-font scroll-mt-20 bg-navy text-sm text-[#c9cde6]">
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.7fr_0.7fr_1fr]">
         <div>
-          <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-white px-4 py-2 lg:flex-nowrap">
+          <div className="mb-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl bg-surface px-4 py-2 lg:flex-nowrap">
             <img src={aset('/ubaya_logo.png')} alt="Logo Ubaya" width="200" height="67" className="h-7 w-auto max-w-full shrink-0" loading="lazy" />
             <span className="h-7 w-px shrink-0 bg-line" aria-hidden="true" />
             <img

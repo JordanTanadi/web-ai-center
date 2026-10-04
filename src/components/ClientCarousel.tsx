@@ -58,11 +58,11 @@ export default function ClientCarousel({
               key={k.nama}
               role="group"
               aria-roledescription="slide"
-              className="card-accent rounded-2xl border border-line bg-white p-6 text-center"
+              className="card-accent rounded-2xl border border-line bg-surface p-6 text-center"
             >
               <div
                 aria-hidden="true"
-                className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-soft font-display text-xl font-bold text-brand"
+                className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-line bg-soft font-display text-xl font-bold text-brand"
               >
                 {k.nama.charAt(0) || '?'}
               </div>

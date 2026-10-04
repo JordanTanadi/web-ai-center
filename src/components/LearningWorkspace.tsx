@@ -90,7 +90,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
             const selesai = state.completed[i];
             const terkunci = modulTerkunci(i, state.completed);
             return (
-              <li key={m.judul} className="rounded-2xl border border-line bg-white p-5">
+              <li key={m.judul} className="rounded-2xl border border-line bg-surface p-5">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
                   {t(`Modul ${String(i + 1).padStart(2, '0')}`)}
                 </p>
@@ -108,7 +108,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                       selesai
                         ? 'btn-primary text-white'
                         : terkunci
-                          ? 'border border-line bg-white text-muted'
+                          ? 'border border-line bg-surface text-muted'
                           : 'border border-brand text-brand hover:bg-brand hover:text-white'
                     }`}
                   >
@@ -121,7 +121,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
         </ul>
 
         {aktif !== null && modulAktif ? (
-          <article className="mt-8 rounded-2xl border border-line bg-white p-6">
+          <article className="mt-8 rounded-2xl border border-line bg-surface p-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
@@ -221,7 +221,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
           </article>
         ) : null}
 
-        <div className="mt-8 rounded-2xl border border-line bg-white p-6">
+        <div className="mt-8 rounded-2xl border border-line bg-surface p-6">
           <PrototipePanel state={state} onAction={onAction} />
         </div>
       </div>
@@ -245,12 +245,12 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
         <p className="mt-2 text-muted">
           {t('Selamat, seluruh tahapan kursus ini sudah selesai. Kamu bisa kembali kapan saja untuk memperbaiki catatan prototipe.')}
         </p>
-        <p className="mt-4 inline-block rounded-lg bg-brand px-4 py-2 text-sm font-bold text-white">
+        <p className="mt-4 inline-block rounded-lg bg-brand/10 px-4 py-2 text-sm font-bold text-brand">
           {t('Kursus selesai · Progress 100%')}
         </p>
 
         {state.ratingSubmitted ? (
-          <div className="mt-4 rounded-xl bg-soft p-4">
+          <div className="mt-4 rounded-xl border border-line bg-soft p-4">
             <strong>
               {t('Rating kamu:')} {'★'.repeat(state.rating)}
               {'☆'.repeat(5 - state.rating)}
@@ -280,7 +280,7 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
                 name="rating"
                 required
                 defaultValue=""
-                className="rounded-lg border border-line bg-white px-3 py-2 font-normal"
+                className="rounded-lg border border-line bg-surface px-3 py-2 font-normal"
               >
                 <option value="" disabled>
                   {t('Pilih rating')}
@@ -428,7 +428,7 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
         </button>
       </form>
 
-      <div className="mt-6 rounded-xl bg-soft p-4">
+      <div className="mt-6 rounded-xl border border-line bg-soft p-4">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
           {t('Model lab · dummy inference')}
         </p>
@@ -442,7 +442,7 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
             <select
               value={tugasModel}
               onChange={(e) => setTugasModel(e.target.value as TugasModel)}
-              className="rounded-lg border border-line bg-white px-3 py-2 font-normal"
+              className="rounded-lg border border-line bg-surface px-3 py-2 font-normal"
             >
               <option value="summarize">{t('Ringkas teks')}</option>
               <option value="classify">{t('Klasifikasi masalah')}</option>
@@ -467,7 +467,7 @@ function PrototipePanel({ state, onAction }: { state: StateBelajar; onAction: (a
         >
           {t('Jalankan model')}
         </button>
-        <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-white p-4 text-sm">
+        <pre className="mt-3 overflow-x-auto whitespace-pre-wrap rounded-lg bg-surface p-4 text-sm">
           {t(outputModel)}
         </pre>
       </div>

@@ -58,8 +58,8 @@ function KatalogKursus() {
             onClick={() => setFilter(kat.nilai)}
             className={`rounded-full px-4 py-1.5 text-sm font-medium ${
               filter === kat.nilai
-                ? 'bg-brand text-white'
-                : 'border border-line bg-white text-ink transition-colors hover:border-brand hover:bg-soft hover:text-brand'
+                ? 'border border-brand bg-brand/10 text-brand'
+                : 'border border-line bg-surface text-ink transition-colors hover:border-brand hover:bg-soft hover:text-brand'
             }`}
           >
             {t(kat.label)}
@@ -72,7 +72,7 @@ function KatalogKursus() {
       ) : (
         <ul className="mt-6 grid gap-5 sm:grid-cols-2">
           {terlihat.map((k) => (
-            <li key={k.kode} className="flex flex-col rounded-2xl border border-line bg-white p-6">
+            <li key={k.kode} className="flex flex-col rounded-2xl border border-line bg-surface p-6">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded bg-soft px-2 py-0.5 font-body text-xs font-bold text-brand">
                   {k.kode}
@@ -124,7 +124,7 @@ function KatalogKursus() {
 function ModulUnggulan() {
   const t = useT();
   return (
-    <section aria-labelledby="modul-unggulan-heading" className="mt-12 rounded-2xl border border-line bg-white p-6 text-center md:p-8">
+    <section aria-labelledby="modul-unggulan-heading" className="mt-12 rounded-2xl border border-line bg-surface p-6 text-center md:p-8">
       <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
         {t(modulUnggulan.eyebrow)}
       </p>
@@ -195,7 +195,7 @@ function AlurKerjaInference() {
       </h2>
       <ol className="mt-5 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-3">
         {alurInference.map((l) => (
-          <li key={l.nomor} className="rounded-2xl border border-line bg-white p-5">
+          <li key={l.nomor} className="rounded-2xl border border-line bg-surface p-5">
             <p className="font-display text-lg font-bold text-brand">{l.nomor}</p>
             <h3 className="mt-1 font-display font-bold">{t(l.judul)}</h3>
             <p className="mt-1 text-sm text-muted">{t(l.deskripsi)}</p>
@@ -212,7 +212,7 @@ function ContohPenerapanInference() {
   return (
     <section
       aria-labelledby="contoh-penerapan-heading"
-      className="mt-12 rounded-2xl border border-line bg-white p-6 text-center md:p-8"
+      className="mt-12 rounded-2xl border border-line bg-surface p-6 text-center md:p-8"
     >
       <h2 id="contoh-penerapan-heading" className="font-display text-xl font-bold">
         {t('Contoh penerapan')}
@@ -328,7 +328,7 @@ export default function LayananDetail() {
                   ))}
                 </div>
               </header>
-              <aside className="rounded-lg bg-white p-6 text-ink md:p-7">
+              <aside className="rounded-lg bg-surface p-6 text-ink md:p-7">
                 <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
                   {t(panelCaraBelajar.kicker)}
                 </p>

@@ -67,6 +67,12 @@ describe('Token identitas visual (src/index.css @theme)', () => {
   it('footer gelap dipertahankan font lamanya (Helvetica) sementara', () => {
     expect(css).toMatch(/\.footer-legacy-font\s*\{[^}]*Helvetica/);
   });
+
+  it('token turunan surface: putih dihangatkan agar kartu menyatu dengan section krem', () => {
+    expect(token('--color-surface')).toBe('#FCFBF7');
+    // Nyaris sama dengan krem → kontras kartu vs section rendah ("lebih menyatu")
+    expect(contrast(token('--color-surface'), token('--color-soft'))).toBeLessThan(1.1);
+  });
 });
 
 describe('Kontras WCAG AA pasangan warna kunci', () => {

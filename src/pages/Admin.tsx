@@ -269,7 +269,7 @@ export default function Admin() {
               type="password"
               autoComplete="current-password"
               required
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+              className="mt-1 w-full rounded-lg border border-line px-3 py-2"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
@@ -308,7 +308,7 @@ export default function Admin() {
         <button
           type="button"
           onClick={keluar}
-          className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-soft"
+          className="rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
         >
           Keluar
         </button>
@@ -329,7 +329,7 @@ export default function Admin() {
               bersihkanGambar();
             }}
             className={`rounded-lg px-4 py-2 text-sm font-semibold ${
-              jenis === j ? 'bg-brand text-white' : 'border border-slate-300 hover:bg-soft'
+              jenis === j ? 'bg-brand text-white' : 'border border-line hover:bg-soft'
             }`}
           >
             {LABEL_JENIS[j]}
@@ -371,7 +371,7 @@ export default function Admin() {
           daftar.length === 0 ? (
             <p className="mt-4 text-sm text-muted">Belum ada konten {labelJenis}.</p>
           ) : (
-            <ul className="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200">
+            <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
               {daftar.map((item) => (
                 <li key={item.slug} className="flex items-center gap-3 px-4 py-3">
                   <div className="min-w-0 flex-1">
@@ -391,7 +391,7 @@ export default function Admin() {
                       setMode('ubah');
                       setPesan(null);
                     }}
-                    className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+                    className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:bg-soft"
                   >
                     Ubah
                   </button>
@@ -407,7 +407,7 @@ export default function Admin() {
             </ul>
           )
         ) : (
-          <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-slate-200 p-5">
+          <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
             <h3 className="font-semibold">
               {mode === 'ubah' ? `Ubah konten — ${slugEdit ?? ''}` : 'Tambah konten baru'}
             </h3>
@@ -425,7 +425,7 @@ export default function Admin() {
                       type="file"
                       accept="image/jpeg,image/png,image/webp"
                       onChange={pilihGambar}
-                      className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                      className="mt-1 w-full rounded-lg border border-line px-3 py-2"
                     />
                     <p className="mt-1 text-xs text-muted">
                       {form.gambar !== ''
@@ -436,7 +436,7 @@ export default function Admin() {
                       <img
                         src={pratinjau}
                         alt="Pratinjau gambar baru"
-                        className="mt-2 aspect-video w-full max-w-xs rounded-lg border border-slate-200 bg-soft object-cover"
+                        className="mt-2 aspect-video w-full max-w-xs rounded-lg border border-line bg-soft object-cover"
                       />
                     )}
                   </div>
@@ -445,7 +445,7 @@ export default function Admin() {
                     id={`field-${f.kunci}`}
                     required={f.wajib === true}
                     rows={f.baris ?? 4}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                    className="mt-1 w-full rounded-lg border border-line px-3 py-2"
                     value={form[f.kunci] ?? ''}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, [f.kunci]: event.target.value }))
@@ -456,7 +456,7 @@ export default function Admin() {
                     id={`field-${f.kunci}`}
                     type={f.tanggal === true ? 'date' : 'text'}
                     required={f.wajib === true}
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2"
+                    className="mt-1 w-full rounded-lg border border-line px-3 py-2"
                     value={form[f.kunci] ?? ''}
                     onChange={(event) =>
                       setForm((prev) => ({ ...prev, [f.kunci]: event.target.value }))
@@ -480,7 +480,7 @@ export default function Admin() {
                   setPesan(null);
                   bersihkanGambar();
                 }}
-                className="rounded-lg border border-slate-300 px-5 py-2 font-semibold hover:bg-soft"
+                className="rounded-lg border border-line px-5 py-2 font-semibold hover:bg-soft"
               >
                 Batal
               </button>
@@ -658,7 +658,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       </p>
     );
 
-  const inputCls = 'mt-1 w-full rounded-lg border border-slate-300 px-3 py-2';
+  const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
   const labelCls = 'block text-sm font-semibold';
   const teksSingkat: Array<{ kunci: keyof typeof k; label: string }> = [
     { kunci: 'judul', label: 'Judul' },
@@ -691,7 +691,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
         daftar.length === 0 ? (
           <p className="mt-4 text-sm text-muted">Belum ada konten Kursus.</p>
         ) : (
-          <ul className="mt-4 divide-y divide-slate-200 rounded-xl border border-slate-200">
+          <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
             {daftar.map((item) => (
               <li key={item.kode} className="flex items-center gap-3 px-4 py-3">
                 <div className="min-w-0 flex-1">
@@ -703,7 +703,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                 <button
                   type="button"
                   onClick={() => mulaiUbah(item)}
-                  className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+                  className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:bg-soft"
                 >
                   Ubah
                 </button>
@@ -719,7 +719,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
           </ul>
         )
       ) : (
-        <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-slate-200 p-5">
+        <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
           <h3 className="font-semibold">
             {mode === 'ubah' ? `Ubah kursus — ${kodeEdit ?? ''}` : 'Tambah kursus baru'}
           </h3>
@@ -733,7 +733,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
               required
               disabled={mode === 'ubah'}
               placeholder="R01"
-              className={`${inputCls} disabled:bg-slate-100`}
+              className={`${inputCls} disabled:bg-soft`}
               value={mode === 'ubah' ? (kodeEdit ?? '') : k.kode}
               onChange={(event) => atur('kode', event.target.value)}
             />
@@ -813,7 +813,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
             <p className={labelCls}>Daftar modul *</p>
             <ol className="mt-2 space-y-3">
               {modul.map((m, i) => (
-                <li key={i} className="rounded-lg border border-slate-200 p-3">
+                <li key={i} className="rounded-lg border border-line p-3">
                   <p className="text-xs font-bold text-muted">Modul {i + 1}</p>
                   <input
                     type="text"
@@ -857,7 +857,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
             <button
               type="button"
               onClick={() => setModul((prev) => [...prev, { ...MODUL_KOSONG }])}
-              className="mt-2 rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold hover:bg-soft"
+              className="mt-2 rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
             >
               + Tambah modul
             </button>
@@ -876,7 +876,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                 setKodeEdit(null);
                 setPesan(null);
               }}
-              className="rounded-lg border border-slate-300 px-5 py-2 font-semibold hover:bg-soft"
+              className="rounded-lg border border-line px-5 py-2 font-semibold hover:bg-soft"
             >
               Batal
             </button>
