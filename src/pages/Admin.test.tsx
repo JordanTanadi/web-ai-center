@@ -107,6 +107,20 @@ describe('Admin — layar login', () => {
     expect(screen.getByRole('heading', { name: 'Masuk Admin' })).toBeInTheDocument();
     expect(mockDaftar).not.toHaveBeenCalled();
   });
+
+  it('login diblokir rate-limit (429) → pesan server tampil, tetap di layar login', async () => {
+    mockKirim.mockRejectedValue(
+      new Error('Terlalu banyak percobaan login — coba lagi dalam 600 detik') as never,
+    );
+    render(<Admin />);
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'salah' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Masuk' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Terlalu banyak percobaan login');
+    expect(localStorage.getItem(KEY_TOKEN_ADMIN)).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Masuk Admin' })).toBeInTheDocument();
+    expect(mockDaftar).not.toHaveBeenCalled();
+  });
 });
 
 describe('Admin — dashboard', () => {
@@ -245,6 +259,57 @@ describe('Admin — dashboard', () => {
       expect.objectContaining({ body: expect.objectContaining({ gambar: '/uploads/abc.png' }) }),
     );
   });
+
+  it('unggah file gagal → pesan error, tanpa simpan, form tetap terbuka', async () => {
+    mockUnggah.mockRejectedValue(new Error('Ukuran file melebihi 2 MB') as never);
+    await renderDashboard();
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+    fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Karya Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-02' } });
+    fireEvent.change(screen.getByLabelText(/^Kategori/), { target: { value: 'Project' } });
+    fireEvent.change(screen.getByLabelText(/^Deskripsi/), { target: { value: 'Deskripsi.' } });
+    const file = new File([new Uint8Array([1])], 'foto.png', { type: 'image/png' });
+    fireEvent.change(screen.getByLabelText(/gambar/i), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Ukuran file melebihi 2 MB');
+    // Gagal unggah → tak pernah kirim body; form tetap terbuka; sesi tidak ikut keluar.
+    expect(mockKirim).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Simpan' })).toBeInTheDocument();
+    expect(localStorage.getItem(KEY_TOKEN_ADMIN)).toBe(TOKEN);
+  });
+
+  it('berita: tambah baru → POST /berita dengan penulis, ringkasan, isi', async () => {
+    mockKirim.mockResolvedValue({ ...BERITA, judul: 'Berita Baru' } as never);
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/berita' ? [BERITA] : [DOK, DOK2],
+    );
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Berita' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+    fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Berita Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-03' } });
+    fireEvent.change(screen.getByLabelText(/^Penulis/), { target: { value: 'Humas' } });
+    fireEvent.change(screen.getByLabelText(/^Ringkasan/), { target: { value: 'Ringkasan baru.' } });
+    fireEvent.change(screen.getByLabelText(/^Isi/), { target: { value: 'Isi lengkap baru.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Berita Baru');
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/berita',
+      expect.objectContaining({
+        method: 'POST',
+        token: TOKEN,
+        body: expect.objectContaining({
+          judul: 'Berita Baru',
+          penulis: 'Humas',
+          ringkasan: 'Ringkasan baru.',
+          isi: 'Isi lengkap baru.',
+        }),
+      }),
+    );
+  });
 });
 
 describe('Admin — tab Kursus', () => {
@@ -306,5 +371,75 @@ describe('Admin — tab Kursus', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah modul' }));
     expect(screen.getByLabelText('Judul modul 2')).toBeInTheDocument();
+  });
+
+  it('Ubah kursus → form terisi, kode terkunci, Simpan → PUT /kursus/:kode', async () => {
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/kursus' ? [KURSUS] : [DOK, DOK2],
+    );
+    mockKirim.mockResolvedValue({ ...KURSUS, judul: 'Dasar ML Revisi' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    // Tunggu daftar kursus termuat dulu (muat async) sebelum aksi baris.
+    expect(await screen.findByText('Dasar ML')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
+
+    expect(screen.getByLabelText('Judul *')).toHaveValue('Dasar ML');
+    // Kode adalah kunci: tidak boleh diganti saat edit.
+    expect(screen.getByLabelText(/^Kode/)).toBeDisabled();
+    expect(screen.getByText(/kode kunci tidak bisa diganti/i)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('diperbarui');
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/kursus/R01',
+      expect.objectContaining({
+        method: 'PUT',
+        token: TOKEN,
+        body: expect.objectContaining({ kode: 'R01' }),
+      }),
+    );
+  });
+
+  it('Hapus kursus → ya: DELETE /kursus/:kode + pesan; tidak: batal tanpa request', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/kursus' ? [KURSUS] : [DOK, DOK2],
+    );
+    mockKirim.mockResolvedValue({ ok: true } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    expect(await screen.findByText('Dasar ML')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Hapus' })[0]);
+
+    expect(konfirmasi).toHaveBeenCalledWith(expect.stringContaining('Dasar ML'));
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/kursus/R01',
+      expect.objectContaining({ method: 'DELETE', token: TOKEN }),
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent('dihapus');
+
+    konfirmasi.mockReturnValue(false);
+    mockKirim.mockClear();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Hapus' })[0]);
+    expect(mockKirim).not.toHaveBeenCalled();
+    konfirmasi.mockRestore();
+  });
+
+  it('aksi kursus 401 → keluar otomatis + pesan sesi berakhir', async () => {
+    const err401 = Object.assign(new Error('Belum login'), { status: 401 });
+    mockKirim.mockRejectedValue(err401 as never);
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/kursus' ? [KURSUS] : [DOK, DOK2],
+    );
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    expect(await screen.findByText('Dasar ML')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('heading', { name: 'Masuk Admin' })).toBeInTheDocument();
+    expect(localStorage.getItem(KEY_TOKEN_ADMIN)).toBeNull();
+    expect(screen.getByRole('alert')).toHaveTextContent('Sesi berakhir');
   });
 });
