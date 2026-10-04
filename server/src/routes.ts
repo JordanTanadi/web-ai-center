@@ -3,12 +3,14 @@
  * murni dari lib/query dan repository yang disuntikkan — tanpa akses DB langsung.
  *
  * Route tulis (POST/PUT/DELETE dokumentasi & berita) dijaga token hasil
- * POST /api/admin/login (konsul PROGRESS 2: login sederhana 1 akun).
+ * POST /api/admin/login (konsul PROGRESS 2: login sederhana 1 akun);
+ * login itu sendiri dibatasi rate-limit 5 gagal / 10 menit per IP → 429.
  *
  * Kontrak daftar: { items: T[] }; detail tidak ada → 404 { error }.
  */
 import type { Elysia } from 'elysia';
 import { buatTokenAdmin, passwordCocok, tokenAdminValid, tokenDariHeader } from './auth';
+import { buatRateLimitLogin, kunciIpDariRequest } from './lib/rateLimit';
 import { normalizeSearch, parseOrder, parsePagination, trimOrNull } from './lib/query';
 import { slugDariJudul, validasiBerita, validasiDokumentasi, validasiKursus } from './lib/tulis';
 import {
@@ -47,6 +49,9 @@ export function registerRoutes(
     return token !== null && tokenAdminValid(token, adminPassword);
   };
   const dirUnggahan = opsi?.uploadDir ?? resolveUploadDir();
+
+  /** Batas brute-force login admin: 5 gagal / 10 menit per IP (fixed-window). */
+  const limiterLogin = buatRateLimitLogin({ batasPercobaan: 5, jendelaMs: 10 * 60_000 });
 
   return app
     .get('/api/health', () => ({ status: 'ok' as const }))
@@ -137,13 +142,25 @@ export function registerRoutes(
     })
 
     // — Admin: login sederhana (1 akun; password dari ADMIN_PASSWORD) ————
-    .post('/api/admin/login', ({ body, set }) => {
+    .post('/api/admin/login', ({ body, request, set }) => {
+      // Rate-limit dulu sebelum verifikasi: blokir tanpa membuka oracle password.
+      const kunciIp = kunciIpDariRequest(request);
+      const keputusan = limiterLogin.periksa(kunciIp);
+      if (!keputusan.diizinkan) {
+        set.status = 429;
+        set.headers['Retry-After'] = String(keputusan.detikTersisa);
+        return {
+          error: `Terlalu banyak percobaan login — coba lagi dalam ${keputusan.detikTersisa} detik`,
+        };
+      }
       const input = (body ?? {}) as { password?: unknown };
       const password = typeof input.password === 'string' ? input.password : '';
       if (!passwordCocok(password, adminPassword)) {
+        limiterLogin.catatGagal(kunciIp);
         set.status = 401;
         return { error: 'Password salah' };
       }
+      limiterLogin.reset(kunciIp);
       return { token: buatTokenAdmin(adminPassword) };
     })
 

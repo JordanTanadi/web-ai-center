@@ -430,6 +430,46 @@ describe('POST /api/admin/login', () => {
     const bukanObjek = await kirimTulis(app, 'POST', '/api/admin/login', 'halo');
     expect(bukanObjek.status).toBe(401);
   });
+
+  test('gagal beruntun dibatasi 429 + Retry-After; login benar me-reset hitungan', async () => {
+    const { app } = createTestApp();
+    const kirim = (password: string, ip: string) =>
+      app.handle(
+        new Request('http://localhost/api/admin/login', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-forwarded-for': ip },
+          body: JSON.stringify({ password }),
+        }),
+      );
+
+    // IP A: 5 gagal pertama tetap 401 (kuota habis), percobaan ke-6 diblokir 429.
+    for (let i = 0; i < 5; i++) {
+      expect((await kirim('salah', '198.51.100.1')).status).toBe(401);
+    }
+    const terkunci = await kirim('salah', '198.51.100.1');
+    expect(terkunci.status).toBe(429);
+    expect(terkunci.headers.get('Retry-After')).not.toBeNull();
+    const pesan = (await terkunci.json()) as { error: string };
+    expect(pesan.error).toContain('percobaan login');
+
+    // IP A tetap terkunci walau password benar — dicek sebelum verifikasi.
+    expect((await kirim(ADMIN_PASSWORD_TEST, '198.51.100.1')).status).toBe(429);
+
+    // IP lain tidak terdampak lock.
+    expect((await kirim(ADMIN_PASSWORD_TEST, '198.51.100.2')).status).toBe(200);
+
+    // Login benar mereset hitungan: 4 gagal + sukses, lalu 5 gagal baru
+    // terkunci pada percobaan keenam sesudah reset.
+    for (let i = 0; i < 4; i++) {
+      expect((await kirim('salah', '198.51.100.3')).status).toBe(401);
+    }
+    expect((await kirim(ADMIN_PASSWORD_TEST, '198.51.100.3')).status).toBe(200);
+    for (let i = 0; i < 4; i++) {
+      expect((await kirim('salah', '198.51.100.3')).status).toBe(401);
+    }
+    expect((await kirim('salah', '198.51.100.3')).status).toBe(401); // gagal ke-5 setelah reset
+    expect((await kirim('salah', '198.51.100.3')).status).toBe(429); // baru terkunci
+  });
 });
 
 describe('guard route tulis (dokumentasi & berita)', () => {
