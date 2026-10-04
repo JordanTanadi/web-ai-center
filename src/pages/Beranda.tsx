@@ -206,7 +206,7 @@ export default function Beranda() {
         </div>
       </section>
 
-      <section aria-label={t('Berita Terkini')} className="bg-gradient-to-b from-white to-sky/60 py-16">
+      <section aria-label={t('Berita Terkini')} className="bg-gradient-to-b from-white via-sky/70 to-navy py-16">
         <div className="mx-auto max-w-6xl px-6">
           {/* Highlight 3 berita teratas — GET /api/berita (limit penampilan di frontend). */}
           <SectionBar

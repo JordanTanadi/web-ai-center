@@ -209,8 +209,8 @@ export function Footer() {
       {/* Glow biru dari atas (dekoratif; -z-10) — meredam potongan section terang → footer. */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-32"
-        style={{ background: 'linear-gradient(to bottom, rgb(37 71 244 / 0.18), transparent)' }}
+        className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-40"
+        style={{ background: 'linear-gradient(to bottom, rgb(37 71 244 / 0.24), transparent)' }}
       />
       <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 md:grid-cols-2 lg:grid-cols-[1.2fr_1.1fr_0.7fr_0.7fr_1fr]">
         <div>

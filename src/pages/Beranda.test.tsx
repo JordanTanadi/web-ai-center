@@ -151,7 +151,7 @@ describe('Beranda — PROGRESS 2 (konsul 2 Okt)', () => {
     expect(screen.queryByText('Workshop Pengenalan GPU Lab')).not.toBeInTheDocument();
   });
 
-  it('transisi antar section dihaluskan (fade -z; gradasi diredam sesuai masukan)', () => {
+  it('transisi antar section dihaluskan (fade -z; gradasi berita menyambung footer)', () => {
     renderBeranda();
 
     // Section layanan/dokumentasi ber-isolate agar fade & cincin dekoratif (-z-10)
@@ -165,8 +165,10 @@ describe('Beranda — PROGRESS 2 (konsul 2 Okt)', () => {
     expect(dok?.className).toContain('bg-gradient-to-br');
     expect(dok?.querySelectorAll('div[style*="linear-gradient"]')).toHaveLength(2);
 
-    // Section berita kembali ringan (putih → sky lembut), tanpa ramp navy penuh.
+    // Section berita tetap berakhir navy (sesuai referensi), dengan sky di tengah
+    // sedikit diredam (via-sky/70) agar tidak terlalu gradasi.
     const berita = screen.getByRole('heading', { name: 'Berita Terkini' }).closest('section');
-    expect(berita?.className).toContain('to-sky/60');
+    expect(berita?.className).toContain('to-navy');
+    expect(berita?.className).toContain('via-sky/70');
   });
 });
