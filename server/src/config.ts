@@ -5,7 +5,13 @@
  */
 
 export const DEFAULT_PORT = 3000;
-export const DEFAULT_CORS_ORIGINS = ['http://localhost:5173'];
+// Origin frontend lokal yang diizinkan: dev (5173), `vite preview` (4173),
+// dan XAMPP tanpa port (http://localhost/coding/…). Produksi diset via env CORS_ORIGIN.
+export const DEFAULT_CORS_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:4173',
+  'http://localhost',
+];
 /**
  * Fallback password admin HANYA untuk development tanpa `.env`.
  * index.ts mencetak peringatan bila fallback ini yang terpakai.

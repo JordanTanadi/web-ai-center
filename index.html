@@ -9,6 +9,40 @@
          General Sans (isi) + Cabinet Grotesk (judul); dipreload agar tampil cepat. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/GeneralSans-Regular.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/fonts/CabinetGrotesk-Bold.woff2" crossorigin />
+    <!-- Preload HANYA hero beranda (elemen LCP): URL gambar baru diketahui setelah
+         chunk rute dimuat, tanpa ini unduhan terlambat dan skor Lighthouse turun.
+         Kondisional per pathname — halaman lain sengaja tidak di-preload agar
+         tidak berebut bandwidth (menjaga skor halaman lain).
+         __PETA_CHUNK diisi plugin `peta-chunk-rute` saat build (dev tanpa peta). -->
+    <script>
+      (function () {
+        var p = location.pathname;
+        var beranda = /(^|\/)beranda\/?$/.test(p) || /coding\/Web-AI-Center\/?$/.test(p);
+        if (beranda) {
+          var l = document.createElement('link');
+          l.rel = 'preload';
+          l.as = 'image';
+          l.href = '/coding/Web-AI-Center/hero-1-800.webp';
+          l.setAttribute('imagesrcset', '/coding/Web-AI-Center/hero-1-800.webp 800w, /coding/Web-AI-Center/hero-1-1600.webp 1600w');
+          l.setAttribute('imagesizes', '100vw');
+          document.head.appendChild(l);
+        }
+        // modulepreload chunk rute lazy: konten tampil pada render pertama tanpa
+        // menunggu rantai dynamic-import berurutan (pengungkit terbesar skor mobile).
+        var peta = window.__PETA_CHUNK;
+        if (!peta) return;
+        for (var k in peta) {
+          if (p.indexOf(k) === -1 && !(k === '/beranda' && beranda)) continue;
+          var urls = peta[k];
+          for (var i = 0; i < urls.length; i++) {
+            var m = document.createElement('link');
+            m.rel = 'modulepreload';
+            m.href = urls[i];
+            document.head.appendChild(m);
+          }
+        }
+      })();
+    </script>
     <meta
       name="description"
       content="AI Center Universitas Surabaya — riset AI, pelatihan, inference solution, dan publikasi."

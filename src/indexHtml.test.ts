@@ -32,4 +32,26 @@ describe('index.html (SEO & performa)', () => {
     expect(html).toContain('rel="preload"');
     expect(html).not.toContain('hero-1.jpg');
   });
+
+  it('hero beranda di-preload kondisional: srcset cocok dengan atribut <img> + guard pathname', () => {
+    // Preload dibuat lewat script agar hanya aktif di rute beranda (LCP hero);
+    // halaman lain tidak ikut agar tidak berebut bandwidth.
+    expect(html).toContain("l.rel = 'preload'");
+    expect(html).toContain("l.as = 'image'");
+    expect(html).toContain('hero-1-800.webp 800w, /coding/Web-AI-Center/hero-1-1600.webp 1600w');
+    // imagesizes HARUS sama dengan atribut img hero (100vw) agar pilihan varian
+    // identik — kalau beda, browser mengunduh dua kali (malah merusak skor).
+    expect(html).toContain('imagesizes\', \'100vw');
+    // Guard: hanya rute beranda / base — bukan preload buta untuk semua halaman.
+    expect(html).toContain('beranda');
+  });
+
+  it('chunk rute lazy di-modulepreload memakai peta build (window.__PETA_CHUNK)', () => {
+    // Peta diisi plugin `peta-chunk-rute` (URL ber-hash → tak bisa hardcode);
+    // tanpa peta (mis. dev) skrip keluar tanpa aksi apa pun.
+    expect(html).toContain('window.__PETA_CHUNK');
+    expect(html).toContain("m.rel = 'modulepreload'");
+    // Guard agar preload chunk tidak membocor ke halaman lain.
+    expect(html).toContain('p.indexOf(k) === -1');
+  });
 });

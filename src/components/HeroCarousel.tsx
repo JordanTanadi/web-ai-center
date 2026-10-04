@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
 import type { HeroSlide } from '../data/hero.ts';
 import { aset, srcSetBerbasis } from '../lib/basis.ts';
 import { prefersReducedMotion } from '../lib/prefersReducedMotion.ts';
@@ -11,7 +10,11 @@ import { useT } from '../lib/i18n.tsx';
 // (interval 7 detik, dots bar di bawah).
 // Hanya satu slide yang di-mount dalam satu waktu agar tidak ada duplikat
 // heading/link tersembunyi bagi keyboard & screen reader.
-// Animasi (motion): background fade + teks naik halus saat slide masuk.
+// Animasi memakai kelas CSS (`.hero-slide` / `.hero-teks` di index.css):
+// visual sama seperti versi motion (background fade + teks naik halus saat
+// slide masuk), tapi tanpa evaluasi library animasi di pemuatan awal —
+// pengungkit skor Lighthouse. Slide di-remount per index, jadi animasi CSS
+// berjalan otomatis tiap pergantian; dimatikan pada prefers-reduced-motion.
 export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: HeroSlide[]; intervalMs?: number }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -32,8 +35,6 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
 
   if (slides.length === 0) return null;
   const current = slides[index % slides.length];
-  // Animasi entrance dimatikan bila pengguna meminta reduced motion.
-  const hematGerak = prefersReducedMotion();
   const isImageLeft = (current.layout ?? 'default') === 'image-left';
   // 'teks-kanan' (konsul 2 Okt): teks dipindah ke samping kanan pada area foto
   // yang kosong — subjek/kiri background tetap terlihat, tanpa memecah jadi kolom.
@@ -65,14 +66,11 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
         />
         <div aria-hidden="true" className="pointer-events-none absolute -left-40 -top-36 h-96 w-96 rounded-full border border-white/10" />
         <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-10 h-[460px] w-[460px] rounded-full border border-white/10" />
-        <motion.div
+        <div
           key={index % slides.length}
-          initial={hematGerak ? false : { opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, ease: 'easeOut' }}
           aria-roledescription="slide"
           aria-label={t(`Slide ${index + 1} dari ${slides.length}`)}
-          className={isImageLeft ? 'absolute inset-0 flex items-stretch' : 'absolute inset-0 flex items-center'}
+          className={`hero-slide ${isImageLeft ? 'absolute inset-0 flex items-stretch' : 'absolute inset-0 flex items-center'}`}
         >
             {isImageLeft ? (
               // Layout image-left: grid dengan gambar di kiri (40%), teks di kanan (60%)
@@ -95,11 +93,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                 )}
                 <div className="flex-1 flex items-center bg-gradient-to-r from-navy via-navy/80 to-navy/60">
                   <div className="relative z-10 w-full max-w-2xl px-6 py-20 md:py-24 ml-auto">
-                    <motion.div
-                      initial={hematGerak ? false : { opacity: 0, y: 16 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
-                    >
+                    <div className="hero-teks">
                       <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
                         {t(current.eyebrow)}
                       </span>
@@ -107,7 +101,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                         {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
                       </h1>
                       <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
-                    </motion.div>
+                    </div>
                   </div>
                 </div>
               </>
@@ -142,12 +136,7 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                 />
                 {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}
                 <div className="relative z-10 w-full mx-auto max-w-6xl px-6 py-20 md:py-24">
-                  <motion.div
-                    className={teksKanan ? 'md:ml-auto md:max-w-2xl' : undefined}
-                    initial={hematGerak ? false : { opacity: 0, y: 16 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
-                  >
+                  <div className={`hero-teks ${teksKanan ? 'md:ml-auto md:max-w-2xl' : ''}`}>
                     <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
                       {t(current.eyebrow)}
                     </span>
@@ -155,11 +144,11 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                       {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
                     </h1>
                     <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
-                  </motion.div>
+                  </div>
                 </div>
               </>
             )}
-          </motion.div>
+          </div>
       </div>
 
       {slides.length > 1 && (

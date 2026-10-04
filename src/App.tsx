@@ -2,20 +2,24 @@ import { Suspense, lazy } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import SiteLayout from './components/SiteLayout.tsx';
 import { PenyediaBahasa, useT } from './lib/i18n.tsx';
+// Rute RINGAN diimpor langsung (bukan lazy): JS awal sudah memuatnya, jadi
+// konten tampil pada render pertama — menutup jeda FCP→LCP saat audit Lighthouse
+// (dengan chunk terpisah, konten menunggu unduhan ekstra ±1 detik di Slow 4G).
+// Rute berat tetap lazy agar JS awal tidak membengkak.
+import LayananDetail from './pages/LayananDetail.tsx';
+import TentangKami from './pages/TentangKami.tsx';
+import Tim from './pages/Tim.tsx';
+import Berita from './pages/Berita.tsx';
+import BeritaDetail from './pages/BeritaDetail.tsx';
+import Dokumentasi from './pages/Dokumentasi.tsx';
+import DokumentasiDetail from './pages/DokumentasiDetail.tsx';
+import NotFound from './pages/NotFound.tsx';
 
-// Code-splitting per route agar JS awal hanya memuat yang dibutuhkan halaman ini.
+// Rute berat → code-splitting: JS awal hanya memuat yang dibutuhkan halaman ini.
 const Beranda = lazy(() => import('./pages/Beranda.tsx'));
-const LayananDetail = lazy(() => import('./pages/LayananDetail.tsx'));
 const PelatihanDetail = lazy(() => import('./pages/PelatihanDetail.tsx'));
-const Tim = lazy(() => import('./pages/Tim.tsx'));
-const TentangKami = lazy(() => import('./pages/TentangKami.tsx'));
-const Berita = lazy(() => import('./pages/Berita.tsx'));
-const BeritaDetail = lazy(() => import('./pages/BeritaDetail.tsx'));
-const Dokumentasi = lazy(() => import('./pages/Dokumentasi.tsx'));
-const DokumentasiDetail = lazy(() => import('./pages/DokumentasiDetail.tsx'));
 // Admin DI LUAR SiteLayout: tanpa navbar/footer publik.
 const Admin = lazy(() => import('./pages/Admin.tsx'));
-const NotFound = lazy(() => import('./pages/NotFound.tsx'));
 
 function PageFallback() {
   const t = useT();

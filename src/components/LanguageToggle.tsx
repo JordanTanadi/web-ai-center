@@ -11,7 +11,7 @@ export default function LanguageToggle() {
     <button
       type="button"
       onClick={() => setBahasa(bahasa === 'id' ? 'en' : 'id')}
-      aria-label="Switch language"
+      aria-label={`Switch language (${bahasa === 'id' ? 'EN' : 'ID'})`}
       title="Bahasa / Language"
       className="flex shrink-0 items-center gap-1.5 rounded-lg border border-line px-2.5 py-2 text-xs font-bold text-ink transition-colors hover:border-brand hover:bg-soft hover:text-brand"
     >

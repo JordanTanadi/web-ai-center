@@ -275,7 +275,6 @@ export function Footer() {
               href={kontakDummy.instagramUrl}
               target="_blank"
               rel="noreferrer"
-              aria-label="Instagram AI Center"
               className="inline-block min-h-6 py-1 hover:text-white hover:underline"
             >
               <Ikon nama="instagram" className="mr-1.5 inline h-4 w-4 align-[-2px]" />

@@ -43,6 +43,16 @@ describe('parseCorsOrigins', () => {
     expect(parseCorsOrigins('')).toEqual(DEFAULT_CORS_ORIGINS);
     expect(parseCorsOrigins(' , ,')).toEqual(DEFAULT_CORS_ORIGINS);
   });
+
+  test('default meng-cover dev, vite preview, dan XAMPP tanpa port', () => {
+    // Lighthouse/preview jalan di :4173 dan deploy XAMPP di http://localhost/coding/…;
+    // tanpa ini fetch API gagal CORS → error console → skor Best Practices turun.
+    expect(DEFAULT_CORS_ORIGINS).toEqual([
+      'http://localhost:5173',
+      'http://localhost:4173',
+      'http://localhost',
+    ]);
+  });
 });
 
 describe('parseDatabaseUrl', () => {

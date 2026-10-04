@@ -187,12 +187,12 @@ describe('SiteLayout — mode EN', () => {
     );
 
     expect(screen.getByRole('navigation', { name: 'Navigasi utama' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Switch language' })).toHaveTextContent('EN');
+    expect(screen.getByRole('button', { name: /Switch language/ })).toHaveTextContent('EN');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Switch language' }));
+    fireEvent.click(screen.getByRole('button', { name: /Switch language/ }));
 
     expect(screen.getByRole('navigation', { name: 'Main navigation' })).toHaveTextContent('Home');
-    expect(screen.getByRole('button', { name: 'Switch language' })).toHaveTextContent('ID');
+    expect(screen.getByRole('button', { name: /Switch language/ })).toHaveTextContent('ID');
     expect(localStorage.getItem(KEY_BAHASA)).toBe('en');
   });
 });

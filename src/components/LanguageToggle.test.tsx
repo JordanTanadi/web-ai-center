@@ -18,7 +18,7 @@ beforeEach(() => {
 describe('LanguageToggle', () => {
   it('label menampilkan bahasa TUJUAN: ID → "EN"', () => {
     renderToggle();
-    const tombol = screen.getByRole('button', { name: 'Switch language' });
+    const tombol = screen.getByRole('button', { name: /Switch language/ });
     expect(tombol).toHaveTextContent('EN');
     expect(tombol).toHaveAttribute('title', 'Bahasa / Language');
     // Ikon globe dekoratif, bukan gambar bernama.
@@ -27,7 +27,7 @@ describe('LanguageToggle', () => {
 
   it('klik sekali → label "ID" + tersimpan ubaya-language=en', () => {
     renderToggle();
-    const tombol = screen.getByRole('button', { name: 'Switch language' });
+    const tombol = screen.getByRole('button', { name: /Switch language/ });
 
     fireEvent.click(tombol);
 
@@ -37,7 +37,7 @@ describe('LanguageToggle', () => {
 
   it('klik dua kali → kembali ke ID dan tersimpan id', () => {
     renderToggle();
-    const tombol = screen.getByRole('button', { name: 'Switch language' });
+    const tombol = screen.getByRole('button', { name: /Switch language/ });
 
     fireEvent.click(tombol);
     fireEvent.click(tombol);
@@ -48,7 +48,7 @@ describe('LanguageToggle', () => {
 
   it('tanpa provider (unit test lain): klik tidak crash (no-op eksplisit)', () => {
     render(<LanguageToggle />);
-    const tombol = screen.getByRole('button', { name: 'Switch language' });
+    const tombol = screen.getByRole('button', { name: /Switch language/ });
     expect(() => fireEvent.click(tombol)).not.toThrow();
     expect(blokirLocalStorageTersimpan()).toBeNull();
   });
