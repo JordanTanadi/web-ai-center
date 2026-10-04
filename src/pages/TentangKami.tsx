@@ -74,7 +74,7 @@ export default function TentangKami({ profil: profilOverride }: { profil?: Profi
             section Kontak sudah dihapus dari home, andalkan footer + tombol navbar. */}
         <section
           aria-label={t('Langkah Selanjutnya')}
-          className="relative isolate mt-14 overflow-hidden rounded-3xl bg-gradient-to-br from-brand via-brand to-navy p-8 text-center text-white md:p-14"
+          className="relative isolate mt-14 overflow-hidden rounded-3xl bg-gradient-to-br from-brand from-65% to-navy p-8 text-center text-white md:p-14"
         >
           {/* Glow + cincin ala referensi (dekoratif; -z-10 → di bawah konten). */}
           <div aria-hidden="true" className="pointer-events-none absolute -right-20 -top-20 h-64 w-64 rounded-full border border-white/15" />

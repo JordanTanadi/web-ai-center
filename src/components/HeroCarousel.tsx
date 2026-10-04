@@ -56,12 +56,12 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(75% 65% at 15% 0%, rgb(37 71 244 / 0.5), transparent 62%)' }}
+          style={{ background: 'radial-gradient(75% 65% at 15% 0%, rgb(37 71 244 / 0.25), transparent 62%)' }}
         />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(65% 55% at 90% 25%, rgb(6 116 253 / 0.35), transparent 65%)' }}
+          style={{ background: 'radial-gradient(65% 55% at 90% 25%, rgb(6 116 253 / 0.15), transparent 65%)' }}
         />
         <div aria-hidden="true" className="pointer-events-none absolute -left-40 -top-36 h-96 w-96 rounded-full border border-white/10" />
         <div aria-hidden="true" className="pointer-events-none absolute -right-32 top-10 h-[460px] w-[460px] rounded-full border border-white/10" />

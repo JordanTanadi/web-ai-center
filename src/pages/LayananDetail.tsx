@@ -309,7 +309,7 @@ export default function LayananDetail() {
               className="pointer-events-none absolute inset-0 -z-10"
               style={{
                 background:
-                  'radial-gradient(90% 110% at 5% 0%, rgb(37 71 244 / 0.55), transparent 60%), radial-gradient(70% 80% at 100% 10%, rgb(6 116 253 / 0.35), transparent 65%)',
+                  'radial-gradient(90% 110% at 5% 0%, rgb(37 71 244 / 0.3), transparent 60%), radial-gradient(70% 80% at 100% 10%, rgb(6 116 253 / 0.18), transparent 65%)',
               }}
             />
             <div aria-hidden="true" className="pointer-events-none absolute -bottom-28 -right-24 h-72 w-72 rounded-full border border-white/10" />
