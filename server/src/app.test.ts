@@ -96,6 +96,7 @@ function createFakeRepos(): FakeHandle {
     };
 
   const repos: Repositories = {
+    ping: rec('ping', async (): Promise<void> => undefined),
     berita: {
       list: rec('berita.list', async (_params: ListParams): Promise<BeritaItem[]> => [sampleBerita]),
       findBySlug: rec('berita.findBySlug', async (slug: string): Promise<BeritaItem | null> =>
@@ -165,11 +166,23 @@ const getJson = async (app: ReturnType<typeof createApp>, path: string) => {
 };
 
 describe('GET /api/health', () => {
-  test('200 { status: "ok" }', async () => {
-    const { app } = createTestApp();
+  test('200 { status: "ok", db: "ok" } — ping DB sukses', async () => {
+    const { app, calls } = createTestApp();
     const { status, body } = await getJson(app, '/api/health');
     expect(status).toBe(200);
-    expect(body).toEqual({ status: 'ok' });
+    expect(body).toEqual({ status: 'ok', db: 'ok' });
+    expect(calls.some((c) => c.method === 'ping')).toBe(true);
+  });
+
+  test('503 { error } — ping DB gagal (DB tidak terjangkau)', async () => {
+    const handle = createFakeRepos();
+    handle.repos.ping = async () => {
+      throw new Error('koneksi putus');
+    };
+    const { app } = createTestApp(handle);
+    const { status, body } = await getJson(app, '/api/health');
+    expect(status).toBe(503);
+    expect(body).toEqual({ error: 'Database tidak terjangkau' });
   });
 });
 

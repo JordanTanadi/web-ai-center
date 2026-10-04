@@ -54,7 +54,17 @@ export function registerRoutes(
   const limiterLogin = buatRateLimitLogin({ batasPercobaan: 5, jendelaMs: 10 * 60_000 });
 
   return app
-    .get('/api/health', () => ({ status: 'ok' as const }))
+    .get('/api/health', async ({ set }) => {
+      try {
+        await repos.ping();
+      } catch {
+        // Sengaja tidak di-log: endpoint ini bisa di-poll berkala oleh pemantau,
+        // jadi saat DB mati log tidak ikut membanjiri. Sinyalnya = status 503.
+        set.status = 503;
+        return { error: 'Database tidak terjangkau' };
+      }
+      return { status: 'ok' as const, db: 'ok' as const };
+    })
 
     // — Berita —————————————————————————————————————————————————
     .get('/api/berita', async ({ query }) => ({

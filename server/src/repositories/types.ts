@@ -109,4 +109,6 @@ export interface Repositories {
   testimoni: TestimoniRepository;
   profil: ProfilRepository;
   kursus: KursusRepository;
+  /** Cek koneksi DB untuk `/api/health`; lempar bila DB tidak terjangkau. */
+  ping: () => Promise<void>;
 }

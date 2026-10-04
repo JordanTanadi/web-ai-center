@@ -3,7 +3,7 @@
  * Semua fungsi tipis: query + mapper — tanpa logika bisnis.
  * Disuntikkan ke route lewat `Repositories`, jadi test route tidak menyentuh file ini.
  */
-import { and, asc, desc, eq, ilike, or } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { berita, dokumentasi, heroSlides, klien, kursus, layanan, profil, tim, testimoni } from '../db/schema';
 import { toLikePattern } from '../lib/query';
@@ -317,6 +317,9 @@ export function createRepositories(db: Db): Repositories {
   };
 
   return {
+    ping: async () => {
+      await db.execute(sql`select 1`);
+    },
     berita: beritaRepo,
     dokumentasi: dokumentasiRepo,
     tim: timRepo,
