@@ -6,6 +6,11 @@ import { kontakDummy, waLinkKontak } from './kontak.ts';
 // — HeroCarousel me-render-nya sebagai <a> tab baru.
 // Slide hero beranda — struktur mengikuti slider hero di beranda/index.html.
 export interface HeroSlide {
+  /** Id baris DB — hanya ada pada data backend (kunci CRUD tab "Hero" di
+   *  admin); data dummy tidak memilikinya. */
+  id?: number;
+  /** Urutan tampil (asc; slide pertama = 0) — hanya ada pada data backend. */
+  urutan?: number;
   eyebrow: string;
   judul: string;
   judulAksen: string;

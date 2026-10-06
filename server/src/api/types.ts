@@ -56,8 +56,15 @@ export interface HeroCta {
   to: string;
 }
 
-/** ↔ src/data/hero.ts HeroSlide */
+/**
+ * ↔ src/data/hero.ts HeroSlide. `id` & `urutan` hanya dipakai admin
+ * (CRUD tab "Hero" di src/pages/Admin.tsx) — halaman publik mengabaikannya;
+ * data dummy frontend tidak memilikinya (karena itu opsional di sana).
+ */
 export interface HeroSlide {
+  id: number;
+  /** Urutan tampil (asc) — slide pertama = 0. */
+  urutan: number;
   eyebrow: string;
   judul: string;
   judulAksen: string;
@@ -79,8 +86,14 @@ export interface Klien {
   bidang: string;
 }
 
-/** ↔ src/data/testimoni.ts Testimoni */
+/**
+ * ↔ src/data/testimoni.ts Testimoni. `id` & `urutan` hanya dipakai admin
+ * (CRUD tab "Testimoni" di src/pages/Admin.tsx) — idem AnggotaTim/HeroSlide.
+ */
 export interface Testimoni {
+  id: number;
+  /** Urutan tampil (asc) — testimoni pertama = 0. */
+  urutan: number;
   nama: string;
   peran: string;
   kutipan: string;

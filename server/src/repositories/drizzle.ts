@@ -241,6 +241,53 @@ export function createRepositories(db: Db): Repositories {
       const rows = await db.select().from(heroSlides).orderBy(asc(heroSlides.urutan), asc(heroSlides.id));
       return rows.map(toHeroSlide);
     },
+    async create(data) {
+      const rows = await db
+        .insert(heroSlides)
+        .values({
+          urutan: data.urutan,
+          eyebrow: data.eyebrow,
+          judul: data.judul,
+          judulAksen: data.judulAksen,
+          sub: data.sub,
+          ctaPrimer: data.ctaPrimer,
+          ctaSekunder: data.ctaSekunder,
+          badgeJudul: data.badgeJudul,
+          badgeSub: data.badgeSub,
+          image: data.image,
+          srcSet: data.srcSet,
+          sizes: data.sizes,
+          layout: data.layout,
+        })
+        .returning();
+      return toHeroSlide(rows[0]);
+    },
+    async update(id, data) {
+      const rows = await db
+        .update(heroSlides)
+        .set({
+          urutan: data.urutan,
+          eyebrow: data.eyebrow,
+          judul: data.judul,
+          judulAksen: data.judulAksen,
+          sub: data.sub,
+          ctaPrimer: data.ctaPrimer,
+          ctaSekunder: data.ctaSekunder,
+          badgeJudul: data.badgeJudul,
+          badgeSub: data.badgeSub,
+          image: data.image,
+          srcSet: data.srcSet,
+          sizes: data.sizes,
+          layout: data.layout,
+        })
+        .where(eq(heroSlides.id, id))
+        .returning();
+      return rows[0] !== undefined ? toHeroSlide(rows[0]) : null;
+    },
+    async remove(id) {
+      const rows = await db.delete(heroSlides).where(eq(heroSlides.id, id)).returning({ id: heroSlides.id });
+      return rows.length > 0;
+    },
   };
 
   const klienRepo: KlienRepository = {
@@ -257,6 +304,25 @@ export function createRepositories(db: Db): Repositories {
         .from(testimoni)
         .orderBy(asc(testimoni.urutan), asc(testimoni.id));
       return rows.map(toTestimoni);
+    },
+    async create(data) {
+      const rows = await db
+        .insert(testimoni)
+        .values({ nama: data.nama, peran: data.peran, kutipan: data.kutipan, urutan: data.urutan })
+        .returning();
+      return toTestimoni(rows[0]);
+    },
+    async update(id, data) {
+      const rows = await db
+        .update(testimoni)
+        .set({ nama: data.nama, peran: data.peran, kutipan: data.kutipan, urutan: data.urutan })
+        .where(eq(testimoni.id, id))
+        .returning();
+      return rows[0] !== undefined ? toTestimoni(rows[0]) : null;
+    },
+    async remove(id) {
+      const rows = await db.delete(testimoni).where(eq(testimoni.id, id)).returning({ id: testimoni.id });
+      return rows.length > 0;
     },
   };
 
@@ -394,16 +460,28 @@ export function createRepositories(db: Db): Repositories {
       await db.execute(sql`select 1`);
     },
     referensiGambar: async () => {
-      // Tiga select kecil (bukan union SQL) — tetap portabel di kedua driver
+      // Empat select kecil (bukan union SQL) — tetap portabel di kedua driver
       // (PGlite dev & node-postgres produksi) dan tipenya aman.
-      const [b, d, t] = await Promise.all([
+      const [b, d, t, h] = await Promise.all([
         db.select({ v: berita.gambar }).from(berita).where(isNotNull(berita.gambar)),
         db.select({ v: dokumentasi.gambar }).from(dokumentasi).where(isNotNull(dokumentasi.gambar)),
         db.select({ v: tim.foto }).from(tim).where(isNotNull(tim.foto)),
+        db.select({ image: heroSlides.image, srcSet: heroSlides.srcSet }).from(heroSlides),
       ]);
-      return [...b, ...d, ...t]
+      const langsung = [...b, ...d, ...t]
         .map((r) => r.v)
         .filter((v): v is string => v !== null);
+      const imageHero = h.map((r) => r.image).filter((v): v is string => v !== null);
+      // Kolom `srcSet` berisi "url lebar, url lebar, …" — pecah per entri lalu
+      // buang deskriptornya ("800w") supaya varian gambar hero tidak dianggap
+      // file yatim lalu terhapus oleh pembersih.
+      const srcSetHero = h.flatMap((r) =>
+        (r.srcSet ?? '')
+          .split(',')
+          .map((entri) => entri.trim().split(/\s+/)[0] ?? '')
+          .filter((url) => url !== ''),
+      );
+      return [...langsung, ...imageHero, ...srcSetHero];
     },
     berita: beritaRepo,
     dokumentasi: dokumentasiRepo,

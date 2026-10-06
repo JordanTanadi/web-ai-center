@@ -21,9 +21,11 @@ import type { Pagination } from '../lib/query';
 import type {
   InputBerita,
   InputDokumentasi,
+  InputHero,
   InputInference,
   InputKursus,
   InputProfil,
+  InputTestimoni,
   InputTim,
 } from '../lib/tulis';
 
@@ -34,6 +36,8 @@ export type KursusInput = InputKursus;
 export type ProfilInput = InputProfil;
 export type TimInput = InputTim;
 export type InferenceInput = InputInference;
+export type TestimoniInput = InputTestimoni;
+export type HeroInput = InputHero;
 
 export interface ListParams {
   /** Kata kunci pencarian; `null` = tanpa filter. */
@@ -88,6 +92,12 @@ export interface LayananRepository {
 
 export interface HeroRepository {
   list(): Promise<HeroSlide[]>;
+  /** Buat slide baru; balikan slide tersimpan (id & urutan dari DB). */
+  create(data: HeroInput): Promise<HeroSlide>;
+  /** Perbarui slide berdasarkan id; `null` bila id tidak ditemukan. */
+  update(id: number, data: HeroInput): Promise<HeroSlide | null>;
+  /** Hapus slide berdasarkan id; `true` bila ada baris yang terhapus. */
+  remove(id: number): Promise<boolean>;
 }
 
 export interface KlienRepository {
@@ -96,6 +106,12 @@ export interface KlienRepository {
 
 export interface TestimoniRepository {
   list(): Promise<Testimoni[]>;
+  /** Buat testimoni baru; balikan item tersimpan (id & urutan dari DB). */
+  create(data: TestimoniInput): Promise<Testimoni>;
+  /** Perbarui testimoni berdasarkan id; `null` bila id tidak ditemukan. */
+  update(id: number, data: TestimoniInput): Promise<Testimoni | null>;
+  /** Hapus testimoni berdasarkan id; `true` bila ada baris yang terhapus. */
+  remove(id: number): Promise<boolean>;
 }
 
 export interface ProfilRepository {

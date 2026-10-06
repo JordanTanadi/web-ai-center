@@ -75,6 +75,8 @@ export function toLayanan(row: LayananRow): Layanan {
 
 export function toHeroSlide(row: HeroRow): HeroSlide {
   return {
+    id: row.id,
+    urutan: row.urutan,
     eyebrow: row.eyebrow,
     judul: row.judul,
     judulAksen: row.judulAksen,
@@ -95,7 +97,7 @@ export function toKlien(row: KlienRow): Klien {
 }
 
 export function toTestimoni(row: TestimoniRow): Testimoni {
-  return { nama: row.nama, peran: row.peran, kutipan: row.kutipan };
+  return { id: row.id, urutan: row.urutan, nama: row.nama, peran: row.peran, kutipan: row.kutipan };
 }
 
 export function toProfil(row: ProfilRow): Profil {

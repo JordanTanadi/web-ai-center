@@ -1,8 +1,9 @@
 /**
  * Dashboard admin (konsul PROGRESS 2 fase 3 + lanjutan + Prioritas 2): login
  * sederhana (1 akun) + CRUD dokumentasi, berita, kursus — lalu tim & profil
- * (tab Prioritas 2; lihat komponen TimAdmin & ProfilAdmin) dan konten halaman
- * inference (tab Inference → InferenceAdmin, GET/PUT /api/inference).
+ * (tab Prioritas 2; lihat komponen TimAdmin & ProfilAdmin), konten halaman
+ * inference (tab Inference → InferenceAdmin, GET/PUT /api/inference), serta
+ * testimoni & slide hero (tab Testimoni/Hero → TestimoniAdmin & HeroAdmin).
  *
  * - UI sengaja bahasa Indonesia tanpa i18n — alat internal, bukan halaman publik.
  * - Token hasil POST /api/admin/login disimpan di localStorage; semua aksi tulis
@@ -22,17 +23,28 @@ import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
 import type { BeritaItem } from '../data/berita.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
+import type { HeroSlide } from '../data/hero.ts';
 import type { Kursus, Modul } from '../data/pelatihan.ts';
 import type { KontenInference } from '../data/inference.ts';
 import type { ProfilApi } from '../data/profil.ts';
+import type { Testimoni } from '../data/testimoni.ts';
 import type { AnggotaTim } from '../data/tim.ts';
 
 /** Kunci localStorage untuk token sesi admin. */
 export const KEY_TOKEN_ADMIN = 'token-admin';
 
-type Jenis = 'dokumentasi' | 'berita' | 'kursus' | 'tim' | 'profil' | 'inference';
+type Jenis =
+  | 'dokumentasi'
+  | 'berita'
+  | 'kursus'
+  | 'tim'
+  | 'profil'
+  | 'inference'
+  | 'testimoni'
+  | 'hero';
 /** Jenis yang memakai alur daftar+form generik di komponen utama (kursus/tim/
-    profil/inference punya komponen admin sendiri karena bentuk datanya beda). */
+    profil/inference/testimoni/hero punya komponen admin sendiri karena bentuk
+    datanya beda). */
 type JenisDaftar = 'dokumentasi' | 'berita';
 type ItemAdmin = DokumentasiItem | BeritaItem;
 
@@ -307,7 +319,7 @@ export default function Admin() {
       <main className="mx-auto max-w-md px-6 py-16">
         <h1 className="font-display text-3xl font-bold">Masuk Admin</h1>
         <p className="mt-2 text-sm text-muted">
-          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita, kursus, tim, profil & konten inference.
+          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita, kursus, tim, profil, inference, testimoni & slide hero.
         </p>
         <form onSubmit={masuk} className="mt-8 space-y-4">
           <div>
@@ -349,6 +361,8 @@ export default function Admin() {
     tim: 'Tim',
     profil: 'Profil',
     inference: 'Inference',
+    testimoni: 'Testimoni',
+    hero: 'Hero',
   };
   const labelJenis = LABEL_JENIS[jenis];
   /** Handler 401 bersama untuk section admin yang punya token sendiri. */
@@ -362,7 +376,7 @@ export default function Admin() {
         <div>
           <h1 className="font-display text-3xl font-bold">Dashboard Admin</h1>
           <p className="mt-1 text-sm text-muted">
-            Kelola dokumentasi, berita, kursus, tim, profil & konten inference.
+            Kelola dokumentasi, berita, kursus, tim, profil, inference, testimoni & slide hero.
           </p>
         </div>
         <div className="flex gap-2">
@@ -384,7 +398,18 @@ export default function Admin() {
       </header>
 
       <div role="tablist" aria-label="Jenis konten" className="mt-6 flex flex-wrap gap-2">
-        {(['dokumentasi', 'berita', 'kursus', 'tim', 'profil', 'inference'] as const).map((j) => (
+        {(
+          [
+            'dokumentasi',
+            'berita',
+            'kursus',
+            'tim',
+            'profil',
+            'inference',
+            'testimoni',
+            'hero',
+          ] as const
+        ).map((j) => (
           <button
             key={j}
             type="button"
@@ -418,6 +443,10 @@ export default function Admin() {
         <ProfilAdmin token={token} gagal401={sesiBerakhir} />
       ) : jenis === 'inference' ? (
         <InferenceAdmin token={token} gagal401={sesiBerakhir} />
+      ) : jenis === 'testimoni' ? (
+        <TestimoniAdmin token={token} gagal401={sesiBerakhir} />
+      ) : jenis === 'hero' ? (
+        <HeroAdmin token={token} gagal401={sesiBerakhir} />
       ) : (
       <section className="mt-6">
         <div className="flex items-center justify-between gap-3">
@@ -1250,6 +1279,786 @@ function TimAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) 
                 Foto saat ini: {f.foto} — pilih file baru untuk mengganti.
               </p>
             )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:opacity-90"
+            >
+              Simpan
+            </button>
+            <button
+              type="button"
+              onClick={batalkan}
+              className="rounded-lg border border-line px-5 py-2 font-semibold hover:bg-soft"
+            >
+              Batal
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Section CRUD testimoni (tab "Testimoni" — lengkapi CRUD admin, pola sama
+ * dengan TimAdmin). Kunci baris = `id` dari backend; GET /api/testimoni
+ * mengembalikan `id` & `urutan` (data dummy tidak memilikinya).
+ */
+function TestimoniAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
+  const [daftar, setDaftar] = useState<Testimoni[]>([]);
+  const [mode, setMode] = useState<'daftar' | 'tambah' | 'ubah'>('daftar');
+  const [idEdit, setIdEdit] = useState<number | null>(null);
+  const [f, setF] = useState({ nama: '', peran: '', kutipan: '', urutan: '0' });
+  const [pesan, setPesan] = useState<{ teks: string; sukses: boolean } | null>(null);
+
+  async function muat(): Promise<void> {
+    setDaftar(await ambilDaftar<Testimoni>('/testimoni', []));
+  }
+
+  useEffect(() => {
+    void muat();
+    // muat stabil (closure tanpa state); muat sekali saat mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function tanganiError(error: unknown): void {
+    if ((error as { status?: number } | null)?.status === 401) {
+      gagal401();
+      return;
+    }
+    setPesan({
+      teks: error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak dikenal',
+      sukses: false,
+    });
+  }
+
+  function mulaiTambah(): void {
+    setF({ nama: '', peran: '', kutipan: '', urutan: String(daftar.length) });
+    setMode('tambah');
+    setPesan(null);
+  }
+
+  function mulaiUbah(item: Testimoni): void {
+    if (item.id === undefined) return;
+    setF({
+      nama: item.nama,
+      peran: item.peran,
+      kutipan: item.kutipan,
+      urutan: String(item.urutan ?? 0),
+    });
+    setIdEdit(item.id);
+    setMode('ubah');
+    setPesan(null);
+  }
+
+  function batalkan(): void {
+    setMode('daftar');
+    setIdEdit(null);
+    setPesan(null);
+  }
+
+  async function simpan(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setPesan(null);
+    try {
+      const body = {
+        nama: f.nama,
+        peran: f.peran,
+        kutipan: f.kutipan,
+        urutan: Number(f.urutan),
+      };
+      const ubah = mode === 'ubah' && idEdit !== null;
+      const hasil = await kirimJsonAdmin<Testimoni>(ubah ? `/testimoni/${idEdit}` : '/testimoni', {
+        method: ubah ? 'PUT' : 'POST',
+        body,
+        token,
+      });
+      setPesan({
+        teks: ubah
+          ? `Testimoni "${hasil.nama}" diperbarui.`
+          : `Testimoni "${hasil.nama}" tersimpan.`,
+        sukses: true,
+      });
+      setMode('daftar');
+      setIdEdit(null);
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  async function hapus(item: Testimoni): Promise<void> {
+    if (item.id === undefined) return;
+    const yakin = window.confirm(
+      `Hapus testimoni "${item.nama}"? Tindakan ini tidak bisa dibatalkan.`,
+    );
+    if (!yakin) return;
+    setPesan(null);
+    try {
+      await kirimJsonAdmin(`/testimoni/${item.id}`, { method: 'DELETE', token });
+      setPesan({ teks: `Testimoni "${item.nama}" dihapus.`, sukses: true });
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  const elemenPesan =
+    pesan === null ? null : (
+      <p
+        role={pesan.sukses ? 'status' : 'alert'}
+        className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+          pesan.sukses ? 'bg-soft text-emerald-800' : 'bg-red-50 text-red-800'
+        }`}
+      >
+        {pesan.teks}
+      </p>
+    );
+
+  const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
+  const labelCls = 'block text-sm font-semibold';
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-bold">Testimoni</h2>
+        {mode === 'daftar' && (
+          <button
+            type="button"
+            onClick={mulaiTambah}
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Tambah baru
+          </button>
+        )}
+      </div>
+
+      {elemenPesan}
+
+      {mode === 'daftar' ? (
+        daftar.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Belum ada testimoni.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+            {daftar.map((item, i) => (
+              <li key={item.id ?? i} className="flex items-start gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{item.nama}</p>
+                  <p className="text-xs text-muted">
+                    {item.peran} · urutan {item.urutan ?? '-'}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted">{item.kutipan}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => mulaiUbah(item)}
+                  className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+                >
+                  Ubah
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void hapus(item)}
+                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50"
+                >
+                  Hapus
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : (
+        <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
+          <h3 className="font-semibold">
+            {mode === 'ubah' ? `Ubah testimoni — ${f.nama}` : 'Tambah testimoni baru'}
+          </h3>
+          <div>
+            <label htmlFor="testimoni-nama" className={labelCls}>
+              Nama *
+            </label>
+            <input
+              id="testimoni-nama"
+              type="text"
+              required
+              maxLength={200}
+              className={inputCls}
+              value={f.nama}
+              onChange={(event) => setF((prev) => ({ ...prev, nama: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="testimoni-peran" className={labelCls}>
+              Peran (mis. Mahasiswa) *
+            </label>
+            <input
+              id="testimoni-peran"
+              type="text"
+              required
+              maxLength={200}
+              className={inputCls}
+              value={f.peran}
+              onChange={(event) => setF((prev) => ({ ...prev, peran: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="testimoni-kutipan" className={labelCls}>
+              Kutipan *
+            </label>
+            <textarea
+              id="testimoni-kutipan"
+              required
+              rows={3}
+              maxLength={1000}
+              className={inputCls}
+              value={f.kutipan}
+              onChange={(event) => setF((prev) => ({ ...prev, kutipan: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="testimoni-urutan" className={labelCls}>
+              Urutan tampil (0 = paling atas) *
+            </label>
+            <input
+              id="testimoni-urutan"
+              type="number"
+              required
+              min={0}
+              max={9999}
+              className={inputCls}
+              value={f.urutan}
+              onChange={(event) => setF((prev) => ({ ...prev, urutan: event.target.value }))}
+            />
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:opacity-90"
+            >
+              Simpan
+            </button>
+            <button
+              type="button"
+              onClick={batalkan}
+              className="rounded-lg border border-line px-5 py-2 font-semibold hover:bg-soft"
+            >
+              Batal
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Section CRUD slide hero (tab "Hero" — lengkapi CRUD admin). Kunci baris =
+ * `id` dari backend. Gambar diperlakukan seperti tab lain (file diunggah saat
+ * Simpan); BILA file baru dipilih, `srcSet` ikut dikosongkan — kalau tidak,
+ * browser tetap memakai varian lama sehingga gambar baru tidak pernah tampil.
+ * Slide terakhir tidak bisa dihapus dari UI (hero beranda jadi kosong).
+ */
+function HeroAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
+  const [daftar, setDaftar] = useState<HeroSlide[]>([]);
+  const [mode, setMode] = useState<'daftar' | 'tambah' | 'ubah'>('daftar');
+  const [idEdit, setIdEdit] = useState<number | null>(null);
+  const [f, setF] = useState({
+    urutan: '0',
+    eyebrow: '',
+    judul: '',
+    judulAksen: '',
+    sub: '',
+    badgeJudul: '',
+    badgeSub: '',
+    ctaPrimerLabel: '',
+    ctaPrimerTo: '',
+    ctaSekunderLabel: '',
+    ctaSekunderTo: '',
+    image: '',
+    srcSet: '',
+    sizes: '',
+    layout: '',
+  });
+  const [fileGambar, setFileGambar] = useState<File | null>(null);
+  const [pratinjau, setPratinjau] = useState<string | null>(null);
+  const [pesan, setPesan] = useState<{ teks: string; sukses: boolean } | null>(null);
+
+  async function muat(): Promise<void> {
+    setDaftar(await ambilDaftar<HeroSlide>('/hero-slides', []));
+  }
+
+  useEffect(() => {
+    void muat();
+    // muat stabil (closure tanpa state); muat sekali saat mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function tanganiError(error: unknown): void {
+    if ((error as { status?: number } | null)?.status === 401) {
+      gagal401();
+      return;
+    }
+    setPesan({
+      teks: error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak dikenal',
+      sukses: false,
+    });
+  }
+
+  /** URL object untuk pratinjau file baru di-revoke saat berganti/batal. */
+  function lepasPratinjau(): void {
+    if (pratinjau !== null && pratinjau.startsWith('blob:')) URL.revokeObjectURL(pratinjau);
+  }
+
+  function mulaiTambah(): void {
+    setF({
+      urutan: String(daftar.length),
+      eyebrow: '',
+      judul: '',
+      judulAksen: '',
+      sub: '',
+      badgeJudul: '',
+      badgeSub: '',
+      ctaPrimerLabel: '',
+      ctaPrimerTo: '',
+      ctaSekunderLabel: '',
+      ctaSekunderTo: '',
+      image: '',
+      srcSet: '',
+      sizes: '',
+      layout: '',
+    });
+    setFileGambar(null);
+    setPratinjau(null);
+    setMode('tambah');
+    setPesan(null);
+  }
+
+  function mulaiUbah(item: HeroSlide): void {
+    if (item.id === undefined) return;
+    setF({
+      urutan: String(item.urutan ?? 0),
+      eyebrow: item.eyebrow,
+      judul: item.judul,
+      judulAksen: item.judulAksen,
+      sub: item.sub,
+      badgeJudul: item.badgeJudul,
+      badgeSub: item.badgeSub,
+      ctaPrimerLabel: item.ctaPrimer.label,
+      ctaPrimerTo: item.ctaPrimer.to,
+      ctaSekunderLabel: item.ctaSekunder.label,
+      ctaSekunderTo: item.ctaSekunder.to,
+      image: item.image ?? '',
+      srcSet: item.srcSet ?? '',
+      sizes: item.sizes ?? '',
+      layout: item.layout ?? '',
+    });
+    setFileGambar(null);
+    setPratinjau(null);
+    setIdEdit(item.id);
+    setMode('ubah');
+    setPesan(null);
+  }
+
+  function pilihGambar(event: ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0] ?? null;
+    lepasPratinjau();
+    setFileGambar(file);
+    // jsdom (unit test) tidak punya createObjectURL — pratinjau hanya di browser.
+    setPratinjau(file !== null && typeof URL.createObjectURL === 'function' ? URL.createObjectURL(file) : null);
+    // File baru = varian srcSet lama tidak relevan (bahkan menunjuk file lain)
+    // → kosongkan supaya slide tampil memakai file yang baru dipilih.
+    if (file !== null) setF((prev) => ({ ...prev, srcSet: '' }));
+  }
+
+  function batalkan(): void {
+    lepasPratinjau();
+    setMode('daftar');
+    setIdEdit(null);
+    setFileGambar(null);
+    setPratinjau(null);
+    setPesan(null);
+  }
+
+  async function simpan(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setPesan(null);
+    try {
+      let image = f.image;
+      if (fileGambar !== null) {
+        const unggah = await kirimFileAdmin('/admin/upload', fileGambar, { token });
+        image = unggah.url;
+      }
+      const body = {
+        urutan: Number(f.urutan),
+        eyebrow: f.eyebrow,
+        judul: f.judul,
+        judulAksen: f.judulAksen,
+        sub: f.sub,
+        badgeJudul: f.badgeJudul,
+        badgeSub: f.badgeSub,
+        ctaPrimer: { label: f.ctaPrimerLabel, to: f.ctaPrimerTo },
+        ctaSekunder: { label: f.ctaSekunderLabel, to: f.ctaSekunderTo },
+        image,
+        srcSet: f.srcSet,
+        sizes: f.sizes,
+        // layout kosong = default; server menyimpan NULL (bukan 'default').
+        layout: f.layout === '' ? null : f.layout,
+      };
+      const ubah = mode === 'ubah' && idEdit !== null;
+      const hasil = await kirimJsonAdmin<HeroSlide>(
+        ubah ? `/hero-slides/${idEdit}` : '/hero-slides',
+        { method: ubah ? 'PUT' : 'POST', body, token },
+      );
+      setPesan({
+        teks: ubah
+          ? `Slide "${hasil.judul}" diperbarui.`
+          : `Slide "${hasil.judul}" tersimpan.`,
+        sukses: true,
+      });
+      setMode('daftar');
+      setIdEdit(null);
+      setFileGambar(null);
+      lepasPratinjau();
+      setPratinjau(null);
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  async function hapus(item: HeroSlide): Promise<void> {
+    if (item.id === undefined) return;
+    const yakin = window.confirm(
+      `Hapus slide "${item.judul}"? Tindakan ini tidak bisa dibatalkan.`,
+    );
+    if (!yakin) return;
+    setPesan(null);
+    try {
+      await kirimJsonAdmin(`/hero-slides/${item.id}`, { method: 'DELETE', token });
+      setPesan({ teks: `Slide "${item.judul}" dihapus.`, sukses: true });
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  const elemenPesan =
+    pesan === null ? null : (
+      <p
+        role={pesan.sukses ? 'status' : 'alert'}
+        className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+          pesan.sukses ? 'bg-soft text-emerald-800' : 'bg-red-50 text-red-800'
+        }`}
+      >
+        {pesan.teks}
+      </p>
+    );
+
+  const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
+  const labelCls = 'block text-sm font-semibold';
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-bold">Hero</h2>
+        {mode === 'daftar' && (
+          <button
+            type="button"
+            onClick={mulaiTambah}
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Tambah baru
+          </button>
+        )}
+      </div>
+
+      {elemenPesan}
+
+      {mode === 'daftar' ? (
+        daftar.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Belum ada slide hero.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+            {daftar.map((item, i) => (
+              <li key={item.id ?? i} className="flex items-start gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">
+                    {item.judul} {item.judulAksen}
+                  </p>
+                  <p className="text-xs text-muted">
+                    urutan {item.urutan ?? '-'} · layout {item.layout ?? 'default'} ·{' '}
+                    {item.image !== undefined ? item.image : 'tanpa gambar'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => mulaiUbah(item)}
+                  className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+                >
+                  Ubah
+                </button>
+                <button
+                  type="button"
+                  disabled={daftar.length <= 1}
+                  title={
+                    daftar.length <= 1
+                      ? 'Minimal harus ada 1 slide — hero beranda jadi kosong bila dihapus.'
+                      : undefined
+                  }
+                  onClick={() => void hapus(item)}
+                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Hapus
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : (
+        <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
+          <h3 className="font-semibold">
+            {mode === 'ubah' ? `Ubah slide — ${f.judul}` : 'Tambah slide hero baru'}
+          </h3>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="hero-urutan" className={labelCls}>
+                Urutan tampil (0 = pertama) *
+              </label>
+              <input
+                id="hero-urutan"
+                type="number"
+                required
+                min={0}
+                max={9999}
+                className={inputCls}
+                value={f.urutan}
+                onChange={(event) => setF((prev) => ({ ...prev, urutan: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label htmlFor="hero-layout" className={labelCls}>
+                Layout
+              </label>
+              <select
+                id="hero-layout"
+                className={inputCls}
+                value={f.layout}
+                onChange={(event) => setF((prev) => ({ ...prev, layout: event.target.value }))}
+              >
+                <option value="">default — teks kiri, background overlay</option>
+                <option value="image-left">image-left — gambar kiri, teks kanan</option>
+                <option value="teks-kanan">teks-kanan — teks di samping kanan</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label htmlFor="hero-eyebrow" className={labelCls}>
+              Eyebrow (teks kecil di atas judul) *
+            </label>
+            <input
+              id="hero-eyebrow"
+              type="text"
+              required
+              maxLength={150}
+              className={inputCls}
+              value={f.eyebrow}
+              onChange={(event) => setF((prev) => ({ ...prev, eyebrow: event.target.value }))}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="hero-judul" className={labelCls}>
+                Judul *
+              </label>
+              <input
+                id="hero-judul"
+                type="text"
+                required
+                maxLength={150}
+                className={inputCls}
+                value={f.judul}
+                onChange={(event) => setF((prev) => ({ ...prev, judul: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label htmlFor="hero-judul-aksen" className={labelCls}>
+                Aksen judul (bagian terakhir) *
+              </label>
+              <input
+                id="hero-judul-aksen"
+                type="text"
+                required
+                maxLength={150}
+                className={inputCls}
+                value={f.judulAksen}
+                onChange={(event) => setF((prev) => ({ ...prev, judulAksen: event.target.value }))}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="hero-sub" className={labelCls}>
+              Subjudul *
+            </label>
+            <textarea
+              id="hero-sub"
+              required
+              rows={3}
+              maxLength={400}
+              className={inputCls}
+              value={f.sub}
+              onChange={(event) => setF((prev) => ({ ...prev, sub: event.target.value }))}
+            />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="hero-cta-primer-label" className={labelCls}>
+                CTA utama — label *
+              </label>
+              <input
+                id="hero-cta-primer-label"
+                type="text"
+                required
+                maxLength={150}
+                className={inputCls}
+                value={f.ctaPrimerLabel}
+                onChange={(event) =>
+                  setF((prev) => ({ ...prev, ctaPrimerLabel: event.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="hero-cta-primer-to" className={labelCls}>
+                CTA utama — tautan *
+              </label>
+              <input
+                id="hero-cta-primer-to"
+                type="text"
+                required
+                maxLength={500}
+                className={inputCls}
+                value={f.ctaPrimerTo}
+                onChange={(event) => setF((prev) => ({ ...prev, ctaPrimerTo: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label htmlFor="hero-cta-sekunder-label" className={labelCls}>
+                CTA sekunder — label *
+              </label>
+              <input
+                id="hero-cta-sekunder-label"
+                type="text"
+                required
+                maxLength={150}
+                className={inputCls}
+                value={f.ctaSekunderLabel}
+                onChange={(event) =>
+                  setF((prev) => ({ ...prev, ctaSekunderLabel: event.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <label htmlFor="hero-cta-sekunder-to" className={labelCls}>
+                CTA sekunder — tautan *
+              </label>
+              <input
+                id="hero-cta-sekunder-to"
+                type="text"
+                required
+                maxLength={500}
+                className={inputCls}
+                value={f.ctaSekunderTo}
+                onChange={(event) =>
+                  setF((prev) => ({ ...prev, ctaSekunderTo: event.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="hero-badge-judul" className={labelCls}>
+                Badge — judul *
+              </label>
+              <input
+                id="hero-badge-judul"
+                type="text"
+                required
+                maxLength={150}
+                className={inputCls}
+                value={f.badgeJudul}
+                onChange={(event) => setF((prev) => ({ ...prev, badgeJudul: event.target.value }))}
+              />
+            </div>
+            <div>
+              <label htmlFor="hero-badge-sub" className={labelCls}>
+                Badge — keterangan *
+              </label>
+              <input
+                id="hero-badge-sub"
+                type="text"
+                required
+                maxLength={200}
+                className={inputCls}
+                value={f.badgeSub}
+                onChange={(event) => setF((prev) => ({ ...prev, badgeSub: event.target.value }))}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="hero-image" className={labelCls}>
+              Gambar slide (file JPG/PNG/WebP, maks 2 MB)
+            </label>
+            <input
+              id="hero-image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="mt-1 block text-sm"
+              onChange={pilihGambar}
+            />
+            {pratinjau !== null && (
+              <img
+                src={pratinjau}
+                alt="Pratinjau gambar slide"
+                className="mt-2 h-24 rounded-lg object-cover"
+              />
+            )}
+            {mode === 'ubah' && f.image !== '' && fileGambar === null && pratinjau === null && (
+              <p className="mt-1 text-xs text-muted">
+                Gambar saat ini: {f.image} — pilih file baru untuk mengganti.
+              </p>
+            )}
+          </div>
+          <div>
+            <label htmlFor="hero-srcset" className={labelCls}>
+              Srcset (opsional — varian responsif)
+            </label>
+            <input
+              id="hero-srcset"
+              type="text"
+              maxLength={500}
+              placeholder="/hero/ai-center-800.webp 800w, /hero/ai-center-1600.webp 1600w"
+              className={inputCls}
+              value={f.srcSet}
+              onChange={(event) => setF((prev) => ({ ...prev, srcSet: event.target.value }))}
+            />
+            <p className="mt-1 text-xs text-muted">
+              Diisi bila varian gambar (800w/1600w) sudah tersedia; memilih file baru akan
+              mengosongkannya otomatis.
+            </p>
+          </div>
+          <div>
+            <label htmlFor="hero-sizes" className={labelCls}>
+              Sizes (opsional)
+            </label>
+            <input
+              id="hero-sizes"
+              type="text"
+              maxLength={200}
+              placeholder="(max-width: 768px) 100vw, 50vw"
+              className={inputCls}
+              value={f.sizes}
+              onChange={(event) => setF((prev) => ({ ...prev, sizes: event.target.value }))}
+            />
           </div>
           <div className="flex gap-2">
             <button

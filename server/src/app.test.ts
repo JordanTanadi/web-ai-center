@@ -18,7 +18,7 @@ import type {
 } from './api/types';
 import type { ListParams, Repositories, DokumentasiListParams } from './repositories/types';
 import type { Pagination } from './lib/query';
-import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputInference as InferenceInput, InputKursus as KursusInput, InputProfil as ProfilInput, InputTim as TimInput } from './lib/tulis';
+import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputHero as HeroInput, InputInference as InferenceInput, InputKursus as KursusInput, InputProfil as ProfilInput, InputTestimoni as TestimoniInput, InputTim as TimInput } from './lib/tulis';
 import { buatTokenAdmin } from './auth';
 
 const NO_PAGINATION: Pagination = { page: null, limit: null, offset: null };
@@ -47,6 +47,8 @@ const sampleLayanan: Layanan = {
   fitur: ['a'],
 };
 const sampleHero: HeroSlide = {
+  id: 10,
+  urutan: 0,
   eyebrow: 'E',
   judul: 'J',
   judulAksen: 'A',
@@ -57,7 +59,26 @@ const sampleHero: HeroSlide = {
   badgeSub: 'BS',
 };
 const sampleKlien: Klien = { nama: 'PT X', bidang: 'Teknologi' };
-const sampleTestimoni: Testimoni = { nama: 'A', peran: 'B', kutipan: 'C' };
+const sampleTestimoni: Testimoni = { id: 7, urutan: 0, nama: 'A', peran: 'B', kutipan: 'C' };
+/** Konversi InputHero (boleh null) → HeroSlide respons; null di-omitted (meniru mapper). */
+function heroDariInput(data: HeroInput, id: number): HeroSlide {
+  return {
+    id,
+    urutan: data.urutan,
+    eyebrow: data.eyebrow,
+    judul: data.judul,
+    judulAksen: data.judulAksen,
+    sub: data.sub,
+    ctaPrimer: data.ctaPrimer,
+    ctaSekunder: data.ctaSekunder,
+    badgeJudul: data.badgeJudul,
+    badgeSub: data.badgeSub,
+    ...(data.image !== null ? { image: data.image } : {}),
+    ...(data.srcSet !== null ? { srcSet: data.srcSet } : {}),
+    ...(data.sizes !== null ? { sizes: data.sizes } : {}),
+    ...(data.layout !== null ? { layout: data.layout } : {}),
+  };
+}
 const sampleProfil: Profil = {
   nama: 'AI Center Ubaya',
   tagline: 'Tagline',
@@ -172,9 +193,29 @@ function createFakeRepos(): FakeHandle {
       findBySlug: rec('layanan.findBySlug', async (slug: string): Promise<Layanan | null> =>
         slug === sampleLayanan.slug ? sampleLayanan : null),
     },
-    hero: { list: rec('hero.list', async (): Promise<HeroSlide[]> => [sampleHero]) },
+    hero: {
+      list: rec('hero.list', async (): Promise<HeroSlide[]> => [sampleHero]),
+      create: rec('hero.create', async (data: HeroInput): Promise<HeroSlide> =>
+        heroDariInput(data, 99)),
+      update: rec('hero.update', async (id: number, data: HeroInput): Promise<HeroSlide | null> =>
+        id === sampleHero.id ? heroDariInput(data, id) : null),
+      remove: rec('hero.remove', async (id: number): Promise<boolean> => id === sampleHero.id),
+    },
     klien: { list: rec('klien.list', async (): Promise<Klien[]> => [sampleKlien]) },
-    testimoni: { list: rec('testimoni.list', async (): Promise<Testimoni[]> => [sampleTestimoni]) },
+    testimoni: {
+      list: rec('testimoni.list', async (): Promise<Testimoni[]> => [sampleTestimoni]),
+      create: rec('testimoni.create', async (data: TestimoniInput): Promise<Testimoni> => ({
+        ...sampleTestimoni,
+        id: 99,
+        ...data,
+      })),
+      update: rec(
+        'testimoni.update',
+        async (id: number, data: TestimoniInput): Promise<Testimoni | null> =>
+          id === sampleTestimoni.id ? { ...sampleTestimoni, ...data } : null,
+      ),
+      remove: rec('testimoni.remove', async (id: number): Promise<boolean> => id === sampleTestimoni.id),
+    },
     profil: {
       get: rec('profil.get', async (): Promise<Profil | null> => sampleProfil),
       update: rec('profil.update', async (data: ProfilInput): Promise<Profil | null> => ({
@@ -1032,6 +1073,115 @@ describe('CRUD /api/tim (Prioritas 2)', () => {
     expect((await kirimTulis(app, 'DELETE', '/api/tim/99', null)).status).toBe(404);
     expect((await kirimTulis(app, 'DELETE', '/api/tim/nol', null)).status).toBe(400);
     expect((await kirimTulis(app, 'DELETE', '/api/tim/1', null, null)).status).toBe(401);
+  });
+});
+
+// — Lengkapi CRUD admin: testimoni & slide hero ————————————————————————
+
+const BODY_TESTIMONI = { nama: 'Peserta', peran: 'Mahasiswa', kutipan: 'Materinya runtut.', urutan: 5 };
+
+const BODY_HERO = {
+  urutan: 3,
+  eyebrow: 'AI Center',
+  judul: 'Judul slide',
+  judulAksen: 'Aksen',
+  sub: 'Sub judul slide.',
+  ctaPrimer: { label: 'Mulai', to: '/pelatihan' },
+  ctaSekunder: { label: 'Kontak', to: 'https://example.test/kontak' },
+  badgeJudul: 'Badge',
+  badgeSub: 'Sub badge',
+  image: '/uploads/hero-baru.jpg',
+  srcSet: null,
+  sizes: null,
+  layout: 'image-left',
+};
+
+describe('CRUD /api/testimoni (lengkapi CRUD admin)', () => {
+  test('POST valid → 201 + repo.create; tanpa token → 401', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/testimoni', BODY_TESTIMONI);
+    expect(status).toBe(201);
+    expect((body as Testimoni).id).toBe(99);
+    expect(calls.find((c) => c.method === 'testimoni.create')?.args[0]).toEqual(BODY_TESTIMONI);
+    expect((await kirimTulis(app, 'POST', '/api/testimoni', BODY_TESTIMONI, null)).status).toBe(401);
+  });
+
+  test('POST kutipan kelewat batas → 400 eksplisit tanpa menyentuh repository', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/testimoni', {
+      ...BODY_TESTIMONI,
+      kutipan: 'x'.repeat(1001),
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "kutipan" maksimal 1000 karakter' });
+    expect(calls.some((c) => c.method === 'testimoni.create')).toBe(false);
+  });
+
+  test('PUT id valid → 200; id tidak sah → 400; tidak ada → 404; DELETE alur sama', async () => {
+    const { app } = createTestApp();
+    const ok = await kirimTulis(app, 'PUT', '/api/testimoni/7', BODY_TESTIMONI);
+    expect(ok.status).toBe(200);
+    expect((ok.body as Testimoni).nama).toBe('Peserta');
+
+    expect((await kirimTulis(app, 'PUT', '/api/testimoni/abc', BODY_TESTIMONI)).status).toBe(400);
+    expect((await kirimTulis(app, 'PUT', '/api/testimoni/99', BODY_TESTIMONI)).status).toBe(404);
+
+    expect((await kirimTulis(app, 'DELETE', '/api/testimoni/7', null)).status).toBe(200);
+    expect((await kirimTulis(app, 'DELETE', '/api/testimoni/99', null)).status).toBe(404);
+    expect((await kirimTulis(app, 'DELETE', '/api/testimoni/7', null, null)).status).toBe(401);
+  });
+});
+
+describe('CRUD /api/hero-slides (lengkapi CRUD admin)', () => {
+  test('POST valid → 201 + repo.create menerima body penuh', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/hero-slides', BODY_HERO);
+    expect(status).toBe(201);
+    expect((body as HeroSlide).id).toBe(99);
+    expect(calls.find((c) => c.method === 'hero.create')?.args[0]).toEqual(BODY_HERO);
+    expect((await kirimTulis(app, 'POST', '/api/hero-slides', BODY_HERO, null)).status).toBe(401);
+  });
+
+  test('layout di luar enum → 400 eksplisit tanpa menyentuh repository', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/hero-slides', {
+      ...BODY_HERO,
+      layout: 'tengah',
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({
+      error: 'Field "layout" harus salah satu dari: default, image-left, teks-kanan',
+    });
+    expect(calls.some((c) => c.method === 'hero.create')).toBe(false);
+  });
+
+  test('CTA bukan objek → 400 yang menyebut nama fieldnya', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/hero-slides', {
+      ...BODY_HERO,
+      ctaSekunder: 'masih diisi string lama',
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "ctaSekunder" harus objek { label, to }' });
+  });
+
+  test('PUT id valid → 200 (field null di-omitted); tidak ada → 404; DELETE alur sama', async () => {
+    const { app } = createTestApp();
+    const ok = await kirimTulis(app, 'PUT', '/api/hero-slides/10', {
+      ...BODY_HERO,
+      image: null,
+      srcSet: null,
+      sizes: null,
+      layout: null,
+    });
+    expect(ok.status).toBe(200);
+    const json = JSON.stringify(ok.body);
+    expect(json).not.toContain('image');
+    expect(json).not.toContain('layout');
+
+    expect((await kirimTulis(app, 'PUT', '/api/hero-slides/99', BODY_HERO)).status).toBe(404);
+    expect((await kirimTulis(app, 'DELETE', '/api/hero-slides/10', null)).status).toBe(200);
+    expect((await kirimTulis(app, 'DELETE', '/api/hero-slides/abc', null)).status).toBe(400);
   });
 });
 

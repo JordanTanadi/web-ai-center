@@ -163,6 +163,9 @@ describe('toLayanan', () => {
 describe('toHeroSlide', () => {
   test('CTA jsonb dipetakan, gambar/srcset/sizes/layout NULL omitted', () => {
     const slide = toHeroSlide(baseHero);
+    // id & urutan ikut terpetakan — kunci baris untuk CRUD admin slide hero.
+    expect(slide.id).toBe(baseHero.id);
+    expect(slide.urutan).toBe(baseHero.urutan);
     expect(slide.ctaPrimer).toEqual({ label: 'Tentang Kami', to: '/tentang-kami' });
     expect(slide.judulAksen).toBe('Aksen');
     const json = JSON.stringify(slide);
@@ -189,9 +192,10 @@ describe('toKlien / toTestimoni', () => {
       nama: 'PT X',
       bidang: 'Teknologi',
     });
+    // id & urutan ikut terpetakan — kunci baris untuk CRUD admin testimoni.
     expect(
       toTestimoni({ id: 1, nama: 'A', peran: 'B', kutipan: 'C', urutan: 0 }),
-    ).toEqual({ nama: 'A', peran: 'B', kutipan: 'C' });
+    ).toEqual({ id: 1, urutan: 0, nama: 'A', peran: 'B', kutipan: 'C' });
   });
 });
 

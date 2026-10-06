@@ -3,8 +3,9 @@
  * murni dari lib/query dan repository yang disuntikkan — tanpa akses DB langsung.
  *
  * Route tulis (dokumentasi, berita, kursus — lalu profil & tim pada Prioritas 2,
- * kemudian konten inference) dijaga token hasil POST /api/admin/login (konsul PROGRESS 2: login sederhana
- * 1 akun); login itu sendiri dibatasi rate-limit 5 gagal / 10 menit per IP → 429.
+ * kemudian konten inference, testimoni & slide hero) dijaga token hasil
+ * POST /api/admin/login (konsul PROGRESS 2: login sederhana 1 akun); login itu
+ * sendiri dibatasi rate-limit 5 gagal / 10 menit per IP → 429.
  * Semua field teks punya batas panjang di lib/tulis (Prioritas 2) → 400 eksplisit.
  *
  * Kontrak daftar: { items: T[] }; detail tidak ada → 404 { error }.
@@ -17,9 +18,11 @@ import {
   slugDariJudul,
   validasiBerita,
   validasiDokumentasi,
+  validasiHero,
   validasiInference,
   validasiKursus,
   validasiProfil,
+  validasiTestimoni,
   validasiTim,
 } from './lib/tulis';
 import {
@@ -451,6 +454,114 @@ export function registerRoutes(
       if (!terhapus) {
         set.status = 404;
         return { error: 'Anggota tim tidak ditemukan' };
+      }
+      return { ok: true as const };
+    })
+
+    // — Tulis testimoni (CRUD admin; kunci = id numerik) ——————————————————
+    .post('/api/testimoni', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiTestimoni(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      set.status = 201;
+      return await repos.testimoni.create(hasil.data);
+    })
+    .put('/api/testimoni/:id', async ({ params, body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const id = idDariParams(params.id);
+      if (id === null) {
+        set.status = 400;
+        return { error: 'Id testimoni tidak valid — isi bilangan bulat positif' };
+      }
+      const hasil = validasiTestimoni(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      const item = await repos.testimoni.update(id, hasil.data);
+      if (item === null) {
+        set.status = 404;
+        return { error: 'Testimoni tidak ditemukan' };
+      }
+      return item;
+    })
+    .delete('/api/testimoni/:id', async ({ params, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const id = idDariParams(params.id);
+      if (id === null) {
+        set.status = 400;
+        return { error: 'Id testimoni tidak valid — isi bilangan bulat positif' };
+      }
+      const terhapus = await repos.testimoni.remove(id);
+      if (!terhapus) {
+        set.status = 404;
+        return { error: 'Testimoni tidak ditemukan' };
+      }
+      return { ok: true as const };
+    })
+
+    // — Tulis slide hero (CRUD admin; kunci = id numerik) ——————————————————
+    .post('/api/hero-slides', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiHero(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      set.status = 201;
+      return await repos.hero.create(hasil.data);
+    })
+    .put('/api/hero-slides/:id', async ({ params, body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const id = idDariParams(params.id);
+      if (id === null) {
+        set.status = 400;
+        return { error: 'Id slide hero tidak valid — isi bilangan bulat positif' };
+      }
+      const hasil = validasiHero(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      const slide = await repos.hero.update(id, hasil.data);
+      if (slide === null) {
+        set.status = 404;
+        return { error: 'Slide hero tidak ditemukan' };
+      }
+      return slide;
+    })
+    .delete('/api/hero-slides/:id', async ({ params, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const id = idDariParams(params.id);
+      if (id === null) {
+        set.status = 400;
+        return { error: 'Id slide hero tidak valid — isi bilangan bulat positif' };
+      }
+      const terhapus = await repos.hero.remove(id);
+      if (!terhapus) {
+        set.status = 404;
+        return { error: 'Slide hero tidak ditemukan' };
       }
       return { ok: true as const };
     })

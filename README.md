@@ -92,6 +92,8 @@ bun run db:generate     # generate migrasi — hanya setelah ubah schema.ts
 | `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan |
 | `PUT /api/inference` | — | konten halaman inference (id = 1); wajib ≥1 item tiap daftar |
 | `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | kunci `id` numerik; `urutan` = posisi tampil |
+| `POST` · `PUT` · `DELETE /api/testimoni[/:id]` | — | idem (tab Testimoni di `/admin`); `kutipan` ≤ 1000 |
+| `POST` · `PUT` · `DELETE /api/hero-slides[/:id]` | — | idem (tab Hero); `layout` hanya `default`/`image-left`/`teks-kanan` |
 | `POST /api/admin/upload` | multipart `gambar` | file ≤ 2 MB (jpg/png/webp) → `{ url }` `/uploads/<nama>` |
 | `POST /api/admin/uploads/bersihkan` | `{ kering? }` | hapus file unggahan yatim (tak dirujuk kolom manapun); `kering: true` = mode uji |
 
@@ -126,7 +128,15 @@ CRUD admin sudah lengkap (Prioritas 2): dokumentasi, berita, kursus — lalu
 file gambar yatim (`POST /api/admin/uploads/bersihkan` + tombol "Bersihkan
 gambar yatim" di dashboard admin). Lanjutannya: konten halaman **Inference**
 (`GET`/`PUT /api/inference` + tab Inference di `/admin`) kini ikut dikelola
-lewat database, bukan lagi hardcode.
+lewat database, bukan lagi hardcode; **testimoni** & **slide hero** juga bisa
+diedit dari `/admin` (tab Testimoni & Hero, CRUD `id` + `urutan`) — jadi semua
+konten yang tampil di beranda dikelola lewat CMS. Yang sengaja TIDAK diedit:
+layanan (copy disetujui rapat) dan klien (section Our Client dikomentari).
+
+Catatan khusus tab Hero: memilih file gambar baru mengosongkan `srcSet`
+otomatis (varian lama menunjuk file lain — kalau dibiarkan, slide tetap tampil
+gambar lama), dan tombol Hapus dinonaktifkan saat tersisa 1 slide (hero
+beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar yatim.
 
 ## Ringkasan pengerjaan
 
@@ -137,7 +147,8 @@ lewat database, bukan lagi hardcode.
 5. Keputusan rapat 16 Sept: layanan tinggal 2 (Pelatihan + Inference Solution), Our Client dikomentari (kode dipertahankan), testimoni naik ke posisi Our Client dengan background `bg-soft`, kontak footer/Tentang Kami disentralisasi di `src/data/kontak.ts` (email `aicenter@unit.ubaya.ac.id`, WA 0895-6342-22240, website LPPM).
 6. Unit test: frontend **238 test / 30 file** (lib, data, komponen, halaman, routing); backend **86 test**. `tsc` bersih di dua sisi.
 7. Integrasi frontend↔backend: tabel + route `GET /api/kursus` (+ migrasi `0001`), lapisan `src/lib/api.ts` + hook `useApiData`, wiring semua halaman konten; seed disinkronkan dengan data frontend (tim 6 anggota, teks layanan, gambar hero).
-8. Prioritas 2 (CRUD profil & tim, batas panjang field, pembersih gambar yatim) lalu konten halaman **Inference** pindah ke CMS: tabel `inference` (+ migrasi `0003`), `GET`/`PUT /api/inference`, tab Inference di `/admin`, dan `LayananDetail` memakai `useApiObjek('/inference', …)`. Gerbang saat ini: frontend **374 test / 36 file**, backend **203 test / 14 file**, `tsc` bersih + build produksi OK.
+8. Prioritas 2 (CRUD profil & tim, batas panjang field, pembersih gambar yatim) lalu konten halaman **Inference** pindah ke CMS: tabel `inference` (+ migrasi `0003`), `GET`/`PUT /api/inference`, tab Inference di `/admin`, dan `LayananDetail` memakai `useApiObjek('/inference', …)`.
+9. Lengkapi CRUD admin: **testimoni** & **slide hero** (`POST`/`PUT`/`DELETE /api/testimoni[/:id]` dan `/api/hero-slides[/:id]`, tab Testimoni & Hero di `/admin`) — `id` & `urutan` ikut kontrak respons `GET`-nya, lalu `referensiGambar` juga membaca `image`/`srcSet` hero supaya pembersih gambar yatim tidak menghapus varian slide. Gerbang saat ini: frontend **381 test / 36 file**, backend **221 test / 14 file**, `tsc` bersih di dua sisi + build produksi OK.
 
 ### Penanda TODO
 

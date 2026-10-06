@@ -3,9 +3,11 @@ import {
   slugDariJudul,
   validasiBerita,
   validasiDokumentasi,
+  validasiHero,
   validasiInference,
   validasiKursus,
   validasiProfil,
+  validasiTestimoni,
   validasiTim,
 } from './tulis';
 
@@ -427,5 +429,164 @@ describe('validasiInference', () => {
 
   test('edge: body bukan objek → tolak', () => {
     expect(validasiInference(null)).toEqual({ ok: false, error: 'Body harus objek JSON' });
+  });
+});
+
+// — Lengkapi CRUD admin: testimoni & slide hero ————————————————————————
+
+const BODY_TESTIMONI_VALID = {
+  nama: 'Peserta Pelatihan ML',
+  peran: 'Mahasiswa',
+  kutipan: 'Materi pelatihan runtut dan langsung praktik.',
+  urutan: 0,
+};
+
+describe('validasiTestimoni', () => {
+  test('body lengkap → ok, semua field terpetak', () => {
+    expect(validasiTestimoni(BODY_TESTIMONI_VALID)).toEqual({
+      ok: true,
+      data: BODY_TESTIMONI_VALID,
+    });
+  });
+
+  test('field wajib kosong → error menyebut field', () => {
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, nama: '   ' })).toEqual({
+      ok: false,
+      error: 'Field "nama" wajib diisi',
+    });
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, kutipan: undefined })).toEqual({
+      ok: false,
+      error: 'Field "kutipan" wajib diisi',
+    });
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, peran: 123 })).toEqual({
+      ok: false,
+      error: 'Field "peran" wajib diisi',
+    });
+  });
+
+  test('batas panjang: nama >200, peran >200, kutipan >1000 → tolak', () => {
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, nama: 'x'.repeat(201) })).toEqual({
+      ok: false,
+      error: 'Field "nama" maksimal 200 karakter',
+    });
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, peran: 'x'.repeat(201) })).toEqual({
+      ok: false,
+      error: 'Field "peran" maksimal 200 karakter',
+    });
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, kutipan: 'x'.repeat(1_001) })).toEqual({
+      ok: false,
+      error: 'Field "kutipan" maksimal 1000 karakter',
+    });
+  });
+
+  test('urutan tidak valid & body bukan objek → tolak eksplisit', () => {
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, urutan: '3' })).toEqual({
+      ok: false,
+      error: 'Field "urutan" harus bilangan bulat 0-9999',
+    });
+    expect(validasiTestimoni({ ...BODY_TESTIMONI_VALID, urutan: -1 })).toEqual({
+      ok: false,
+      error: 'Field "urutan" harus bilangan bulat 0-9999',
+    });
+    expect(validasiTestimoni('bukan-objek')).toEqual({
+      ok: false,
+      error: 'Body harus objek JSON',
+    });
+  });
+});
+
+const BODY_HERO_VALID = {
+  urutan: 0,
+  eyebrow: 'AI Center Ubaya',
+  judul: 'Kami membangun solusi AI',
+  judulAksen: 'untuk industri & akademik',
+  sub: 'Riset, pelatihan, dan inference solution dalam satu pintu.',
+  ctaPrimer: { label: 'Konsultasi Gratis', to: 'https://wa.me/6289563422240' },
+  ctaSekunder: { label: 'Layanan Kami', to: '/layanan' },
+  badgeJudul: 'AI Center',
+  badgeSub: 'Universitas Surabaya',
+  image: '/hero/ai-center.jpg',
+  srcSet: '/hero/ai-center-800.webp 800w, /hero/ai-center-1600.webp 1600w',
+  sizes: '(max-width: 768px) 100vw, 50vw',
+  layout: 'default' as const,
+};
+
+describe('validasiHero', () => {
+  test('body lengkap → ok, semua field terpetak', () => {
+    expect(validasiHero(BODY_HERO_VALID)).toEqual({ ok: true, data: BODY_HERO_VALID });
+  });
+
+  test('image/srcSet/sizes/layout kosong → null (kolom opsional)', () => {
+    const hasil = validasiHero({
+      ...BODY_HERO_VALID,
+      image: '',
+      srcSet: undefined,
+      sizes: '   ',
+      layout: '',
+    });
+    expect(hasil.ok).toBe(true);
+    if (hasil.ok) {
+      expect(hasil.data.image).toBeNull();
+      expect(hasil.data.srcSet).toBeNull();
+      expect(hasil.data.sizes).toBeNull();
+      expect(hasil.data.layout).toBeNull();
+    }
+  });
+
+  test('layout di luar enum → tolak dengan daftar nilai sah', () => {
+    expect(validasiHero({ ...BODY_HERO_VALID, layout: 'tengah' })).toEqual({
+      ok: false,
+      error: 'Field "layout" harus salah satu dari: default, image-left, teks-kanan',
+    });
+    expect(validasiHero({ ...BODY_HERO_VALID, layout: 42 })).toEqual({
+      ok: false,
+      error: 'Field "layout" harus salah satu dari: default, image-left, teks-kanan',
+    });
+  });
+
+  test('CTA bukan objek / label kosong → tolak menyebut nama fieldnya', () => {
+    expect(validasiHero({ ...BODY_HERO_VALID, ctaPrimer: null })).toEqual({
+      ok: false,
+      error: 'Field "ctaPrimer" harus objek { label, to }',
+    });
+    expect(
+      validasiHero({ ...BODY_HERO_VALID, ctaSekunder: { label: '  ', to: '/x' } }),
+    ).toEqual({ ok: false, error: 'Field "ctaSekunder.label" wajib diisi' });
+    expect(
+      validasiHero({ ...BODY_HERO_VALID, ctaPrimer: { label: 'Mulai', to: '' } }),
+    ).toEqual({ ok: false, error: 'Field "ctaPrimer.to" wajib diisi' });
+  });
+
+  test('batas panjang: judul >150, sub >400, badgeSub >200, label CTA >150 → tolak', () => {
+    expect(validasiHero({ ...BODY_HERO_VALID, judul: 'x'.repeat(151) })).toEqual({
+      ok: false,
+      error: 'Field "judul" maksimal 150 karakter',
+    });
+    expect(validasiHero({ ...BODY_HERO_VALID, sub: 'x'.repeat(401) })).toEqual({
+      ok: false,
+      error: 'Field "sub" maksimal 400 karakter',
+    });
+    expect(validasiHero({ ...BODY_HERO_VALID, badgeSub: 'x'.repeat(201) })).toEqual({
+      ok: false,
+      error: 'Field "badgeSub" maksimal 200 karakter',
+    });
+    expect(
+      validasiHero({
+        ...BODY_HERO_VALID,
+        ctaPrimer: { label: 'x'.repeat(151), to: '/layanan' },
+      }),
+    ).toEqual({ ok: false, error: 'Field "ctaPrimer.label" maksimal 150 karakter' });
+    expect(validasiHero({ ...BODY_HERO_VALID, image: 'x'.repeat(501) })).toEqual({
+      ok: false,
+      error: 'Field "image" maksimal 500 karakter',
+    });
+  });
+
+  test('urutan tidak valid & body bukan objek → tolak eksplisit', () => {
+    expect(validasiHero({ ...BODY_HERO_VALID, urutan: 1.5 })).toEqual({
+      ok: false,
+      error: 'Field "urutan" harus bilangan bulat 0-9999',
+    });
+    expect(validasiHero(null)).toEqual({ ok: false, error: 'Body harus objek JSON' });
   });
 });

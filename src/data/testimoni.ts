@@ -1,9 +1,14 @@
 // Data dummy = FALLBACK untuk backend (GET /api/testimoni via useApiDaftar di Beranda):
 // dipakai bila VITE_API_BASE_URL kosong atau request gagal.
 export interface Testimoni {
+  /** Id baris DB — hanya ada pada data backend (kunci CRUD tab "Testimoni"
+   *  di admin); data dummy tidak memilikinya. */
+  id?: number;
   nama: string;
   peran: string;
   kutipan: string;
+  /** Urutan tampil (asc) — hanya ada pada data backend. */
+  urutan?: number;
 }
 
 export const testimoniDummy: Testimoni[] = [

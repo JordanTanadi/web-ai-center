@@ -7,6 +7,8 @@ import type { BeritaItem } from '../data/berita.ts';
 import type { Kursus } from '../data/pelatihan.ts';
 import type { KontenInference } from '../data/inference.ts';
 import type { ProfilApi } from '../data/profil.ts';
+import type { Testimoni } from '../data/testimoni.ts';
+import type { HeroSlide } from '../data/hero.ts';
 import type { AnggotaTim } from '../data/tim.ts';
 
 // Mock modul api: test deterministik tanpa backend (Admin memakai ambilDaftar
@@ -724,6 +726,239 @@ describe('Admin — tab Inference', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Simpan inference' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('maksimal 300 karakter');
+  });
+});
+
+describe('Admin — tab Testimoni & tab Hero (lengkapi CRUD admin)', () => {
+  /** Fixture testimoni dari backend (membawa id & urutan). */
+  const TESTIMONI: Testimoni = {
+    id: 4,
+    nama: 'Peserta Pelatihan ML',
+    peran: 'Mahasiswa',
+    kutipan: 'Materi pelatihan runtut.',
+    urutan: 0,
+  };
+  /** Fixture slide hero dari backend (membawa id & urutan + field opsional). */
+  const SLIDE: HeroSlide = {
+    id: 1,
+    urutan: 0,
+    eyebrow: 'AI Center Ubaya',
+    judul: 'Kami membangun',
+    judulAksen: 'solusi AI',
+    sub: 'Riset, pelatihan & inference.',
+    ctaPrimer: { label: 'Konsultasi', to: 'https://wa.me/6289563422240' },
+    ctaSekunder: { label: 'Layanan Kami', to: '/layanan' },
+    badgeJudul: 'Ubaya',
+    badgeSub: 'Surabaya',
+    image: '/hero/ai-center.jpg',
+    srcSet: '/hero/ai-center-800.webp 800w, /hero/ai-center-1600.webp 1600w',
+    sizes: '(max-width: 768px) 100vw, 50vw',
+    layout: 'image-left',
+  };
+  const SLIDE_2: HeroSlide = { ...SLIDE, id: 2, urutan: 1, judul: 'Slide Kedua' };
+
+  /** Daftar per endpoint: /testimoni & /hero-slides dibedakan dari jenis lain. */
+  const daftarBaru = (): void => {
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/testimoni'
+        ? ([TESTIMONI] as never)
+        : path === '/hero-slides'
+          ? ([SLIDE, SLIDE_2] as never)
+          : ([DOK, DOK2] as never),
+    );
+  };
+
+  it('tab Testimoni → GET /testimoni dimuat & baris tampil', async () => {
+    daftarBaru();
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Testimoni' }));
+    expect(await screen.findByText('Peserta Pelatihan ML')).toBeInTheDocument();
+    expect(mockDaftar).toHaveBeenCalledWith('/testimoni', []);
+  });
+
+  it('tambah testimoni → Simpan → POST /testimoni dengan urutan', async () => {
+    daftarBaru();
+    mockKirim.mockResolvedValue({ ...TESTIMONI, id: 9, nama: 'Testimoni Baru' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Testimoni' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Nama/), { target: { value: 'Testimoni Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Peran/), { target: { value: 'Dosen' } });
+    fireEvent.change(screen.getByLabelText(/^Kutipan/), { target: { value: 'Bagus sekali.' } });
+    fireEvent.change(screen.getByLabelText(/^Urutan/), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith('/testimoni', {
+      method: 'POST',
+      body: { nama: 'Testimoni Baru', peran: 'Dosen', kutipan: 'Bagus sekali.', urutan: 2 },
+      token: TOKEN,
+    });
+  });
+
+  it('ubah & hapus testimoni → PUT /testimoni/:id lalu DELETE', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    daftarBaru();
+    mockKirim.mockResolvedValue(TESTIMONI as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Testimoni' }));
+    expect(await screen.findByText('Peserta Pelatihan ML')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
+    expect((screen.getByLabelText(/^Kutipan/) as HTMLTextAreaElement).value).toBe(
+      'Materi pelatihan runtut.',
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('diperbarui');
+    expect(mockKirim).toHaveBeenCalledWith('/testimoni/4', {
+      method: 'PUT',
+      body: {
+        nama: 'Peserta Pelatihan ML',
+        peran: 'Mahasiswa',
+        kutipan: 'Materi pelatihan runtut.',
+        urutan: 0,
+      },
+      token: TOKEN,
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Hapus' })[0]);
+    expect(konfirmasi).toHaveBeenCalledWith(expect.stringContaining('Peserta Pelatihan ML'));
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/testimoni/4',
+      expect.objectContaining({ method: 'DELETE', token: TOKEN }),
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent('dihapus');
+    konfirmasi.mockRestore();
+  });
+
+  it('tab Hero → GET /hero-slides dimuat & dua slide tampil', async () => {
+    daftarBaru();
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Hero' }));
+    expect(await screen.findByText('Kami membangun solusi AI')).toBeInTheDocument();
+    expect(screen.getByText(/Slide Kedua/)).toBeInTheDocument();
+    expect(mockDaftar).toHaveBeenCalledWith('/hero-slides', []);
+  });
+
+  it('ubah slide → Simpan → PUT /hero-slides/:id dengan objek CTA & field opsional', async () => {
+    daftarBaru();
+    mockKirim.mockResolvedValue(SLIDE as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Hero' }));
+    expect(await screen.findByText('Kami membangun solusi AI')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
+
+    expect((screen.getByLabelText(/^Judul/) as HTMLInputElement).value).toBe('Kami membangun');
+    fireEvent.change(screen.getByLabelText(/^Subjudul/), { target: { value: 'Sub baru.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('diperbarui');
+    expect(mockKirim).toHaveBeenCalledWith('/hero-slides/1', {
+      method: 'PUT',
+      body: {
+        urutan: 0,
+        eyebrow: 'AI Center Ubaya',
+        judul: 'Kami membangun',
+        judulAksen: 'solusi AI',
+        sub: 'Sub baru.',
+        badgeJudul: 'Ubaya',
+        badgeSub: 'Surabaya',
+        ctaPrimer: { label: 'Konsultasi', to: 'https://wa.me/6289563422240' },
+        ctaSekunder: { label: 'Layanan Kami', to: '/layanan' },
+        image: '/hero/ai-center.jpg',
+        srcSet: '/hero/ai-center-800.webp 800w, /hero/ai-center-1600.webp 1600w',
+        sizes: '(max-width: 768px) 100vw, 50vw',
+        layout: 'image-left',
+      },
+      token: TOKEN,
+    });
+  });
+
+  it('tambah slide: layout kosong → null; file baru → unggah & srcSet dikosongkan', async () => {
+    daftarBaru();
+    mockUnggah.mockResolvedValue({ url: '/uploads/hero-baru.jpg' } as never);
+    mockKirim.mockResolvedValue({ ...SLIDE, id: 3 } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Hero' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Urutan/), { target: { value: '0' } });
+    fireEvent.change(screen.getByLabelText(/^Eyebrow/), { target: { value: 'AI Center' } });
+    fireEvent.change(screen.getByLabelText(/^Judul \*/), { target: { value: 'Slide Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Aksen judul/), { target: { value: 'untuk semua' } });
+    fireEvent.change(screen.getByLabelText(/^Subjudul/), { target: { value: 'Sub.' } });
+    fireEvent.change(screen.getByLabelText('CTA utama — label *'), {
+      target: { value: 'Mulai' },
+    });
+    fireEvent.change(screen.getByLabelText('CTA utama — tautan *'), {
+      target: { value: '/pelatihan' },
+    });
+    fireEvent.change(screen.getByLabelText('CTA sekunder — label *'), {
+      target: { value: 'Kontak' },
+    });
+    fireEvent.change(screen.getByLabelText('CTA sekunder — tautan *'), {
+      target: { value: '/kontak' },
+    });
+    fireEvent.change(screen.getByLabelText('Badge — judul *'), { target: { value: 'Ubaya' } });
+    fireEvent.change(screen.getByLabelText('Badge — keterangan *'), {
+      target: { value: 'Surabaya' },
+    });
+
+    // Pilih file gambar → varian srcSet lama harus ikut dikosongkan.
+    fireEvent.change(screen.getByLabelText(/^Srcset/), {
+      target: { value: '/hero/lama-800.webp 800w' },
+    });
+    const file = new File(['isi'], 'hero-baru.jpg', { type: 'image/jpeg' });
+    fireEvent.change(screen.getByLabelText(/^Gambar slide/), { target: { files: [file] } });
+    expect((screen.getByLabelText(/^Srcset/) as HTMLInputElement).value).toBe('');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockUnggah).toHaveBeenCalledWith('/admin/upload', file, { token: TOKEN });
+    expect(mockKirim).toHaveBeenCalledWith('/hero-slides', {
+      method: 'POST',
+      body: {
+        urutan: 0,
+        eyebrow: 'AI Center',
+        judul: 'Slide Baru',
+        judulAksen: 'untuk semua',
+        sub: 'Sub.',
+        badgeJudul: 'Ubaya',
+        badgeSub: 'Surabaya',
+        ctaPrimer: { label: 'Mulai', to: '/pelatihan' },
+        ctaSekunder: { label: 'Kontak', to: '/kontak' },
+        image: '/uploads/hero-baru.jpg',
+        srcSet: '',
+        sizes: '',
+        layout: null,
+      },
+      token: TOKEN,
+    });
+  });
+
+  it('slide terakhir tidak bisa dihapus (tombol Hapus dinonaktifkan)', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    daftarBaru();
+    mockKirim.mockResolvedValue({ ok: true } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Hero' }));
+    expect(await screen.findByText('Kami membangun solusi AI')).toBeInTheDocument();
+    const tombol = screen.getAllByRole('button', { name: 'Hapus' });
+    expect(tombol.every((b) => !(b as HTMLButtonElement).disabled)).toBe(true);
+
+    // Hapus satu slide → tersisa satu → tombol Hapus mati (hero tidak boleh kosong).
+    fireEvent.click(tombol[0]);
+    expect(await screen.findByRole('status')).toHaveTextContent('dihapus');
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/hero-slides' ? ([SLIDE] as never) : ([DOK, DOK2] as never),
+    );
+    fireEvent.click(screen.getByRole('tab', { name: 'Profil' }));
+    fireEvent.click(screen.getByRole('tab', { name: 'Hero' }));
+    expect(await screen.findByText('Kami membangun solusi AI')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Hapus' })).toBeDisabled();
+    konfirmasi.mockRestore();
   });
 });
 

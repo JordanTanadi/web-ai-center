@@ -98,6 +98,39 @@ export interface InputTim {
   urutan: number;
 }
 
+/** Input tulis testimoni (kunci baris = id; tab "Testimoni" di /admin). */
+export interface InputTestimoni {
+  nama: string;
+  peran: string;
+  kutipan: string;
+  urutan: number;
+}
+
+/** Nilai yang diterima kolom `layout` slide hero (kolom lain di bawah opsional). */
+export const LAYOUT_HERO = ['default', 'image-left', 'teks-kanan'] as const;
+export type LayoutHero = (typeof LAYOUT_HERO)[number];
+
+/** Input tulis slide hero (kunci baris = id; tab "Hero" di /admin). */
+export interface InputHero {
+  urutan: number;
+  eyebrow: string;
+  judul: string;
+  judulAksen: string;
+  sub: string;
+  /** CTA utama & sekunder — objek { label, to }. */
+  ctaPrimer: { label: string; to: string };
+  ctaSekunder: { label: string; to: string };
+  badgeJudul: string;
+  badgeSub: string;
+  /** URL gambar slide; `null` = slide memakai background navy. */
+  image: string | null;
+  /** Srcset responsif; `null` = hanya gambar tunggal (lihat catatan Admin.tsx). */
+  srcSet: string | null;
+  sizes: string | null;
+  /** Layout tampil; `null` = 'default'. */
+  layout: LayoutHero | null;
+}
+
 const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
 const POLA_KODE = /^[A-Za-z0-9-]{1,12}$/;
 
@@ -156,6 +189,19 @@ export const BATAS = {
   inferenceKebutuhanMaks: 20,
   inferenceAlurMaks: 20,
   inferenceContohMaks: 50,
+  /** Testimoni (tab "Testimoni" di /admin). */
+  testimoniNama: 200,
+  testimoniPeran: 200,
+  testimoniKutipan: 1_000,
+  /** Slide hero (tab "Hero" di /admin) — dst. = teks pendukung. */
+  heroEyebrow: 150,
+  heroJudul: 150,
+  heroJudulAksen: 150,
+  heroSub: 400,
+  heroBadgeJudul: 150,
+  heroBadgeSub: 200,
+  heroCtaLabel: 150,
+  heroSizes: 200,
 } as const;
 
 /**
@@ -231,6 +277,51 @@ function bacaTanggal(body: Record<string, unknown>): { nilai: string } | { error
     return { error: `Field "tanggal" tidak valid: ${nilai}` };
   }
   return { nilai };
+}
+
+/** Baca field `urutan` wajib — bilangan bulat 0..BATAS.urutanMaks (semua tabel CMS). */
+function bacaUrutan(body: Record<string, unknown>): { nilai: number } | { error: string } {
+  const nilai = body.urutan;
+  if (
+    typeof nilai !== 'number' ||
+    !Number.isInteger(nilai) ||
+    nilai < 0 ||
+    nilai > BATAS.urutanMaks
+  ) {
+    return { error: `Field "urutan" harus bilangan bulat 0-${BATAS.urutanMaks}` };
+  }
+  return { nilai };
+}
+
+/**
+ * Baca objek CTA slide hero `{ label, to }` — dua field teks wajib.
+ * Pesan error menyebut nama objeknya (`ctaPrimer.label`) supaya jelas field
+ * mana yang salah ketika ada dua CTA dalam satu body.
+ */
+function bacaCta(
+  body: Record<string, unknown>,
+  kunci: string,
+): { nilai: { label: string; to: string } } | { error: string } {
+  const mentah = body[kunci];
+  if (mentah === null || typeof mentah !== 'object') {
+    return { error: `Field "${kunci}" harus objek { label, to }` };
+  }
+  const objek = mentah as Record<string, unknown>;
+  const label = objek.label;
+  if (typeof label !== 'string' || label.trim() === '') {
+    return { error: `Field "${kunci}.label" wajib diisi` };
+  }
+  if (label.trim().length > BATAS.heroCtaLabel) {
+    return { error: `Field "${kunci}.label" maksimal ${BATAS.heroCtaLabel} karakter` };
+  }
+  const to = objek.to;
+  if (typeof to !== 'string' || to.trim() === '') {
+    return { error: `Field "${kunci}.to" wajib diisi` };
+  }
+  if (to.trim().length > BATAS.url) {
+    return { error: `Field "${kunci}.to" maksimal ${BATAS.url} karakter` };
+  }
+  return { nilai: { label: label.trim(), to: to.trim() } };
 }
 
 /** Validasi body tulis dokumentasi. */
@@ -540,10 +631,8 @@ export function validasiTim(body: unknown): HasilValidasi<InputTim> {
   if ('error' in kredensial) return { ok: false, error: kredensial.error };
   const foto = bacaTeksOpsional(b, 'foto', BATAS.url);
   if ('error' in foto) return { ok: false, error: foto.error };
-  const urutan = b.urutan;
-  if (typeof urutan !== 'number' || !Number.isInteger(urutan) || urutan < 0 || urutan > BATAS.urutanMaks) {
-    return { ok: false, error: `Field "urutan" harus bilangan bulat 0-${BATAS.urutanMaks}` };
-  }
+  const urutan = bacaUrutan(b);
+  if ('error' in urutan) return { ok: false, error: urutan.error };
   return {
     ok: true,
     data: {
@@ -551,7 +640,97 @@ export function validasiTim(body: unknown): HasilValidasi<InputTim> {
       peran: peran.nilai,
       kredensial: kredensial.nilai,
       foto: foto.nilai,
-      urutan,
+      urutan: urutan.nilai,
+    },
+  };
+}
+
+/** Validasi body tulis testimoni (POST/PUT /api/testimoni). */
+export function validasiTestimoni(body: unknown): HasilValidasi<InputTestimoni> {
+  if (body === null || typeof body !== 'object') {
+    return { ok: false, error: 'Body harus objek JSON' };
+  }
+  const b = body as Record<string, unknown>;
+  const nama = bacaTeks(b, 'nama', BATAS.testimoniNama);
+  if ('error' in nama) return { ok: false, error: nama.error };
+  const peran = bacaTeks(b, 'peran', BATAS.testimoniPeran);
+  if ('error' in peran) return { ok: false, error: peran.error };
+  const kutipan = bacaTeks(b, 'kutipan', BATAS.testimoniKutipan);
+  if ('error' in kutipan) return { ok: false, error: kutipan.error };
+  const urutan = bacaUrutan(b);
+  if ('error' in urutan) return { ok: false, error: urutan.error };
+  return {
+    ok: true,
+    data: {
+      nama: nama.nilai,
+      peran: peran.nilai,
+      kutipan: kutipan.nilai,
+      urutan: urutan.nilai,
+    },
+  };
+}
+
+/** Validasi body tulis slide hero (POST/PUT /api/hero-slides). */
+export function validasiHero(body: unknown): HasilValidasi<InputHero> {
+  if (body === null || typeof body !== 'object') {
+    return { ok: false, error: 'Body harus objek JSON' };
+  }
+  const b = body as Record<string, unknown>;
+  const urutan = bacaUrutan(b);
+  if ('error' in urutan) return { ok: false, error: urutan.error };
+  const eyebrow = bacaTeks(b, 'eyebrow', BATAS.heroEyebrow);
+  if ('error' in eyebrow) return { ok: false, error: eyebrow.error };
+  const judul = bacaTeks(b, 'judul', BATAS.heroJudul);
+  if ('error' in judul) return { ok: false, error: judul.error };
+  const judulAksen = bacaTeks(b, 'judulAksen', BATAS.heroJudulAksen);
+  if ('error' in judulAksen) return { ok: false, error: judulAksen.error };
+  const sub = bacaTeks(b, 'sub', BATAS.heroSub);
+  if ('error' in sub) return { ok: false, error: sub.error };
+  const ctaPrimer = bacaCta(b, 'ctaPrimer');
+  if ('error' in ctaPrimer) return { ok: false, error: ctaPrimer.error };
+  const ctaSekunder = bacaCta(b, 'ctaSekunder');
+  if ('error' in ctaSekunder) return { ok: false, error: ctaSekunder.error };
+  const badgeJudul = bacaTeks(b, 'badgeJudul', BATAS.heroBadgeJudul);
+  if ('error' in badgeJudul) return { ok: false, error: badgeJudul.error };
+  const badgeSub = bacaTeks(b, 'badgeSub', BATAS.heroBadgeSub);
+  if ('error' in badgeSub) return { ok: false, error: badgeSub.error };
+  const image = bacaTeksOpsional(b, 'image', BATAS.url);
+  if ('error' in image) return { ok: false, error: image.error };
+  const srcSet = bacaTeksOpsional(b, 'srcSet', BATAS.url);
+  if ('error' in srcSet) return { ok: false, error: srcSet.error };
+  const sizes = bacaTeksOpsional(b, 'sizes', BATAS.heroSizes);
+  if ('error' in sizes) return { ok: false, error: sizes.error };
+  // layout: null/kosong = 'default'; selain itu wajib salah satu nilai yang sah.
+  const layoutMentah = b.layout;
+  let layout: LayoutHero | null = null;
+  if (layoutMentah !== undefined && layoutMentah !== null && layoutMentah !== '') {
+    if (
+      typeof layoutMentah !== 'string' ||
+      !(LAYOUT_HERO as readonly string[]).includes(layoutMentah)
+    ) {
+      return {
+        ok: false,
+        error: `Field "layout" harus salah satu dari: ${LAYOUT_HERO.join(', ')}`,
+      };
+    }
+    layout = layoutMentah as LayoutHero;
+  }
+  return {
+    ok: true,
+    data: {
+      urutan: urutan.nilai,
+      eyebrow: eyebrow.nilai,
+      judul: judul.nilai,
+      judulAksen: judulAksen.nilai,
+      sub: sub.nilai,
+      ctaPrimer: ctaPrimer.nilai,
+      ctaSekunder: ctaSekunder.nilai,
+      badgeJudul: badgeJudul.nilai,
+      badgeSub: badgeSub.nilai,
+      image: image.nilai,
+      srcSet: srcSet.nilai,
+      sizes: sizes.nilai,
+      layout,
     },
   };
 }
