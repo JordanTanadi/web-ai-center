@@ -3,7 +3,7 @@
  * Semua fungsi tipis: query + mapper — tanpa logika bisnis.
  * Disuntikkan ke route lewat `Repositories`, jadi test route tidak menyentuh file ini.
  */
-import { and, asc, desc, eq, ilike, or, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
 import { berita, dokumentasi, heroSlides, klien, kursus, layanan, profil, tim, testimoni } from '../db/schema';
 import { toLikePattern } from '../lib/query';
@@ -189,6 +189,37 @@ export function createRepositories(db: Db): Repositories {
       const rows = await applyPagination(base, pagination);
       return rows.map(toAnggotaTim);
     },
+    async create(data) {
+      const rows = await db
+        .insert(tim)
+        .values({
+          nama: data.nama,
+          peran: data.peran,
+          kredensial: data.kredensial,
+          foto: data.foto,
+          urutan: data.urutan,
+        })
+        .returning();
+      return toAnggotaTim(rows[0]);
+    },
+    async update(id, data) {
+      const rows = await db
+        .update(tim)
+        .set({
+          nama: data.nama,
+          peran: data.peran,
+          kredensial: data.kredensial,
+          foto: data.foto,
+          urutan: data.urutan,
+        })
+        .where(eq(tim.id, id))
+        .returning();
+      return rows[0] !== undefined ? toAnggotaTim(rows[0]) : null;
+    },
+    async remove(id) {
+      const rows = await db.delete(tim).where(eq(tim.id, id)).returning({ id: tim.id });
+      return rows.length > 0;
+    },
   };
 
   const layananRepo: LayananRepository = {
@@ -230,6 +261,24 @@ export function createRepositories(db: Db): Repositories {
   const profilRepo: ProfilRepository = {
     async get() {
       const rows = await db.select().from(profil).where(eq(profil.id, 1)).limit(1);
+      return rows[0] !== undefined ? toProfil(rows[0]) : null;
+    },
+    async update(data) {
+      // `statistik` tidak disertakan — kolom jsonb dipertahankan apa adanya.
+      const rows = await db
+        .update(profil)
+        .set({
+          nama: data.nama,
+          tagline: data.tagline,
+          ringkasan: data.ringkasan,
+          alamat: data.alamat,
+          email: data.email,
+          telepon: data.telepon,
+          visi: data.visi,
+          misi: data.misi,
+        })
+        .where(eq(profil.id, 1))
+        .returning();
       return rows[0] !== undefined ? toProfil(rows[0]) : null;
     },
   };
@@ -319,6 +368,18 @@ export function createRepositories(db: Db): Repositories {
   return {
     ping: async () => {
       await db.execute(sql`select 1`);
+    },
+    referensiGambar: async () => {
+      // Tiga select kecil (bukan union SQL) — tetap portabel di kedua driver
+      // (PGlite dev & node-postgres produksi) dan tipenya aman.
+      const [b, d, t] = await Promise.all([
+        db.select({ v: berita.gambar }).from(berita).where(isNotNull(berita.gambar)),
+        db.select({ v: dokumentasi.gambar }).from(dokumentasi).where(isNotNull(dokumentasi.gambar)),
+        db.select({ v: tim.foto }).from(tim).where(isNotNull(tim.foto)),
+      ]);
+      return [...b, ...d, ...t]
+        .map((r) => r.v)
+        .filter((v): v is string => v !== null);
     },
     berita: beritaRepo,
     dokumentasi: dokumentasiRepo,

@@ -52,10 +52,12 @@ export function toDokumentasiItem(row: DokumentasiRow): DokumentasiItem {
 
 export function toAnggotaTim(row: TimRow): AnggotaTim {
   return {
+    id: row.id,
     nama: row.nama,
     peran: row.peran,
     ...(row.kredensial !== null ? { kredensial: row.kredensial } : {}),
     ...(row.foto !== null ? { foto: row.foto } : {}),
+    urutan: row.urutan,
   };
 }
 

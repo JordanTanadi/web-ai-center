@@ -133,11 +133,13 @@ describe('toDokumentasiItem', () => {
 });
 
 describe('toAnggotaTim', () => {
-  test('kredensial/foto terisi → ikut; keduanya NULL → omitted', () => {
+  test('id/urutan ikut (kunci admin); kredensial/foto NULL → omitted', () => {
     expect(toAnggotaTim({ ...baseTim, kredensial: 'Ph.D.' })).toEqual({
+      id: 1,
       nama: 'Nama',
       peran: 'Kepala',
       kredensial: 'Ph.D.',
+      urutan: 0,
     });
     const bare = JSON.stringify(toAnggotaTim(baseTim));
     expect(bare).not.toContain('kredensial');

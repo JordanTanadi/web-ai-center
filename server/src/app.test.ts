@@ -17,7 +17,7 @@ import type {
 } from './api/types';
 import type { ListParams, Repositories, DokumentasiListParams } from './repositories/types';
 import type { Pagination } from './lib/query';
-import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputKursus as KursusInput } from './lib/tulis';
+import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputKursus as KursusInput, InputProfil as ProfilInput, InputTim as TimInput } from './lib/tulis';
 import { buatTokenAdmin } from './auth';
 
 const NO_PAGINATION: Pagination = { page: null, limit: null, offset: null };
@@ -37,7 +37,7 @@ const sampleDok: DokumentasiItem = {
   tanggal: '2026-07-15',
   kategori: 'Workshop',
 };
-const sampleTim: AnggotaTim = { nama: 'Nama', peran: 'Kepala' };
+const sampleTim: AnggotaTim = { id: 1, nama: 'Nama', peran: 'Kepala', urutan: 0 };
 const sampleLayanan: Layanan = {
   slug: 'pelatihan',
   nama: 'Pelatihan',
@@ -97,6 +97,7 @@ function createFakeRepos(): FakeHandle {
 
   const repos: Repositories = {
     ping: rec('ping', async (): Promise<void> => undefined),
+    referensiGambar: rec('referensiGambar', async (): Promise<string[]> => ['/uploads/pakai.jpg']),
     berita: {
       list: rec('berita.list', async (_params: ListParams): Promise<BeritaItem[]> => [sampleBerita]),
       findBySlug: rec('berita.findBySlug', async (slug: string): Promise<BeritaItem | null> =>
@@ -121,6 +122,26 @@ function createFakeRepos(): FakeHandle {
     },
     tim: {
       list: rec('tim.list', async (_params: ListParams): Promise<AnggotaTim[]> => [sampleTim]),
+      create: rec('tim.create', async (data: TimInput): Promise<AnggotaTim> => ({
+        id: 9,
+        nama: data.nama,
+        peran: data.peran,
+        urutan: data.urutan,
+        ...(data.kredensial !== null ? { kredensial: data.kredensial } : {}),
+        ...(data.foto !== null ? { foto: data.foto } : {}),
+      })),
+      update: rec('tim.update', async (id: number, data: TimInput): Promise<AnggotaTim | null> =>
+        id === sampleTim.id
+          ? {
+              id,
+              nama: data.nama,
+              peran: data.peran,
+              urutan: data.urutan,
+              ...(data.kredensial !== null ? { kredensial: data.kredensial } : {}),
+              ...(data.foto !== null ? { foto: data.foto } : {}),
+            }
+          : null),
+      remove: rec('tim.remove', async (id: number): Promise<boolean> => id === sampleTim.id),
     },
     layanan: {
       list: rec('layanan.list', async (): Promise<Layanan[]> => [sampleLayanan]),
@@ -130,7 +151,19 @@ function createFakeRepos(): FakeHandle {
     hero: { list: rec('hero.list', async (): Promise<HeroSlide[]> => [sampleHero]) },
     klien: { list: rec('klien.list', async (): Promise<Klien[]> => [sampleKlien]) },
     testimoni: { list: rec('testimoni.list', async (): Promise<Testimoni[]> => [sampleTestimoni]) },
-    profil: { get: rec('profil.get', async (): Promise<Profil | null> => sampleProfil) },
+    profil: {
+      get: rec('profil.get', async (): Promise<Profil | null> => sampleProfil),
+      update: rec('profil.update', async (data: ProfilInput): Promise<Profil | null> => ({
+        nama: data.nama,
+        tagline: data.tagline,
+        ringkasan: data.ringkasan,
+        alamat: data.alamat,
+        email: data.email,
+        telepon: data.telepon,
+        ...(data.visi !== null ? { visi: data.visi } : {}),
+        ...(data.misi !== null ? { misi: data.misi } : {}),
+      })),
+    },
     kursus: {
       list: rec('kursus.list', async (_params: ListParams): Promise<Kursus[]> => [sampleKursus]),
       findByKode: rec('kursus.findByKode', async (kode: string): Promise<Kursus | null> =>
@@ -319,7 +352,7 @@ describe('GET /api/profil', () => {
 
   test('edge: belum di-seed (null) → 404', async () => {
     const handle = createFakeRepos();
-    handle.repos.profil = { get: async () => null };
+    handle.repos.profil = { get: async () => null, update: async () => null };
     const { app } = createTestApp(handle);
     const { status, body } = await getJson(app, '/api/profil');
     expect(status).toBe(404);
@@ -788,5 +821,178 @@ describe('POST /api/admin/upload + GET /uploads/:nama', () => {
       else process.env.UPLOAD_DIR = lama;
       await rm(dir, { recursive: true, force: true });
     }
+  });
+});
+
+// — Prioritas 2: PUT /api/profil ————————————————————————————————————————
+
+const BODY_PROFIL = {
+  nama: 'AI Center Universitas Surabaya',
+  tagline: 'Pusat riset AI Ubaya.',
+  ringkasan: 'Ringkasan profil.',
+  alamat: 'Gedung Perpustakaan LT.4',
+  email: 'aicenter@unit.ubaya.ac.id',
+  telepon: '0895-6342-22240',
+  visi: 'Menjadi yang terdepan — Deskripsi visi.',
+  misi: 'Mendorong riset.\nMenghasilkan produk.',
+};
+
+describe('PUT /api/profil (Prioritas 2)', () => {
+  test('token valid + body valid → 200, repo.profil.update dipanggil dengan data bersih', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/profil', {
+      ...BODY_PROFIL,
+      nama: '  AI Center  ',
+    });
+    expect(status).toBe(200);
+    expect((body as Profil).nama).toBe('AI Center');
+    const update = calls.find((c) => c.method === 'profil.update');
+    expect(update).toBeDefined();
+    expect(update?.args[0]).toEqual({ ...BODY_PROFIL, nama: 'AI Center' });
+  });
+
+  test('tanpa token → 401; field wajib kosong → 400 menyebut field', async () => {
+    const { app } = createTestApp();
+    expect((await kirimTulis(app, 'PUT', '/api/profil', BODY_PROFIL, null)).status).toBe(401);
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/profil', {
+      ...BODY_PROFIL,
+      telepon: '',
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "telepon" wajib diisi' });
+  });
+
+  test('baris profil belum di-seed (update → null) → 404 eksplisit', async () => {
+    const handle = createFakeRepos();
+    handle.repos.profil.update = async () => null;
+    const { app } = createTestApp(handle);
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/profil', BODY_PROFIL);
+    expect(status).toBe(404);
+    expect(body).toEqual({ error: 'Profil tidak ditemukan — jalankan seed dulu' });
+  });
+});
+
+// — Prioritas 2: CRUD /api/tim ————————————————————————————————————————
+
+const BODY_TIM = {
+  nama: 'Dr. Contoh',
+  peran: 'Ketua',
+  kredensial: 'Ph.D.',
+  foto: '/tim/contoh.jpg',
+  urutan: 7,
+};
+
+describe('CRUD /api/tim (Prioritas 2)', () => {
+  test('POST valid → 201 + repo.create dipanggil; tanpa token → 401', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/tim', BODY_TIM);
+    expect(status).toBe(201);
+    expect((body as AnggotaTim).id).toBe(9);
+    expect(calls.find((c) => c.method === 'tim.create')?.args[0]).toEqual(BODY_TIM);
+    expect((await kirimTulis(app, 'POST', '/api/tim', BODY_TIM, null)).status).toBe(401);
+  });
+
+  test('POST body tidak valid → 400 tanpa menyentuh repository', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/tim', {
+      ...BODY_TIM,
+      urutan: 'abc',
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "urutan" harus bilangan bulat 0-9999' });
+    expect(calls.some((c) => c.method === 'tim.create')).toBe(false);
+  });
+
+  test('PUT id valid → 200; id tidak sah → 400; tidak ada → 404', async () => {
+    const { app } = createTestApp();
+    const ok = await kirimTulis(app, 'PUT', '/api/tim/1', BODY_TIM);
+    expect(ok.status).toBe(200);
+    expect((ok.body as AnggotaTim).nama).toBe('Dr. Contoh');
+
+    const salah = await kirimTulis(app, 'PUT', '/api/tim/abc', BODY_TIM);
+    expect(salah.status).toBe(400);
+    expect(salah.body).toEqual({ error: 'Id tim tidak valid — isi bilangan bulat positif' });
+
+    const hilang = await kirimTulis(app, 'PUT', '/api/tim/99', BODY_TIM);
+    expect(hilang.status).toBe(404);
+    expect(hilang.body).toEqual({ error: 'Anggota tim tidak ditemukan' });
+  });
+
+  test('DELETE id valid → 200 { ok }; tidak ada → 404; id tidak sah → 400; tanpa token → 401', async () => {
+    const { app } = createTestApp();
+    expect((await kirimTulis(app, 'DELETE', '/api/tim/1', null)).status).toBe(200);
+    expect((await kirimTulis(app, 'DELETE', '/api/tim/99', null)).status).toBe(404);
+    expect((await kirimTulis(app, 'DELETE', '/api/tim/nol', null)).status).toBe(400);
+    expect((await kirimTulis(app, 'DELETE', '/api/tim/1', null, null)).status).toBe(401);
+  });
+});
+
+// — Prioritas 2: batas panjang terekspos di route ————————————————————————
+
+describe('batas panjang field teks di route (Prioritas 2)', () => {
+  test('POST /api/berita judul 201 karakter → 400 eksplisit', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/berita', {
+      ...BODY_BERITA,
+      judul: 'x'.repeat(201),
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "judul" maksimal 200 karakter' });
+  });
+
+  test('PUT /api/dokumentasi/:slug deskripsi 10001 karakter → 400 eksplisit', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(
+      app,
+      'PUT',
+      `/api/dokumentasi/${sampleDok.slug}`,
+      { ...BODY_DOK, deskripsi: 'x'.repeat(10_001) },
+    );
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "deskripsi" maksimal 10000 karakter' });
+  });
+});
+
+// — Prioritas 2: pembersih file gambar yatim ————————————————————————————
+
+describe('POST /api/admin/uploads/bersihkan (Prioritas 2)', () => {
+  test('mode kering → lapor kandidat tanpa menghapus; nyata → file terhapus', async () => {
+    const { mkdtemp, rm, writeFile, stat } = await import('node:fs/promises');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = await mkdtemp(join(tmpdir(), 'rute-yatim-'));
+    const lama = process.env.UPLOAD_DIR;
+    process.env.UPLOAD_DIR = dir;
+    try {
+      // Dua file: 'pakai.jpg' dirujuk fake referensiGambar, 'yatim.jpg' tidak.
+      await writeFile(join(dir, 'pakai.jpg'), 'x');
+      await writeFile(join(dir, 'yatim.jpg'), 'x');
+      const { app } = createTestApp();
+
+      // Kering: hanya lapor — kedua file tetap ada.
+      const kering = await kirimTulis(app, 'POST', '/api/admin/uploads/bersihkan', {
+        kering: true,
+      });
+      expect(kering.status).toBe(200);
+      expect(kering.body).toEqual({ kering: true, items: ['yatim.jpg'] });
+      await stat(join(dir, 'yatim.jpg'));
+
+      // Nyata: file yatim terhapus, file terpakai tetap aman.
+      const nyata = await kirimTulis(app, 'POST', '/api/admin/uploads/bersihkan', {});
+      expect(nyata.status).toBe(200);
+      expect(nyata.body).toEqual({ kering: false, items: ['yatim.jpg'] });
+      await expect(stat(join(dir, 'yatim.jpg'))).rejects.toThrow();
+      await stat(join(dir, 'pakai.jpg'));
+    } finally {
+      if (lama === undefined) delete process.env.UPLOAD_DIR;
+      else process.env.UPLOAD_DIR = lama;
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  test('tanpa token → 401', async () => {
+    const { app } = createTestApp();
+    const { status } = await kirimTulis(app, 'POST', '/api/admin/uploads/bersihkan', {}, null);
+    expect(status).toBe(401);
   });
 });

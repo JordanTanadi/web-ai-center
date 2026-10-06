@@ -1,7 +1,7 @@
 {
   "name": "web-ai-center-server",
   "private": true,
-  "description": "Backend API (read-only) CMS AI Center Ubaya — Bun + Elysia + Drizzle + PostgreSQL (PGlite untuk dev).",
+  "description": "Backend API CMS AI Center Ubaya (baca publik + tulis admin) — Bun + Elysia + Drizzle + PostgreSQL (PGlite untuk dev).",
   "type": "module",
   "scripts": {
     "dev": "bun run --watch src/index.ts",

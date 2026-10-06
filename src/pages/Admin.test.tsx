@@ -1,20 +1,24 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Admin, { KEY_TOKEN_ADMIN } from './Admin.tsx';
-import { ambilDaftar, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
+import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { BeritaItem } from '../data/berita.ts';
 import type { Kursus } from '../data/pelatihan.ts';
+import type { ProfilApi } from '../data/profil.ts';
+import type { AnggotaTim } from '../data/tim.ts';
 
-// Mock modul api: test deterministik tanpa backend (Admin hanya memakai
-// ambilDaftar untuk read & kirimJsonAdmin/kirimFileAdmin untuk write).
+// Mock modul api: test deterministik tanpa backend (Admin memakai ambilDaftar
+// untuk daftar, ambilJson untuk profil, kirimJsonAdmin/kirimFileAdmin untuk write).
 vi.mock('../lib/api.ts', () => ({
   ambilDaftar: vi.fn(),
+  ambilJson: vi.fn(),
   kirimJsonAdmin: vi.fn(),
   kirimFileAdmin: vi.fn(),
 }));
 
 const mockDaftar = vi.mocked(ambilDaftar);
+const mockAmbilJson = vi.mocked(ambilJson);
 const mockKirim = vi.mocked(kirimJsonAdmin);
 const mockUnggah = vi.mocked(kirimFileAdmin);
 
@@ -56,6 +60,26 @@ const KURSUS: Kursus = {
   hasil: ['Hasil 1'],
   modul: [{ judul: 'M1', deskripsi: 'D1', meta: '2 video' }],
 };
+/** Fixture anggota tim dari backend (membawa id & urutan — Prioritas 2). */
+const ANGGOTA: AnggotaTim = {
+  id: 1,
+  nama: 'Dr. Contoh Saja',
+  peran: 'Ketua',
+  kredensial: 'Ph.D.',
+  foto: '/tim/contoh.jpg',
+  urutan: 0,
+};
+/** Fixture profil baris tunggal (GET/PUT /api/profil). */
+const PROFIL: ProfilApi = {
+  nama: 'AI Center Universitas Surabaya',
+  tagline: 'Pusat riset AI Ubaya.',
+  ringkasan: 'Ringkasan profil.',
+  alamat: 'Gedung Perpustakaan LT.4',
+  email: 'aicenter@unit.ubaya.ac.id',
+  telepon: '0895-6342-22240',
+  visi: 'Judul visi — Deskripsi visi.',
+  misi: 'Poin satu.\nPoin dua.',
+};
 
 /** Render dengan sesi sudah ada di localStorage (langsung ke dashboard). */
 async function renderDashboard(): Promise<void> {
@@ -68,6 +92,8 @@ beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
   mockDaftar.mockResolvedValue([DOK, DOK2] as never);
+  // Default: GET /profil gagal (backend mati) → form profil dibiarkan kosong.
+  mockAmbilJson.mockResolvedValue(null as never);
   mockKirim.mockResolvedValue({ token: TOKEN } as never);
 });
 
@@ -441,5 +467,214 @@ describe('Admin — tab Kursus', () => {
     expect(await screen.findByRole('heading', { name: 'Masuk Admin' })).toBeInTheDocument();
     expect(localStorage.getItem(KEY_TOKEN_ADMIN)).toBeNull();
     expect(screen.getByRole('alert')).toHaveTextContent('Sesi berakhir');
+  });
+});
+
+// — Prioritas 2: tab Tim & Profil + pembersih file yatim ————————————————————
+
+describe('Admin — tab Tim (Prioritas 2)', () => {
+  const daftarTim = () => {
+    mockDaftar.mockImplementation(
+      async (path: string) => (path === '/tim' ? [ANGGOTA] : [DOK, DOK2]) as never,
+    );
+  };
+
+  it('tab Tim → GET /tim dimuat & baris anggota tampil', async () => {
+    daftarTim();
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Tim' }));
+    expect(await screen.findByText('Dr. Contoh Saja')).toBeInTheDocument();
+    expect(mockDaftar).toHaveBeenCalledWith('/tim', []);
+  });
+
+  it('tambah anggota → form muncul, Simpan → POST /tim dengan urutan', async () => {
+    daftarTim();
+    mockKirim.mockResolvedValue({ ...ANGGOTA, id: 5, nama: 'Dr. Baru' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Tim' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Nama/), { target: { value: 'Dr. Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Peran/), { target: { value: 'Anggota' } });
+    fireEvent.change(screen.getByLabelText(/^Urutan/), { target: { value: '3' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith('/tim', {
+      method: 'POST',
+      body: { nama: 'Dr. Baru', peran: 'Anggota', kredensial: '', foto: '', urutan: 3 },
+      token: TOKEN,
+    });
+  });
+
+  it('ubah anggota → form terisi dari item, Simpan → PUT /tim/:id', async () => {
+    daftarTim();
+    mockKirim.mockResolvedValue(ANGGOTA as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Tim' }));
+    expect(await screen.findByText('Dr. Contoh Saja')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
+
+    expect((screen.getByLabelText(/^Nama/) as HTMLInputElement).value).toBe('Dr. Contoh Saja');
+    fireEvent.change(screen.getByLabelText(/^Peran/), { target: { value: 'Wakil Ketua' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('diperbarui');
+    expect(mockKirim).toHaveBeenCalledWith('/tim/1', {
+      method: 'PUT',
+      body: {
+        nama: 'Dr. Contoh Saja',
+        peran: 'Wakil Ketua',
+        kredensial: 'Ph.D.',
+        foto: '/tim/contoh.jpg',
+        urutan: 0,
+      },
+      token: TOKEN,
+    });
+  });
+
+  it('hapus anggota → confirm + DELETE /tim/:id', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    daftarTim();
+    mockKirim.mockResolvedValue({ ok: true } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Tim' }));
+    expect(await screen.findByText('Dr. Contoh Saja')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Hapus' })[0]);
+
+    expect(konfirmasi).toHaveBeenCalledWith(expect.stringContaining('Dr. Contoh Saja'));
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/tim/1',
+      expect.objectContaining({ method: 'DELETE', token: TOKEN }),
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent('dihapus');
+    konfirmasi.mockRestore();
+  });
+
+  it('aksi tim 401 → keluar otomatis + pesan sesi berakhir', async () => {
+    const err401 = Object.assign(new Error('Belum login'), { status: 401 });
+    mockKirim.mockRejectedValue(err401 as never);
+    daftarTim();
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Tim' }));
+    expect(await screen.findByText('Dr. Contoh Saja')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+    fireEvent.change(screen.getByLabelText(/^Nama/), { target: { value: 'X' } });
+    fireEvent.change(screen.getByLabelText(/^Peran/), { target: { value: 'Y' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('heading', { name: 'Masuk Admin' })).toBeInTheDocument();
+    expect(localStorage.getItem(KEY_TOKEN_ADMIN)).toBeNull();
+    expect(screen.getByRole('alert')).toHaveTextContent('Sesi berakhir');
+  });
+});
+
+describe('Admin — tab Profil (Prioritas 2)', () => {
+  it('tab Profil → GET /profil mengisi form (visi & misi ikut)', async () => {
+    mockAmbilJson.mockResolvedValue(PROFIL as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Profil' }));
+
+    expect(mockAmbilJson).toHaveBeenCalledWith('/profil', null);
+    const nama = (await screen.findByLabelText(/Nama lembaga/)) as HTMLInputElement;
+    await waitFor(() => expect(nama.value).toBe(PROFIL.nama));
+    expect((screen.getByLabelText(/^Misi/) as HTMLTextAreaElement).value).toBe(PROFIL.misi);
+    expect((screen.getByLabelText(/^Visi/) as HTMLTextAreaElement).value).toBe(PROFIL.visi);
+  });
+
+  it('Simpan → PUT /profil dengan seluruh field teks', async () => {
+    mockAmbilJson.mockResolvedValue(PROFIL as never);
+    mockKirim.mockResolvedValue(PROFIL as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Profil' }));
+
+    const nama = (await screen.findByLabelText(/Nama lembaga/)) as HTMLInputElement;
+    await waitFor(() => expect(nama.value).toBe(PROFIL.nama));
+    fireEvent.change(nama, { target: { value: 'AI Center Ubaya' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan profil' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Profil disimpan.');
+    expect(mockKirim).toHaveBeenCalledWith('/profil', {
+      method: 'PUT',
+      body: {
+        nama: 'AI Center Ubaya',
+        tagline: PROFIL.tagline,
+        ringkasan: PROFIL.ringkasan,
+        alamat: PROFIL.alamat,
+        email: PROFIL.email,
+        telepon: PROFIL.telepon,
+        visi: PROFIL.visi,
+        misi: PROFIL.misi,
+      },
+      token: TOKEN,
+    });
+  });
+
+  it('simpan gagal (400 dari server) → pesan role alert tampil', async () => {
+    mockAmbilJson.mockResolvedValue(PROFIL as never);
+    mockKirim.mockRejectedValue(
+      new Error('Field "telepon" maksimal 50 karakter') as never,
+    );
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Profil' }));
+    await screen.findByLabelText(/Nama lembaga/);
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan profil' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('maksimal 50 karakter');
+  });
+});
+
+describe('Admin — bersihkan gambar yatim (Prioritas 2)', () => {
+  it('konfirmasi → POST /admin/uploads/bersihkan + jumlah file di pesan', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    mockKirim.mockResolvedValue({ kering: false, items: ['a.jpg', 'b.jpg'] } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar yatim' }));
+
+    expect(konfirmasi).toHaveBeenCalled();
+    expect(mockKirim).toHaveBeenCalledWith('/admin/uploads/bersihkan', {
+      method: 'POST',
+      body: {},
+      token: TOKEN,
+    });
+    expect(await screen.findByRole('status')).toHaveTextContent('2 gambar yatim dihapus');
+    konfirmasi.mockRestore();
+  });
+
+  it('tidak ada file yatim → pesan "Tidak ada gambar yatim"', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    mockKirim.mockResolvedValue({ kering: false, items: [] } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar yatim' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Tidak ada gambar yatim');
+    konfirmasi.mockRestore();
+  });
+
+  it('konfirmasi ditolak → request tidak dikirim', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar yatim' }));
+
+    expect(mockKirim).not.toHaveBeenCalled();
+    konfirmasi.mockRestore();
+  });
+});
+
+describe('Admin — batas panjang field (Prioritas 2)', () => {
+  it('input teks memakai maxLength yang disejajarkan dengan server', async () => {
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+    expect(screen.getByLabelText('Judul *')).toHaveAttribute('maxlength', '200');
+    expect(screen.getByLabelText('Kategori *')).toHaveAttribute('maxlength', '100');
+  });
+
+  it('tab Tim: input nama maks 200 & urutan dibatasi 0-9999', async () => {
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Tim' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    expect(screen.getByLabelText(/^Nama/)).toHaveAttribute('maxlength', '200');
+    expect(screen.getByLabelText(/^Urutan/)).toHaveAttribute('max', '9999');
   });
 });

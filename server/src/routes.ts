@@ -1,10 +1,11 @@
 /**
- * Endpoint API (read-only + tulis admin). Semua route memakai helper query
+ * Endpoint API (baca publik + tulis admin). Semua route memakai helper query
  * murni dari lib/query dan repository yang disuntikkan — tanpa akses DB langsung.
  *
- * Route tulis (POST/PUT/DELETE dokumentasi & berita) dijaga token hasil
- * POST /api/admin/login (konsul PROGRESS 2: login sederhana 1 akun);
- * login itu sendiri dibatasi rate-limit 5 gagal / 10 menit per IP → 429.
+ * Route tulis (dokumentasi, berita, kursus — lalu profil & tim pada Prioritas 2)
+ * dijaga token hasil POST /api/admin/login (konsul PROGRESS 2: login sederhana
+ * 1 akun); login itu sendiri dibatasi rate-limit 5 gagal / 10 menit per IP → 429.
+ * Semua field teks punya batas panjang di lib/tulis (Prioritas 2) → 400 eksplisit.
  *
  * Kontrak daftar: { items: T[] }; detail tidak ada → 404 { error }.
  */
@@ -12,8 +13,17 @@ import type { Elysia } from 'elysia';
 import { buatTokenAdmin, passwordCocok, tokenAdminValid, tokenDariHeader } from './auth';
 import { buatRateLimitLogin, kunciIpDariRequest } from './lib/rateLimit';
 import { normalizeSearch, parseOrder, parsePagination, trimOrNull } from './lib/query';
-import { slugDariJudul, validasiBerita, validasiDokumentasi, validasiKursus } from './lib/tulis';
 import {
+  slugDariJudul,
+  validasiBerita,
+  validasiDokumentasi,
+  validasiKursus,
+  validasiProfil,
+  validasiTim,
+} from './lib/tulis';
+import {
+  daftarFileUnggahan,
+  hapusFileUnggahan,
   namaFileAman,
   resolveUploadDir,
   simpanFileGambar,
@@ -21,6 +31,7 @@ import {
   urlFileUnggahan,
   validasiFileGambar,
 } from './lib/upload';
+import { cariYatim } from './lib/yatim';
 import type { Repositories } from './repositories/types';
 
 /**
@@ -49,6 +60,12 @@ export function registerRoutes(
     return token !== null && tokenAdminValid(token, adminPassword);
   };
   const dirUnggahan = opsi?.uploadDir ?? resolveUploadDir();
+
+  /** Path `:id` tim → integer positif; `null` bila tidak sah (→ 400). */
+  const idDariParams = (mentah: string): number | null => {
+    const id = Number(mentah);
+    return Number.isInteger(id) && id > 0 ? id : null;
+  };
 
   /** Batas brute-force login admin: 5 gagal / 10 menit per IP (fixed-window). */
   const limiterLogin = buatRateLimitLogin({ batasPercobaan: 5, jendelaMs: 10 * 60_000 });
@@ -229,7 +246,8 @@ export function registerRoutes(
     })
 
     // — Tulis berita (CRUD admin; butuh Authorization: Bearer) ——————————
-    .post('/api/berita', async ({ body, request, set }) => {      if (!terautentikasi(request)) {
+    .post('/api/berita', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
         set.status = 401;
         return { error: PESAN_BELUM_LOGIN };
       }
@@ -331,6 +349,101 @@ export function registerRoutes(
         return { error: 'Kursus tidak ditemukan' };
       }
       return { ok: true as const };
+    })
+
+    // — Tulis profil (baris tunggal id = 1; Prioritas 2: CRUD admin) ——————
+    .put('/api/profil', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiProfil(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      // Kolom statistik tidak ikut body → dipertahankan oleh repository.
+      const profilBaru = await repos.profil.update(hasil.data);
+      if (profilBaru === null) {
+        set.status = 404;
+        return { error: 'Profil tidak ditemukan — jalankan seed dulu' };
+      }
+      return profilBaru;
+    })
+
+    // — Tulis tim (CRUD admin; kunci = id numerik; Prioritas 2) ————————————
+    .post('/api/tim', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiTim(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      set.status = 201;
+      return await repos.tim.create(hasil.data);
+    })
+    .put('/api/tim/:id', async ({ params, body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const id = idDariParams(params.id);
+      if (id === null) {
+        set.status = 400;
+        return { error: 'Id tim tidak valid — isi bilangan bulat positif' };
+      }
+      const hasil = validasiTim(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      const anggota = await repos.tim.update(id, hasil.data);
+      if (anggota === null) {
+        set.status = 404;
+        return { error: 'Anggota tim tidak ditemukan' };
+      }
+      return anggota;
+    })
+    .delete('/api/tim/:id', async ({ params, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const id = idDariParams(params.id);
+      if (id === null) {
+        set.status = 400;
+        return { error: 'Id tim tidak valid — isi bilangan bulat positif' };
+      }
+      const terhapus = await repos.tim.remove(id);
+      if (!terhapus) {
+        set.status = 404;
+        return { error: 'Anggota tim tidak ditemukan' };
+      }
+      return { ok: true as const };
+    })
+
+    // — Bersihkan file unggahan yatim (Prioritas 2; butuh Bearer) ——————————
+    // Body `{ kering: true }` = mode uji: hanya melaporkan kandidat tanpa
+    // menghapus apa pun. Tanpa body / `kering: false` = hapus betulan;
+    // `items` = daftar file (kandidat saat kering, terhapus saat nyata).
+    .post('/api/admin/uploads/bersihkan', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const kering = (body as { kering?: unknown } | null)?.kering === true;
+      const daftar = await daftarFileUnggahan(dirUnggahan);
+      const referensi = await repos.referensiGambar();
+      const yatim = cariYatim(daftar, referensi);
+      if (!kering) {
+        for (const nama of yatim) {
+          await hapusFileUnggahan(nama, dirUnggahan);
+        }
+      }
+      return { kering, items: yatim };
     })
 
     // — Unggah gambar admin (multipart `gambar`; butuh Bearer) —————————

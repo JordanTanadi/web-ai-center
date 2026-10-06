@@ -15,14 +15,16 @@ import type {
   Testimoni,
 } from '../api/types';
 import type { Pagination } from '../lib/query';
-// Input tulis admin (PROGRESS 2) hidup di lib/tulis — satu sumber kontrak
-// validasi body, dipakai route & repository.
-import type { InputBerita, InputDokumentasi, InputKursus } from '../lib/tulis';
+// Input tulis admin (PROGRESS 2 + Prioritas 2) hidup di lib/tulis — satu
+// sumber kontrak validasi body, dipakai route & repository.
+import type { InputBerita, InputDokumentasi, InputKursus, InputProfil, InputTim } from '../lib/tulis';
 
 /** Alias agar interface repository tidak perlu import langsung dari lib/tulis. */
 export type BeritaInput = InputBerita;
 export type DokumentasiInput = InputDokumentasi;
 export type KursusInput = InputKursus;
+export type ProfilInput = InputProfil;
+export type TimInput = InputTim;
 
 export interface ListParams {
   /** Kata kunci pencarian; `null` = tanpa filter. */
@@ -62,6 +64,12 @@ export interface DokumentasiRepository {
 
 export interface TimRepository {
   list(params: ListParams): Promise<AnggotaTim[]>;
+  /** Buat anggota baru; balikan item tersimpan (id & urutan dari DB). */
+  create(data: TimInput): Promise<AnggotaTim>;
+  /** Perbarui anggota berdasarkan id; `null` bila id tidak ditemukan. */
+  update(id: number, data: TimInput): Promise<AnggotaTim | null>;
+  /** Hapus anggota berdasarkan id; `true` bila ada baris yang terhapus. */
+  remove(id: number): Promise<boolean>;
 }
 
 export interface LayananRepository {
@@ -84,6 +92,11 @@ export interface TestimoniRepository {
 export interface ProfilRepository {
   /** Profil baris tunggal (id = 1); `null` bila belum di-seed. */
   get(): Promise<Profil | null>;
+  /**
+   * Perbarui profil baris tunggal; `null` bila baris belum ada (belum di-seed).
+   * Kolom `statistik` TIDAK disentuh (tidak ada input edit untuknya).
+   */
+  update(data: ProfilInput): Promise<Profil | null>;
 }
 
 export interface KursusRepository {
@@ -111,4 +124,10 @@ export interface Repositories {
   kursus: KursusRepository;
   /** Cek koneksi DB untuk `/api/health`; lempar bila DB tidak terjangkau. */
   ping: () => Promise<void>;
+  /**
+   * Semua nilai URL gambar/foto yang dirujuk konten (berita.gambar,
+   * dokumentasi.gambar, tim.foto) — pembanding file unggahan yatim
+   * (lihat lib/yatim.ts + route POST /api/admin/uploads/bersihkan).
+   */
+  referensiGambar: () => Promise<string[]>;
 }

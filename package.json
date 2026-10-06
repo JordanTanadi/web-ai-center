@@ -2,7 +2,7 @@
   "name": "web-ai-center",
   "private": true,
   "version": "0.1.0",
-  "description": "Frontend CMS AI Center Universitas Surabaya (React + Vite + TS + Tailwind + motion). Data masih dummy — lihat TODO_BACKEND.",
+  "description": "Frontend CMS AI Center Universitas Surabaya (React + Vite + TS + Tailwind + motion). Data dari backend dengan fallback dummy — lihat TODO_BACKEND.",
   "type": "module",
   "scripts": {
     "dev": "vite",

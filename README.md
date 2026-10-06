@@ -1,6 +1,6 @@
 # Web AI Center — Frontend
 
-CMS frontend AI Center Universitas Surabaya. Terhubung ke backend read-only
+CMS frontend AI Center Universitas Surabaya. Terhubung ke backend
 (`VITE_API_BASE_URL`, lihat `.env.example`) — bila backend mati, env kosong, atau
 mode test, semua halaman otomatis memakai data dummy (lihat `src/lib/api.ts`).
 
@@ -53,7 +53,8 @@ jalan penuh dengan data dummy.
 
 ## Backend `server/` (baru)
 
-API **read-only** — Bun + Elysia + Drizzle ORM + PostgreSQL. Dev lokal tidak butuh
+API **baca publik + tulis admin** — Bun + Elysia + Drizzle ORM + PostgreSQL. Dev
+lokal tidak butuh
 instalasi Postgres: kosongkan `DATABASE_URL` → otomatis memakai **PGlite**
 (Postgres in-process, data di `server/.pglite/`, di-gitignore). Isi `.env` dari
 `server/.env.example` untuk koneksi PostgreSQL asli (nilai dummy saja di sana).
@@ -83,6 +84,17 @@ bun run db:generate     # generate migrasi — hanya setelah ubah schema.ts
 | `GET /api/kursus` · `/api/kursus/:kode` | `q`, `page`, `limit` | `{ items }` / 404; kode case-insensitive (`r01`) |
 | `GET /api/hero-slides` · `/api/klien` · `/api/testimoni` | — | `{ items }` |
 | `GET /api/profil` | — | Tentang Kami + kontak footer; 404 bila belum di-seed |
+| `POST /api/admin/login` | body `{ password }` | rate-limit 5 gagal / 10 menit per IP → 429; balikan `{ token }` |
+| `POST` · `PUT` · `DELETE /api/dokumentasi[/:slug]` | — | butuh `Authorization: Bearer <token>`; 400/404/409 eksplisit |
+| `POST` · `PUT` · `DELETE /api/berita[/:slug]` | — | idem; slug dibuat server dari judul |
+| `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | idem; `kode` jadi kunci unik |
+| `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan |
+| `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | kunci `id` numerik; `urutan` = posisi tampil |
+| `POST /api/admin/upload` | multipart `gambar` | file ≤ 2 MB (jpg/png/webp) → `{ url }` `/uploads/<nama>` |
+| `POST /api/admin/uploads/bersihkan` | `{ kering? }` | hapus file unggahan yatim (tak dirujuk kolom manapun); `kering: true` = mode uji |
+
+Semua field teks punya batas panjang di `server/src/lib/tulis.ts` (Prioritas 2) —
+body yang lewat batas ditolak 400 dengan pesan menyebut field + batasnya.
 
 CORS: whitelist origin lewat `CORS_ORIGIN` (default `http://localhost:5173`).
 
@@ -106,7 +118,11 @@ Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
 - video lesson + progress LMS per peserta — butuh konten video & akun
 - section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
 
-CRUD admin belum dikerjakan (scope backend saat ini baru API baca).
+CRUD admin sudah lengkap (Prioritas 2): dokumentasi, berita, kursus — lalu
+**profil** (`PUT /api/profil` + tab Profil di `/admin`) dan **tim**
+(CRUD `/api/tim` + tab Tim), batas panjang semua field teks, serta pembersih
+file gambar yatim (`POST /api/admin/uploads/bersihkan` + tombol "Bersihkan
+gambar yatim" di dashboard admin).
 
 ## Ringkasan pengerjaan
 

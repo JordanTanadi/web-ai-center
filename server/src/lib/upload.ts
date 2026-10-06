@@ -6,7 +6,11 @@
  * simpan ke `UPLOAD_DIR` (default `<cwd>/uploads`) → balikan `{ url }`
  * berbentuk `/uploads/<nama-unik>.<ext>` untuk disimpan di kolom `gambar`.
  * `GET /uploads/:nama` menyajikan file-nya kembali.
+ *
+ * Prioritas 2: `daftarFileUnggahan` + `hapusFileUnggahan` menopang pembersih
+ * file yatim (POST /api/admin/uploads/bersihkan, lihat lib/yatim.ts).
  */
+import { readdir, unlink } from 'node:fs/promises';
 
 /** Ukuran maksimum file: 2 MB. */
 export const BATAS_UKURAN_GAMBAR = 2 * 1024 * 1024;
@@ -102,4 +106,39 @@ export async function simpanFileGambar(
 /** URL publik untuk nama file tersimpan. */
 export function urlFileUnggahan(nama: string): string {
   return `/uploads/${nama}`;
+}
+
+/**
+ * Daftar nama file gambar di direktori unggahan (hanya nama sah — file asing
+ * diabaikan), urut alfabet. Direktori belum ada → `[]` (belum ada unggahan).
+ */
+export async function daftarFileUnggahan(dir: string = resolveUploadDir()): Promise<string[]> {
+  let entri: string[];
+  try {
+    entri = await readdir(dir);
+  } catch (error) {
+    const kode = (error as { code?: string }).code;
+    if (kode === 'ENOENT') return [];
+    throw error;
+  }
+  return entri.filter((nama) => namaFileAman(nama) !== null).sort();
+}
+
+/**
+ * Hapus satu file unggahan. Nama divalidasi `namaFileAman` — traversal /
+ * ekstensi asing ditolak (melempar error eksplisit, bukan diam-diam).
+ * File yang sudah tidak ada (ENOENT) dianggap selesai — tidak error.
+ */
+export async function hapusFileUnggahan(
+  nama: string,
+  dir: string = resolveUploadDir(),
+): Promise<void> {
+  const aman = namaFileAman(nama);
+  if (aman === null) throw new Error(`Nama file tidak aman: ${nama}`);
+  try {
+    await unlink(`${dir.replace(/\/+$/, '')}/${aman}`);
+  } catch (error) {
+    const kode = (error as { code?: string }).code;
+    if (kode !== 'ENOENT') throw error;
+  }
 }

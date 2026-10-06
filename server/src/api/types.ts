@@ -27,12 +27,18 @@ export interface DokumentasiItem {
   gambar?: string;
 }
 
-/** ↔ src/data/tim.ts AnggotaTim */
+/**
+ * ↔ src/data/tim.ts AnggotaTim. `id` & `urutan` hanya dipakai admin
+ * (CRUD tab "Tim" di src/pages/Admin.tsx) — halaman publik mengabaikannya;
+ * data dummy frontend tidak memilikinya (karena itu opsional di sana).
+ */
 export interface AnggotaTim {
+  id: number;
   nama: string;
   peran: string;
   kredensial?: string;
   foto?: string;
+  urutan: number;
 }
 
 /** ↔ src/data/layanan.ts Layanan */

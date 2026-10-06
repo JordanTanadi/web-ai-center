@@ -1,6 +1,7 @@
 /**
- * Dashboard admin (konsul PROGRESS 2 fase 3 + lanjutan): login sederhana (1 akun) +
- * CRUD dokumentasi, berita, & kursus (termasuk editor daftar modul).
+ * Dashboard admin (konsul PROGRESS 2 fase 3 + lanjutan + Prioritas 2): login
+ * sederhana (1 akun) + CRUD dokumentasi, berita, kursus — lalu tim & profil
+ * (tab baru Prioritas 2; lihat komponen TimAdmin & ProfilAdmin di bawah).
  *
  * - UI sengaja bahasa Indonesia tanpa i18n — alat internal, bukan halaman publik.
  * - Token hasil POST /api/admin/login disimpan di localStorage; semua aksi tulis
@@ -11,17 +12,26 @@
  *   kirimJsonAdmin/kirimFileAdmin yang MELEMPAR ErrorApi — kegagalan wajib tampil.
  * - Slug dibuat server dari judul; saat edit slug dipegang tetap supaya tautan lama hidup.
  *   Kursus memakai `kode` (mis. 'R01') sebagai kunci yang juga tidak boleh diganti saat edit.
+ * - Batas panjang field (atribut `maks` → maxLength) disejajarkan dengan
+ *   server/src/lib/tulis.ts — server tetap penegak utamanya (400 eksplisit).
+ * - Tombol "Bersihkan gambar yatim" memanggil POST /api/admin/uploads/bersihkan
+ *   (Prioritas 2) — menghapus file unggahan yang tidak dirujuk konten manapun.
  */
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
-import { ambilDaftar, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
+import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
 import type { BeritaItem } from '../data/berita.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { Kursus, Modul } from '../data/pelatihan.ts';
+import type { ProfilApi } from '../data/profil.ts';
+import type { AnggotaTim } from '../data/tim.ts';
 
 /** Kunci localStorage untuk token sesi admin. */
 export const KEY_TOKEN_ADMIN = 'token-admin';
 
-type Jenis = 'dokumentasi' | 'berita' | 'kursus';
+type Jenis = 'dokumentasi' | 'berita' | 'kursus' | 'tim' | 'profil';
+/** Jenis yang memakai alur daftar+form generik di komponen utama (kursus/tim/profil
+    punya komponen admin sendiri karena bentuk datanya beda). */
+type JenisDaftar = 'dokumentasi' | 'berita';
 type ItemAdmin = DokumentasiItem | BeritaItem;
 
 interface FieldDef {
@@ -33,25 +43,27 @@ interface FieldDef {
   baris?: number;
   /** Input bertipe date (format YYYY-MM-DD). */
   tanggal?: boolean;
+  /** Batas panjang karakter → atribut maxLength (sama dengan BATAS di server). */
+  maks?: number;
 }
 
-/** Definisi form dokumentasi & berita — urutan array = urutan render. Kursus
-    punya form sendiri (KursusAdmin) karena ada editor daftar modul. */
-const FIELD: Record<Exclude<Jenis, 'kursus'>, FieldDef[]> = {
+/** Definisi form dokumentasi & berita — urutan array = urutan render. Kursus,
+    tim, & profil punya form sendiri (KursusAdmin/TimAdmin/ProfilAdmin). */
+const FIELD: Record<JenisDaftar, FieldDef[]> = {
   dokumentasi: [
-    { kunci: 'judul', label: 'Judul', wajib: true },
+    { kunci: 'judul', label: 'Judul', wajib: true, maks: 200 },
     { kunci: 'tanggal', label: 'Tanggal', wajib: true, tanggal: true },
-    { kunci: 'kategori', label: 'Kategori', wajib: true },
+    { kunci: 'kategori', label: 'Kategori', wajib: true, maks: 100 },
     { kunci: 'gambar', label: 'Gambar (file JPG/PNG/WebP, maks 2 MB)' },
-    { kunci: 'deskripsi', label: 'Deskripsi', wajib: true, textarea: true },
+    { kunci: 'deskripsi', label: 'Deskripsi', wajib: true, textarea: true, maks: 10000 },
   ],
   berita: [
-    { kunci: 'judul', label: 'Judul', wajib: true },
+    { kunci: 'judul', label: 'Judul', wajib: true, maks: 200 },
     { kunci: 'tanggal', label: 'Tanggal', wajib: true, tanggal: true },
-    { kunci: 'penulis', label: 'Penulis', wajib: true },
+    { kunci: 'penulis', label: 'Penulis', wajib: true, maks: 100 },
     { kunci: 'gambar', label: 'Gambar (file JPG/PNG/WebP, maks 2 MB)' },
-    { kunci: 'ringkasan', label: 'Ringkasan', wajib: true, textarea: true },
-    { kunci: 'isi', label: 'Isi', wajib: true, textarea: true, baris: 8 },
+    { kunci: 'ringkasan', label: 'Ringkasan', wajib: true, textarea: true, maks: 500 },
+    { kunci: 'isi', label: 'Isi', wajib: true, textarea: true, baris: 8, maks: 20000 },
   ],
 };
 
@@ -89,7 +101,7 @@ function formDariItem(item: ItemAdmin): Record<string, string> {
 }
 
 /** Susun body JSON hanya dari field milik jenis aktif. */
-function bodyDariForm(form: Record<string, string>, jenis: Exclude<Jenis, 'kursus'>): Record<string, string> {
+function bodyDariForm(form: Record<string, string>, jenis: JenisDaftar): Record<string, string> {
   return Object.fromEntries(FIELD[jenis].map((f) => [f.kunci, form[f.kunci] ?? '']));
 }
 
@@ -108,9 +120,9 @@ export default function Admin() {
   const [pesan, setPesan] = useState<Pesan | null>(null);
   const [password, setPassword] = useState('');
 
-  /** Muat daftar sesuai jenis aktif (fallback [] bila backend mati). Kursus
-      dimuat komponennya sendiri (KursusAdmin). */
-  async function muatDaftar(j: Exclude<Jenis, 'kursus'>): Promise<void> {
+  /** Muat daftar sesuai jenis aktif (fallback [] bila backend mati). Kursus,
+      tim, & profil dimuat komponennya sendiri (KursusAdmin/TimAdmin/ProfilAdmin). */
+  async function muatDaftar(j: JenisDaftar): Promise<void> {
     const items = await ambilDaftar<ItemAdmin>(`/${j}`, []);
     setDaftar(items);
   }
@@ -140,7 +152,8 @@ export default function Admin() {
       setDaftar([]);
       return;
     }
-    if (jenis === 'kursus') {
+    // Kursus/tim/profil memakai komponen admin sendiri (daftar milik section-nya).
+    if (jenis !== 'dokumentasi' && jenis !== 'berita') {
       setDaftar([]);
       return;
     }
@@ -194,7 +207,9 @@ export default function Admin() {
 
   async function simpan(event: FormEvent): Promise<void> {
     event.preventDefault();
-    if (token === null || mode === 'daftar' || jenis === 'kursus') return;
+    if (token === null || mode === 'daftar' || (jenis !== 'dokumentasi' && jenis !== 'berita')) {
+      return;
+    }
     setPesan(null);
     const ubah = mode === 'ubah' && slugEdit !== null;
     try {
@@ -226,7 +241,7 @@ export default function Admin() {
   }
 
   async function hapus(item: ItemAdmin): Promise<void> {
-    if (token === null || jenis === 'kursus') return;
+    if (token === null || (jenis !== 'dokumentasi' && jenis !== 'berita')) return;
     const yakin = window.confirm(`Hapus "${item.judul}"? Tindakan ini tidak bisa dibatalkan.`);
     if (!yakin) return;
     setPesan(null);
@@ -234,6 +249,34 @@ export default function Admin() {
       await kirimJsonAdmin(`/${jenis}/${item.slug}`, { method: 'DELETE', token });
       setPesan({ teks: `Konten "${item.judul}" dihapus.`, sukses: true });
       await muatDaftar(jenis);
+    } catch (error) {
+      tanganiErrorAksi(error);
+    }
+  }
+
+  /**
+   * Bersihkan file unggahan yatim (Prioritas 2): file gambar di server yang
+   * tidak lagi dirujuk kolom manapun (sisa edit/hapus konten).
+   */
+  async function bersihkanYatim(): Promise<void> {
+    if (token === null) return;
+    const yakin = window.confirm(
+      'Hapus file gambar di server yang tidak lagi dipakai konten manapun? Tindakan ini tidak bisa dibatalkan.',
+    );
+    if (!yakin) return;
+    setPesan(null);
+    try {
+      const hasil = await kirimJsonAdmin<{ kering: boolean; items: string[] }>(
+        '/admin/uploads/bersihkan',
+        { method: 'POST', body: {}, token },
+      );
+      setPesan({
+        teks:
+          hasil.items.length === 0
+            ? 'Tidak ada gambar yatim — semua file masih dipakai konten.'
+            : `${hasil.items.length} gambar yatim dihapus.`,
+        sukses: true,
+      });
     } catch (error) {
       tanganiErrorAksi(error);
     }
@@ -257,7 +300,7 @@ export default function Admin() {
       <main className="mx-auto max-w-md px-6 py-16">
         <h1 className="font-display text-3xl font-bold">Masuk Admin</h1>
         <p className="mt-2 text-sm text-muted">
-          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita & kursus.
+          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita, kursus, tim & profil.
         </p>
         <form onSubmit={masuk} className="mt-8 space-y-4">
           <div>
@@ -296,26 +339,44 @@ export default function Admin() {
     dokumentasi: 'Dokumentasi',
     berita: 'Berita',
     kursus: 'Kursus',
+    tim: 'Tim',
+    profil: 'Profil',
   };
   const labelJenis = LABEL_JENIS[jenis];
+  /** Handler 401 bersama untuk section admin yang punya token sendiri. */
+  const sesiBerakhir = (): void => {
+    keluar();
+    setPesan({ teks: 'Sesi berakhir — silakan masuk kembali.', sukses: false });
+  };
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <header className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold">Dashboard Admin</h1>
-          <p className="mt-1 text-sm text-muted">Kelola konten dokumentasi, berita & kursus AI Center.</p>
+          <p className="mt-1 text-sm text-muted">
+            Kelola dokumentasi, berita, kursus, tim & profil AI Center.
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={keluar}
-          className="rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
-        >
-          Keluar
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => void bersihkanYatim()}
+            className="rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
+          >
+            Bersihkan gambar yatim
+          </button>
+          <button
+            type="button"
+            onClick={keluar}
+            className="rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
+          >
+            Keluar
+          </button>
+        </div>
       </header>
 
       <div role="tablist" aria-label="Jenis konten" className="mt-6 flex gap-2">
-        {(['dokumentasi', 'berita', 'kursus'] as const).map((j) => (
+        {(['dokumentasi', 'berita', 'kursus', 'tim', 'profil'] as const).map((j) => (
           <button
             key={j}
             type="button"
@@ -337,14 +398,16 @@ export default function Admin() {
         ))}
       </div>
 
+      {/* Satu titik render pesan aksi (simpan/hapus/yatim) — tab lain punya
+          state pesan sendiri di komponennya masing-masing. */}
+      {elemenPesan}
+
       {jenis === 'kursus' ? (
-        <KursusAdmin
-          token={token}
-          gagal401={() => {
-            keluar();
-            setPesan({ teks: 'Sesi berakhir — silakan masuk kembali.', sukses: false });
-          }}
-        />
+        <KursusAdmin token={token} gagal401={sesiBerakhir} />
+      ) : jenis === 'tim' ? (
+        <TimAdmin token={token} gagal401={sesiBerakhir} />
+      ) : jenis === 'profil' ? (
+        <ProfilAdmin token={token} gagal401={sesiBerakhir} />
       ) : (
       <section className="mt-6">
         <div className="flex items-center justify-between gap-3">
@@ -364,8 +427,6 @@ export default function Admin() {
             </button>
           )}
         </div>
-
-        {elemenPesan}
 
         {mode === 'daftar' ? (
           daftar.length === 0 ? (
@@ -445,6 +506,7 @@ export default function Admin() {
                     id={`field-${f.kunci}`}
                     required={f.wajib === true}
                     rows={f.baris ?? 4}
+                    maxLength={f.maks}
                     className="mt-1 w-full rounded-lg border border-line px-3 py-2"
                     value={form[f.kunci] ?? ''}
                     onChange={(event) =>
@@ -456,6 +518,7 @@ export default function Admin() {
                     id={`field-${f.kunci}`}
                     type={f.tanggal === true ? 'date' : 'text'}
                     required={f.wajib === true}
+                    maxLength={f.maks}
                     className="mt-1 w-full rounded-lg border border-line px-3 py-2"
                     value={form[f.kunci] ?? ''}
                     onChange={(event) =>
@@ -660,14 +723,15 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
 
   const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
   const labelCls = 'block text-sm font-semibold';
-  const teksSingkat: Array<{ kunci: keyof typeof k; label: string }> = [
-    { kunci: 'judul', label: 'Judul' },
-    { kunci: 'durasi', label: 'Durasi (mis. 4 sesi)' },
-    { kunci: 'level', label: 'Level (mis. Pemula)' },
-    { kunci: 'format', label: 'Format (mis. Online)' },
-    { kunci: 'instruktur', label: 'Instruktur' },
-    { kunci: 'peran', label: 'Peran instruktur' },
-    { kunci: 'inisial', label: 'Inisial avatar' },
+  // maks = batas panjang server (lib/tulis BATAS) → atribut maxLength.
+  const teksSingkat: Array<{ kunci: keyof typeof k; label: string; maks: number }> = [
+    { kunci: 'judul', label: 'Judul', maks: 200 },
+    { kunci: 'durasi', label: 'Durasi (mis. 4 sesi)', maks: 100 },
+    { kunci: 'level', label: 'Level (mis. Pemula)', maks: 100 },
+    { kunci: 'format', label: 'Format (mis. Online)', maks: 100 },
+    { kunci: 'instruktur', label: 'Instruktur', maks: 200 },
+    { kunci: 'peran', label: 'Peran instruktur', maks: 200 },
+    { kunci: 'inisial', label: 'Inisial avatar', maks: 10 },
   ];
 
   return (
@@ -731,6 +795,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
               id="kursus-kode"
               type="text"
               required
+              maxLength={12}
               disabled={mode === 'ubah'}
               placeholder="R01"
               className={`${inputCls} disabled:bg-soft`}
@@ -750,6 +815,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                 id={`kursus-${f.kunci}`}
                 type="text"
                 required
+                maxLength={f.maks}
                 className={inputCls}
                 value={k[f.kunci]}
                 onChange={(event) => atur(f.kunci, event.target.value)}
@@ -764,6 +830,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
               id="kursus-deskripsi"
               required
               rows={3}
+              maxLength={1000}
               className={inputCls}
               value={k.deskripsi}
               onChange={(event) => atur('deskripsi', event.target.value)}
@@ -777,6 +844,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
               id="kursus-tentang"
               required
               rows={4}
+              maxLength={20000}
               className={inputCls}
               value={k.tentang}
               onChange={(event) => atur('tentang', event.target.value)}
@@ -820,6 +888,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                     required
                     aria-label={`Judul modul ${i + 1}`}
                     placeholder="Judul modul"
+                    maxLength={200}
                     className={`${inputCls} mt-2`}
                     value={m.judul}
                     onChange={(event) => aturModul(i, 'judul', event.target.value)}
@@ -829,6 +898,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                     required
                     aria-label={`Meta modul ${i + 1}`}
                     placeholder="Meta (mis. 4 video · 35 menit)"
+                    maxLength={200}
                     className={inputCls}
                     value={m.meta}
                     onChange={(event) => aturModul(i, 'meta', event.target.value)}
@@ -838,6 +908,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                     aria-label={`Deskripsi modul ${i + 1}`}
                     placeholder="Deskripsi modul"
                     rows={2}
+                    maxLength={1000}
                     className={inputCls}
                     value={m.deskripsi}
                     onChange={(event) => aturModul(i, 'deskripsi', event.target.value)}
@@ -883,6 +954,481 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
           </div>
         </form>
       )}
+    </section>
+  );
+}
+
+/**
+ * Section CRUD anggota tim (tab "Tim", Prioritas 2). Kunci baris = `id` dari
+ * backend (GET /api/tim mengembalikan id & urutan); foto diperlakukan seperti
+ * gambar lain — file diunggah saat Simpan, URL hasilnya masuk ke body.
+ */
+function TimAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
+  const [daftar, setDaftar] = useState<AnggotaTim[]>([]);
+  const [mode, setMode] = useState<'daftar' | 'tambah' | 'ubah'>('daftar');
+  const [idEdit, setIdEdit] = useState<number | null>(null);
+  const [f, setF] = useState({ nama: '', peran: '', kredensial: '', foto: '', urutan: '0' });
+  const [fileFoto, setFileFoto] = useState<File | null>(null);
+  const [pratinjau, setPratinjau] = useState<string | null>(null);
+  const [pesan, setPesan] = useState<{ teks: string; sukses: boolean } | null>(null);
+
+  async function muat(): Promise<void> {
+    setDaftar(await ambilDaftar<AnggotaTim>('/tim', []));
+  }
+
+  useEffect(() => {
+    void muat();
+    // muatDaftar stabil (closure tanpa state); muat sekali saat mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function tanganiError(error: unknown): void {
+    if ((error as { status?: number } | null)?.status === 401) {
+      gagal401();
+      return;
+    }
+    setPesan({
+      teks: error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak dikenal',
+      sukses: false,
+    });
+  }
+
+  /** URL object untuk pratinjau file baru di-revoke saat berganti/batal. */
+  function lepasPratinjau(): void {
+    if (pratinjau !== null && pratinjau.startsWith('blob:')) URL.revokeObjectURL(pratinjau);
+  }
+
+  function mulaiTambah(): void {
+    setF({ nama: '', peran: '', kredensial: '', foto: '', urutan: String(daftar.length) });
+    setFileFoto(null);
+    setPratinjau(null);
+    setMode('tambah');
+    setPesan(null);
+  }
+
+  function mulaiUbah(item: AnggotaTim): void {
+    if (item.id === undefined) return;
+    setF({
+      nama: item.nama,
+      peran: item.peran,
+      kredensial: item.kredensial ?? '',
+      foto: item.foto ?? '',
+      urutan: String(item.urutan ?? 0),
+    });
+    setFileFoto(null);
+    setPratinjau(null);
+    setIdEdit(item.id);
+    setMode('ubah');
+    setPesan(null);
+  }
+
+  function pilihFoto(event: ChangeEvent<HTMLInputElement>): void {
+    const file = event.target.files?.[0] ?? null;
+    lepasPratinjau();
+    setFileFoto(file);
+    setPratinjau(file !== null ? URL.createObjectURL(file) : null);
+  }
+
+  function batalkan(): void {
+    lepasPratinjau();
+    setMode('daftar');
+    setIdEdit(null);
+    setFileFoto(null);
+    setPratinjau(null);
+    setPesan(null);
+  }
+
+  async function simpan(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setPesan(null);
+    try {
+      let foto = f.foto;
+      if (fileFoto !== null) {
+        const unggah = await kirimFileAdmin('/admin/upload', fileFoto, { token });
+        foto = unggah.url;
+      }
+      const body = {
+        nama: f.nama,
+        peran: f.peran,
+        kredensial: f.kredensial,
+        foto,
+        urutan: Number(f.urutan),
+      };
+      const ubah = mode === 'ubah' && idEdit !== null;
+      const hasil = await kirimJsonAdmin<AnggotaTim>(ubah ? `/tim/${idEdit}` : '/tim', {
+        method: ubah ? 'PUT' : 'POST',
+        body,
+        token,
+      });
+      setPesan({
+        teks: ubah ? `Anggota "${hasil.nama}" diperbarui.` : `Anggota "${hasil.nama}" tersimpan.`,
+        sukses: true,
+      });
+      setMode('daftar');
+      setIdEdit(null);
+      setFileFoto(null);
+      lepasPratinjau();
+      setPratinjau(null);
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  async function hapus(item: AnggotaTim): Promise<void> {
+    if (item.id === undefined) return;
+    const yakin = window.confirm(
+      `Hapus "${item.nama}" dari tim? Tindakan ini tidak bisa dibatalkan.`,
+    );
+    if (!yakin) return;
+    setPesan(null);
+    try {
+      await kirimJsonAdmin(`/tim/${item.id}`, { method: 'DELETE', token });
+      setPesan({ teks: `Anggota "${item.nama}" dihapus.`, sukses: true });
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  const elemenPesan =
+    pesan === null ? null : (
+      <p
+        role={pesan.sukses ? 'status' : 'alert'}
+        className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+          pesan.sukses ? 'bg-soft text-emerald-800' : 'bg-red-50 text-red-800'
+        }`}
+      >
+        {pesan.teks}
+      </p>
+    );
+
+  const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
+  const labelCls = 'block text-sm font-semibold';
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-bold">Tim</h2>
+        {mode === 'daftar' && (
+          <button
+            type="button"
+            onClick={mulaiTambah}
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Tambah baru
+          </button>
+        )}
+      </div>
+
+      {elemenPesan}
+
+      {mode === 'daftar' ? (
+        daftar.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Belum ada anggota Tim.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+            {daftar.map((item, i) => (
+              <li key={item.id ?? i} className="flex items-center gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{item.nama}</p>
+                  <p className="text-xs text-muted">
+                    {item.peran}
+                    {item.kredensial !== undefined ? ` · ${item.kredensial}` : ''} · urutan{' '}
+                    {item.urutan ?? '-'}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => mulaiUbah(item)}
+                  className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+                >
+                  Ubah
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void hapus(item)}
+                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50"
+                >
+                  Hapus
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : (
+        <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
+          <h3 className="font-semibold">
+            {mode === 'ubah' ? `Ubah anggota — ${f.nama}` : 'Tambah anggota baru'}
+          </h3>
+          <div>
+            <label htmlFor="tim-nama" className={labelCls}>
+              Nama *
+            </label>
+            <input
+              id="tim-nama"
+              type="text"
+              required
+              maxLength={200}
+              className={inputCls}
+              value={f.nama}
+              onChange={(event) => setF((prev) => ({ ...prev, nama: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="tim-peran" className={labelCls}>
+              Peran *
+            </label>
+            <input
+              id="tim-peran"
+              type="text"
+              required
+              maxLength={200}
+              className={inputCls}
+              value={f.peran}
+              onChange={(event) => setF((prev) => ({ ...prev, peran: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="tim-kredensial" className={labelCls}>
+              Kredensial (opsional)
+            </label>
+            <input
+              id="tim-kredensial"
+              type="text"
+              maxLength={300}
+              className={inputCls}
+              value={f.kredensial}
+              onChange={(event) => setF((prev) => ({ ...prev, kredensial: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="tim-urutan" className={labelCls}>
+              Urutan tampil (0 = paling atas) *
+            </label>
+            <input
+              id="tim-urutan"
+              type="number"
+              required
+              min={0}
+              max={9999}
+              className={inputCls}
+              value={f.urutan}
+              onChange={(event) => setF((prev) => ({ ...prev, urutan: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="tim-foto" className={labelCls}>
+              Foto (file JPG/PNG/WebP, maks 2 MB)
+            </label>
+            <input
+              id="tim-foto"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="mt-1 block text-sm"
+              onChange={pilihFoto}
+            />
+            {pratinjau !== null && (
+              <img
+                src={pratinjau}
+                alt="Pratinjau foto anggota"
+                className="mt-2 h-24 w-24 rounded-full object-cover"
+              />
+            )}
+            {mode === 'ubah' && f.foto !== '' && fileFoto === null && pratinjau === null && (
+              <p className="mt-1 text-xs text-muted">
+                Foto saat ini: {f.foto} — pilih file baru untuk mengganti.
+              </p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:opacity-90"
+            >
+              Simpan
+            </button>
+            <button
+              type="button"
+              onClick={batalkan}
+              className="rounded-lg border border-line px-5 py-2 font-semibold hover:bg-soft"
+            >
+              Batal
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Section edit profil baris tunggal (tab "Profil", Prioritas 2). Isi awal dari
+ * GET /api/profil (ambilJson — form kosong bila backend mati/belum di-seed;
+ * simpan tetap divalidasi server, 404 bila baris belum ada). Field `visi` satu
+ * baris "Judul — Deskripsi"; `misi` satu poin per baris (lihat petakanProfilApi).
+ * Kolom `statistik` tidak diedit di sini (PUT server mempertahankannya).
+ */
+function ProfilAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
+  const [f, setF] = useState({
+    nama: '',
+    tagline: '',
+    ringkasan: '',
+    alamat: '',
+    email: '',
+    telepon: '',
+    visi: '',
+    misi: '',
+  });
+  const [pesan, setPesan] = useState<{ teks: string; sukses: boolean } | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const profil = await ambilJson<ProfilApi | null>('/profil', null);
+      if (profil !== null) {
+        setF({
+          nama: profil.nama,
+          tagline: profil.tagline,
+          ringkasan: profil.ringkasan,
+          alamat: profil.alamat,
+          email: profil.email,
+          telepon: profil.telepon,
+          visi: profil.visi ?? '',
+          misi: profil.misi ?? '',
+        });
+      }
+    })();
+  }, []);
+
+  async function simpan(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setPesan(null);
+    try {
+      await kirimJsonAdmin('/profil', { method: 'PUT', body: f, token });
+      setPesan({ teks: 'Profil disimpan.', sukses: true });
+    } catch (error) {
+      if ((error as { status?: number } | null)?.status === 401) {
+        gagal401();
+        return;
+      }
+      setPesan({
+        teks: error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak dikenal',
+        sukses: false,
+      });
+    }
+  }
+
+  const elemenPesan =
+    pesan === null ? null : (
+      <p
+        role={pesan.sukses ? 'status' : 'alert'}
+        className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+          pesan.sukses ? 'bg-soft text-emerald-800' : 'bg-red-50 text-red-800'
+        }`}
+      >
+        {pesan.teks}
+      </p>
+    );
+
+  const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
+  const labelCls = 'block text-sm font-semibold';
+  // Field singkat + batas panjang server (lib/tulis BATAS) → maxLength.
+  const teks: Array<{ kunci: 'nama' | 'tagline' | 'alamat' | 'email' | 'telepon'; label: string; maks: number }> = [
+    { kunci: 'nama', label: 'Nama lembaga', maks: 200 },
+    { kunci: 'tagline', label: 'Tagline', maks: 300 },
+    { kunci: 'alamat', label: 'Alamat', maks: 500 },
+    { kunci: 'email', label: 'Email', maks: 320 },
+    { kunci: 'telepon', label: 'Telepon', maks: 50 },
+  ];
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-bold">Profil</h2>
+      </div>
+
+      {elemenPesan}
+
+      <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
+        <p className="text-sm text-muted">
+          Data profil baris tunggal — visi &amp; misi tampil di halaman Tentang Kami.
+        </p>
+
+        {teks.map((field) => (
+          <div key={field.kunci}>
+            <label htmlFor={`profil-${field.kunci}`} className={labelCls}>
+              {field.label} *
+            </label>
+            <input
+              id={`profil-${field.kunci}`}
+              type="text"
+              required
+              maxLength={field.maks}
+              className={inputCls}
+              value={f[field.kunci]}
+              onChange={(event) => setF((prev) => ({ ...prev, [field.kunci]: event.target.value }))}
+            />
+          </div>
+        ))}
+
+        <div>
+          <label htmlFor="profil-ringkasan" className={labelCls}>
+            Ringkasan *
+          </label>
+          <textarea
+            id="profil-ringkasan"
+            required
+            rows={3}
+            maxLength={2000}
+            className={inputCls}
+            value={f.ringkasan}
+            onChange={(event) => setF((prev) => ({ ...prev, ringkasan: event.target.value }))}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="profil-visi" className={labelCls}>
+            Visi (satu baris: Judul — Deskripsi)
+          </label>
+          <textarea
+            id="profil-visi"
+            rows={2}
+            maxLength={2000}
+            className={inputCls}
+            value={f.visi}
+            onChange={(event) => setF((prev) => ({ ...prev, visi: event.target.value }))}
+          />
+          <p className="mt-1 text-xs text-muted">
+            Kosongkan untuk memakai teks bawaan di halaman Tentang Kami.
+          </p>
+        </div>
+
+        <div>
+          <label htmlFor="profil-misi" className={labelCls}>
+            Misi (satu poin per baris)
+          </label>
+          <textarea
+            id="profil-misi"
+            rows={6}
+            maxLength={10000}
+            className={inputCls}
+            value={f.misi}
+            onChange={(event) => setF((prev) => ({ ...prev, misi: event.target.value }))}
+          />
+          <p className="mt-1 text-xs text-muted">
+            Kosongkan untuk menampilkan empty-state &quot;Misi belum tersedia.&quot;
+          </p>
+        </div>
+
+        <div>
+          <button
+            type="submit"
+            className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:opacity-90"
+          >
+            Simpan profil
+          </button>
+        </div>
+      </form>
     </section>
   );
 }

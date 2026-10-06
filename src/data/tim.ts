@@ -3,10 +3,15 @@
 // Sumber: section "Tim Kami" di situs lama (index.html) — nama & peran asli tim.
 // foto: diekstrak dari base64 di index.html situs lama ke public/tim/ (disetujui user).
 export interface AnggotaTim {
+  /** Id baris DB — hanya ada pada data backend (kunci CRUD tab "Tim" di admin);
+   *  data dummy tidak memilikinya. */
+  id?: number;
   nama: string;
   peran: string;
   kredensial?: string;
   foto?: string;
+  /** Urutan tampil (asc) — hanya ada pada data backend. */
+  urutan?: number;
 }
 
 export const timDummy: AnggotaTim[] = [
