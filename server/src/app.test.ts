@@ -1211,20 +1211,20 @@ describe('batas panjang field teks di route (Prioritas 2)', () => {
   });
 });
 
-// — Prioritas 2: pembersih file gambar yatim ————————————————————————————
+// — Prioritas 2: pembersih file gambar tidak terpakai ——————————————————————
 
 describe('POST /api/admin/uploads/bersihkan (Prioritas 2)', () => {
   test('mode kering → lapor kandidat tanpa menghapus; nyata → file terhapus', async () => {
     const { mkdtemp, rm, writeFile, stat } = await import('node:fs/promises');
     const { tmpdir } = await import('node:os');
     const { join } = await import('node:path');
-    const dir = await mkdtemp(join(tmpdir(), 'rute-yatim-'));
+    const dir = await mkdtemp(join(tmpdir(), 'rute-orphan-'));
     const lama = process.env.UPLOAD_DIR;
     process.env.UPLOAD_DIR = dir;
     try {
-      // Dua file: 'pakai.jpg' dirujuk fake referensiGambar, 'yatim.jpg' tidak.
+      // Dua file: 'pakai.jpg' dirujuk fake referensiGambar, 'tidak-terpakai.jpg' tidak.
       await writeFile(join(dir, 'pakai.jpg'), 'x');
-      await writeFile(join(dir, 'yatim.jpg'), 'x');
+      await writeFile(join(dir, 'tidak-terpakai.jpg'), 'x');
       const { app } = createTestApp();
 
       // Kering: hanya lapor — kedua file tetap ada.
@@ -1232,14 +1232,14 @@ describe('POST /api/admin/uploads/bersihkan (Prioritas 2)', () => {
         kering: true,
       });
       expect(kering.status).toBe(200);
-      expect(kering.body).toEqual({ kering: true, items: ['yatim.jpg'] });
-      await stat(join(dir, 'yatim.jpg'));
+      expect(kering.body).toEqual({ kering: true, items: ['tidak-terpakai.jpg'] });
+      await stat(join(dir, 'tidak-terpakai.jpg'));
 
-      // Nyata: file yatim terhapus, file terpakai tetap aman.
+      // Nyata: file tidak terpakai terhapus, file terpakai tetap aman.
       const nyata = await kirimTulis(app, 'POST', '/api/admin/uploads/bersihkan', {});
       expect(nyata.status).toBe(200);
-      expect(nyata.body).toEqual({ kering: false, items: ['yatim.jpg'] });
-      await expect(stat(join(dir, 'yatim.jpg'))).rejects.toThrow();
+      expect(nyata.body).toEqual({ kering: false, items: ['tidak-terpakai.jpg'] });
+      await expect(stat(join(dir, 'tidak-terpakai.jpg'))).rejects.toThrow();
       await stat(join(dir, 'pakai.jpg'));
     } finally {
       if (lama === undefined) delete process.env.UPLOAD_DIR;

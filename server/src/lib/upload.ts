@@ -8,7 +8,8 @@
  * `GET /uploads/:nama` menyajikan file-nya kembali.
  *
  * Prioritas 2: `daftarFileUnggahan` + `hapusFileUnggahan` menopang pembersih
- * file yatim (POST /api/admin/uploads/bersihkan, lihat lib/yatim.ts).
+ * file tidak terpakai (POST /api/admin/uploads/bersihkan, lihat
+ * lib/orphanUpload.ts).
  */
 import { readdir, unlink } from 'node:fs/promises';
 

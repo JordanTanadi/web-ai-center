@@ -159,8 +159,9 @@ export interface Repositories {
   ping: () => Promise<void>;
   /**
    * Semua nilai URL gambar/foto yang dirujuk konten (berita.gambar,
-   * dokumentasi.gambar, tim.foto) — pembanding file unggahan yatim
-   * (lihat lib/yatim.ts + route POST /api/admin/uploads/bersihkan).
+   * dokumentasi.gambar, tim.foto, hero.image/srcSet) — pembanding file
+   * unggahan tidak terpakai (lihat lib/orphanUpload.ts + route
+   * POST /api/admin/uploads/bersihkan).
    */
   referensiGambar: () => Promise<string[]>;
 }

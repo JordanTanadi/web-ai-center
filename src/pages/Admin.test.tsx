@@ -486,7 +486,7 @@ describe('Admin — tab Kursus', () => {
   });
 });
 
-// — Prioritas 2: tab Tim & Profil + pembersih file yatim ————————————————————
+// — Prioritas 2: tab Tim & Profil + pembersih file tidak terpakai ——————————
 
 describe('Admin — tab Tim (Prioritas 2)', () => {
   const daftarTim = () => {
@@ -962,12 +962,12 @@ describe('Admin — tab Testimoni & tab Hero (lengkapi CRUD admin)', () => {
   });
 });
 
-describe('Admin — bersihkan gambar yatim (Prioritas 2)', () => {
+describe('Admin — bersihkan gambar tidak terpakai (Prioritas 2)', () => {
   it('konfirmasi → POST /admin/uploads/bersihkan + jumlah file di pesan', async () => {
     const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
     mockKirim.mockResolvedValue({ kering: false, items: ['a.jpg', 'b.jpg'] } as never);
     await renderDashboard();
-    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar yatim' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar tidak terpakai' }));
 
     expect(konfirmasi).toHaveBeenCalled();
     expect(mockKirim).toHaveBeenCalledWith('/admin/uploads/bersihkan', {
@@ -975,24 +975,24 @@ describe('Admin — bersihkan gambar yatim (Prioritas 2)', () => {
       body: {},
       token: TOKEN,
     });
-    expect(await screen.findByRole('status')).toHaveTextContent('2 gambar yatim dihapus');
+    expect(await screen.findByRole('status')).toHaveTextContent('2 gambar tidak terpakai dihapus');
     konfirmasi.mockRestore();
   });
 
-  it('tidak ada file yatim → pesan "Tidak ada gambar yatim"', async () => {
+  it('tidak ada file tersisa → pesan "Semua gambar masih dipakai"', async () => {
     const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
     mockKirim.mockResolvedValue({ kering: false, items: [] } as never);
     await renderDashboard();
-    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar yatim' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar tidak terpakai' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Tidak ada gambar yatim');
+    expect(await screen.findByRole('status')).toHaveTextContent('Semua gambar masih dipakai');
     konfirmasi.mockRestore();
   });
 
   it('konfirmasi ditolak → request tidak dikirim', async () => {
     const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(false);
     await renderDashboard();
-    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar yatim' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bersihkan gambar tidak terpakai' }));
 
     expect(mockKirim).not.toHaveBeenCalled();
     konfirmasi.mockRestore();

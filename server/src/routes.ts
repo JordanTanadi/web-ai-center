@@ -35,7 +35,7 @@ import {
   urlFileUnggahan,
   validasiFileGambar,
 } from './lib/upload';
-import { cariYatim } from './lib/yatim';
+import { findOrphanUploads } from './lib/orphanUpload';
 import type { Repositories } from './repositories/types';
 
 /**
@@ -566,7 +566,7 @@ export function registerRoutes(
       return { ok: true as const };
     })
 
-    // — Bersihkan file unggahan yatim (Prioritas 2; butuh Bearer) ——————————
+    // — Bersihkan file unggahan tidak terpakai (Prioritas 2; butuh Bearer) ——
     // Body `{ kering: true }` = mode uji: hanya melaporkan kandidat tanpa
     // menghapus apa pun. Tanpa body / `kering: false` = hapus betulan;
     // `items` = daftar file (kandidat saat kering, terhapus saat nyata).
@@ -578,13 +578,13 @@ export function registerRoutes(
       const kering = (body as { kering?: unknown } | null)?.kering === true;
       const daftar = await daftarFileUnggahan(dirUnggahan);
       const referensi = await repos.referensiGambar();
-      const yatim = cariYatim(daftar, referensi);
+      const takTerpakai = findOrphanUploads(daftar, referensi);
       if (!kering) {
-        for (const nama of yatim) {
+        for (const nama of takTerpakai) {
           await hapusFileUnggahan(nama, dirUnggahan);
         }
       }
-      return { kering, items: yatim };
+      return { kering, items: takTerpakai };
     })
 
     // — Unggah gambar admin (multipart `gambar`; butuh Bearer) —————————

@@ -474,7 +474,7 @@ export function createRepositories(db: Db): Repositories {
       const imageHero = h.map((r) => r.image).filter((v): v is string => v !== null);
       // Kolom `srcSet` berisi "url lebar, url lebar, …" — pecah per entri lalu
       // buang deskriptornya ("800w") supaya varian gambar hero tidak dianggap
-      // file yatim lalu terhapus oleh pembersih.
+      // file tidak terpakai lalu terhapus oleh pembersih.
       const srcSetHero = h.flatMap((r) =>
         (r.srcSet ?? '')
           .split(',')

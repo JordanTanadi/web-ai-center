@@ -1,7 +1,8 @@
 /**
- * Deteksi file gambar YATIM di direktori unggahan (Prioritas 2): file yang
- * tidak lagi dirujuk kolom manapun (berita.gambar, dokumentasi.gambar,
- * tim.foto) — biasanya sisa setelah admin mengubah/menghapus konten.
+ * Deteksi file gambar TIDAK TERPAKAI (orphan) di direktori unggahan
+ * (Prioritas 2): file yang tidak lagi dirujuk kolom manapun (berita.gambar,
+ * dokumentasi.gambar, tim.foto, hero.image/srcSet) — biasanya sisa setelah
+ * admin mengubah/menghapus konten.
  *
  * Murni (tanpa FS): route POST /api/admin/uploads/bersihkan yang membaca
  * direktori (lib/upload.daftarFileUnggahan), memanggil fungsi ini, lalu
@@ -23,7 +24,7 @@ function namaDariUrl(url: string): string | null {
  * @param daftarFile nama file di direktori unggahan (sudah nama aman)
  * @param referensi  semua nilai kolom gambar/foto dari DB (boleh null/undefined)
  */
-export function cariYatim(
+export function findOrphanUploads(
   daftarFile: string[],
   referensi: Array<string | null | undefined>,
 ): string[] {

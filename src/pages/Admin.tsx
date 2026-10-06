@@ -16,8 +16,9 @@
  *   Kursus memakai `kode` (mis. 'R01') sebagai kunci yang juga tidak boleh diganti saat edit.
  * - Batas panjang field (atribut `maks` → maxLength) disejajarkan dengan
  *   server/src/lib/tulis.ts — server tetap penegak utamanya (400 eksplisit).
- * - Tombol "Bersihkan gambar yatim" memanggil POST /api/admin/uploads/bersihkan
- *   (Prioritas 2) — menghapus file unggahan yang tidak dirujuk konten manapun.
+ * - Tombol "Bersihkan gambar tidak terpakai" memanggil POST
+ *   /api/admin/uploads/bersihkan (Prioritas 2) — menghapus file unggahan yang
+ *   tidak dirujuk konten manapun.
  */
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
@@ -274,10 +275,10 @@ export default function Admin() {
   }
 
   /**
-   * Bersihkan file unggahan yatim (Prioritas 2): file gambar di server yang
-   * tidak lagi dirujuk kolom manapun (sisa edit/hapus konten).
+   * Bersihkan file unggahan tidak terpakai (Prioritas 2): file gambar di
+   * server yang tidak lagi dirujuk kolom manapun (sisa edit/hapus konten).
    */
-  async function bersihkanYatim(): Promise<void> {
+  async function bersihkanGambarTidakTerpakai(): Promise<void> {
     if (token === null) return;
     const yakin = window.confirm(
       'Hapus file gambar di server yang tidak lagi dipakai konten manapun? Tindakan ini tidak bisa dibatalkan.',
@@ -292,8 +293,8 @@ export default function Admin() {
       setPesan({
         teks:
           hasil.items.length === 0
-            ? 'Tidak ada gambar yatim — semua file masih dipakai konten.'
-            : `${hasil.items.length} gambar yatim dihapus.`,
+            ? 'Semua gambar masih dipakai — tidak ada yang dibersihkan.'
+            : `${hasil.items.length} gambar tidak terpakai dihapus.`,
         sukses: true,
       });
     } catch (error) {
@@ -382,10 +383,10 @@ export default function Admin() {
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={() => void bersihkanYatim()}
+            onClick={() => void bersihkanGambarTidakTerpakai()}
             className="rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
           >
-            Bersihkan gambar yatim
+            Bersihkan gambar tidak terpakai
           </button>
           <button
             type="button"
@@ -431,8 +432,8 @@ export default function Admin() {
         ))}
       </div>
 
-      {/* Satu titik render pesan aksi (simpan/hapus/yatim) — tab lain punya
-          state pesan sendiri di komponennya masing-masing. */}
+      {/* Satu titik render pesan aksi (simpan/hapus/bersih-bersih) — tab lain
+          punya state pesan sendiri di komponennya masing-masing. */}
       {elemenPesan}
 
       {jenis === 'kursus' ? (
