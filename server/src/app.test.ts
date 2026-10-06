@@ -11,13 +11,14 @@ import type {
   HeroSlide,
   Klien,
   Kursus,
+  KontenInference,
   Layanan,
   Profil,
   Testimoni,
 } from './api/types';
 import type { ListParams, Repositories, DokumentasiListParams } from './repositories/types';
 import type { Pagination } from './lib/query';
-import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputKursus as KursusInput, InputProfil as ProfilInput, InputTim as TimInput } from './lib/tulis';
+import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputInference as InferenceInput, InputKursus as KursusInput, InputProfil as ProfilInput, InputTim as TimInput } from './lib/tulis';
 import { buatTokenAdmin } from './auth';
 
 const NO_PAGINATION: Pagination = { page: null, limit: null, offset: null };
@@ -65,6 +66,29 @@ const sampleProfil: Profil = {
   email: 'info@example.test',
   telepon: '+62312981000',
 };
+/** Fixture konten halaman inference (baris tunggal — GET/PUT /api/inference). */
+const sampleInference: KontenInference = {
+  judulApaItu: 'Apa itu Inference Solution?',
+  deskripsiApaItu: 'Deskripsi inference.',
+  kebutuhan: ['Kebutuhan 1', 'Kebutuhan 2'],
+  alur: [
+    { nomor: '01', judul: 'Konsultasi', deskripsi: 'Memetakan kebutuhan.' },
+    { nomor: '02', judul: 'Deployment', deskripsi: 'Menjalankan model sebagai API.' },
+  ],
+  contohIntro: 'Contoh penerapan:',
+  contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
+};
+
+/** Body valid untuk PUT /api/inference (bentuk InputInference). */
+const BODY_INFERENCE: InferenceInput = {
+  judulApaItu: 'Apa itu Inference Solution?',
+  deskripsiApaItu: 'Deskripsi inference.',
+  kebutuhan: ['Kebutuhan 1', 'Kebutuhan 2'],
+  alur: [{ nomor: '01', judul: 'Konsultasi', deskripsi: 'Memetakan kebutuhan.' }],
+  contohIntro: 'Contoh penerapan:',
+  contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
+};
+
 const sampleKursus: Kursus = {
   kode: 'R01',
   target: ['Mahasiswa'],
@@ -163,6 +187,10 @@ function createFakeRepos(): FakeHandle {
         ...(data.visi !== null ? { visi: data.visi } : {}),
         ...(data.misi !== null ? { misi: data.misi } : {}),
       })),
+    },
+    inference: {
+      get: rec('inference.get', async (): Promise<KontenInference | null> => sampleInference),
+      update: rec('inference.update', async (data: InferenceInput): Promise<KontenInference | null> => data),
     },
     kursus: {
       list: rec('kursus.list', async (_params: ListParams): Promise<Kursus[]> => [sampleKursus]),
@@ -360,6 +388,24 @@ describe('GET /api/profil', () => {
   });
 });
 
+describe('GET /api/inference', () => {
+  test('ada → 200 body konten inference', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await getJson(app, '/api/inference');
+    expect(status).toBe(200);
+    expect(body).toEqual(sampleInference);
+  });
+
+  test('edge: belum di-seed (null) → 404', async () => {
+    const handle = createFakeRepos();
+    handle.repos.inference = { get: async () => null, update: async () => null };
+    const { app } = createTestApp(handle);
+    const { status, body } = await getJson(app, '/api/inference');
+    expect(status).toBe(404);
+    expect(body).toEqual({ error: 'Konten inference belum diisi' });
+  });
+});
+
 describe('error handling', () => {
   test('rute tidak dikenal → 404 JSON { error }', async () => {
     const { app } = createTestApp();
@@ -377,6 +423,19 @@ describe('error handling', () => {
     const { status, body } = await getJson(app, '/api/berita');
     expect(status).toBe(500);
     expect(body).toEqual({ error: 'Internal Server Error' });
+  });
+
+  test('body bukan JSON valid → 400 eksplisit, bukan 500 (salah ketik = klien)', async () => {
+    const { app } = createTestApp();
+    const res = await app.handle(
+      new Request('http://localhost/api/profil', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{rusak',
+      }),
+    );
+    expect(res.status).toBe(400);
+    expect(await res.json()).toEqual({ error: 'Body bukan JSON valid' });
   });
 });
 
@@ -869,6 +928,55 @@ describe('PUT /api/profil (Prioritas 2)', () => {
     const { status, body } = await kirimTulis(app, 'PUT', '/api/profil', BODY_PROFIL);
     expect(status).toBe(404);
     expect(body).toEqual({ error: 'Profil tidak ditemukan — jalankan seed dulu' });
+  });
+});
+
+// — Konten halaman inference: GET sudah di atas, ini PUT —————————————————
+
+describe('PUT /api/inference', () => {
+  test('token valid + body valid → 200, repo.inference.update dipanggil dengan data bersih', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', {
+      ...BODY_INFERENCE,
+      judulApaItu: '  Apa itu Inference Solution?  ',
+      kebutuhan: ['  Kebutuhan 1  ', 'Kebutuhan 2', ''],
+    });
+    expect(status).toBe(200);
+    expect((body as KontenInference).judulApaItu).toBe('Apa itu Inference Solution?');
+    const update = calls.find((c) => c.method === 'inference.update');
+    expect(update).toBeDefined();
+    // Item kosong dibuang (bacaDaftarTeks) — data masuk repository sudah bersih.
+    expect(update?.args[0]).toEqual({ ...BODY_INFERENCE, kebutuhan: ['Kebutuhan 1', 'Kebutuhan 2'] });
+  });
+
+  test('tanpa token → 401; field wajib kosong → 400 menyebut field', async () => {
+    const { app } = createTestApp();
+    expect((await kirimTulis(app, 'PUT', '/api/inference', BODY_INFERENCE, null)).status).toBe(401);
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', {
+      ...BODY_INFERENCE,
+      deskripsiApaItu: '',
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "deskripsiApaItu" wajib diisi' });
+  });
+
+  test('daftar kosong → 400 menyebut minimal item', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', {
+      ...BODY_INFERENCE,
+      alur: [],
+    });
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Field "alur" minimal 1 item' });
+  });
+
+  test('baris belum di-seed (update → null) → 404 eksplisit', async () => {
+    const handle = createFakeRepos();
+    handle.repos.inference.update = async () => null;
+    const { app } = createTestApp(handle);
+    const { status, body } = await kirimTulis(app, 'PUT', '/api/inference', BODY_INFERENCE);
+    expect(status).toBe(404);
+    expect(body).toEqual({ error: 'Konten inference tidak ditemukan — jalankan seed dulu' });
   });
 });
 

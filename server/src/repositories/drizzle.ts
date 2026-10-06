@@ -5,7 +5,7 @@
  */
 import { and, asc, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
-import { berita, dokumentasi, heroSlides, klien, kursus, layanan, profil, tim, testimoni } from '../db/schema';
+import { berita, dokumentasi, heroSlides, inference, klien, kursus, layanan, profil, tim, testimoni } from '../db/schema';
 import { toLikePattern } from '../lib/query';
 import {
   toAnggotaTim,
@@ -13,6 +13,7 @@ import {
   toDokumentasiItem,
   toHeroSlide,
   toKlien,
+  toKontenInference,
   toKursus,
   toLayanan,
   toProfil,
@@ -21,6 +22,7 @@ import {
 import type {
   DokumentasiRepository,
   HeroRepository,
+  InferenceRepository,
   KlienRepository,
   KursusRepository,
   LayananRepository,
@@ -283,6 +285,28 @@ export function createRepositories(db: Db): Repositories {
     },
   };
 
+  const inferenceRepo: InferenceRepository = {
+    async get() {
+      const rows = await db.select().from(inference).where(eq(inference.id, 1)).limit(1);
+      return rows[0] !== undefined ? toKontenInference(rows[0]) : null;
+    },
+    async update(data) {
+      const rows = await db
+        .update(inference)
+        .set({
+          judulApaItu: data.judulApaItu,
+          deskripsiApaItu: data.deskripsiApaItu,
+          kebutuhan: data.kebutuhan,
+          alur: data.alur,
+          contohIntro: data.contohIntro,
+          contoh: data.contoh,
+        })
+        .where(eq(inference.id, 1))
+        .returning();
+      return rows[0] !== undefined ? toKontenInference(rows[0]) : null;
+    },
+  };
+
   const kursusRepo: KursusRepository = {
     async list({ q, pagination }) {
       const search =
@@ -389,6 +413,7 @@ export function createRepositories(db: Db): Repositories {
     klien: klienRepo,
     testimoni: testimoniRepo,
     profil: profilRepo,
+    inference: inferenceRepo,
     kursus: kursusRepo,
   };
 }

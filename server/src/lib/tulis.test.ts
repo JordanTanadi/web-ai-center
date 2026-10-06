@@ -3,6 +3,7 @@ import {
   slugDariJudul,
   validasiBerita,
   validasiDokumentasi,
+  validasiInference,
   validasiKursus,
   validasiProfil,
   validasiTim,
@@ -319,5 +320,112 @@ describe('validasiTim', () => {
       ok: false,
       error: 'Field "kredensial" maksimal 300 karakter',
     });
+  });
+});
+
+// — Konten halaman inference (GET/PUT /api/inference) ———————————————————
+
+const BODY_INFERENCE_VALID = {
+  judulApaItu: 'Apa itu Inference Solution?',
+  deskripsiApaItu: 'Inference adalah tahap menjalankan model machine learning.',
+  kebutuhan: ['Model belum dipakai tim lain', 'Butuh fitur AI di aplikasi'],
+  alur: [
+    { nomor: '01', judul: 'Konsultasi', deskripsi: 'Memetakan use case.' },
+    { nomor: '02', judul: 'Deployment', deskripsi: 'Menjalankan model sebagai API.' },
+  ],
+  contohIntro: 'Beberapa produk AI Center:',
+  contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
+};
+
+describe('validasiInference', () => {
+  test('body lengkap → ok, semua field terpetak', () => {
+    expect(validasiInference(BODY_INFERENCE_VALID)).toEqual({
+      ok: true,
+      data: BODY_INFERENCE_VALID,
+    });
+  });
+
+  test('teks di-trim & item daftar kosong dibuang', () => {
+    const hasil = validasiInference({
+      ...BODY_INFERENCE_VALID,
+      judulApaItu: '  Apa itu Inference Solution?  ',
+      kebutuhan: ['  Model belum dipakai tim lain  ', 'Butuh fitur AI di aplikasi', '   '],
+    });
+    expect(hasil.ok).toBe(true);
+    if (hasil.ok) {
+      expect(hasil.data.judulApaItu).toBe('Apa itu Inference Solution?');
+      expect(hasil.data.kebutuhan).toEqual([
+        'Model belum dipakai tim lain',
+        'Butuh fitur AI di aplikasi',
+      ]);
+    }
+  });
+
+  test('field wajib kosong / hilang → error menyebut field', () => {
+    expect(validasiInference({ ...BODY_INFERENCE_VALID, contohIntro: '' })).toEqual({
+      ok: false,
+      error: 'Field "contohIntro" wajib diisi',
+    });
+    const { alur: _dibuang, ...tanpaAlur } = BODY_INFERENCE_VALID;
+    expect(validasiInference(tanpaAlur)).toEqual({
+      ok: false,
+      error: 'Field "alur" harus array objek',
+    });
+  });
+
+  test('daftar kosong → tolak minimal 1 item', () => {
+    expect(validasiInference({ ...BODY_INFERENCE_VALID, kebutuhan: [] })).toEqual({
+      ok: false,
+      error: 'Field "kebutuhan" minimal 1 item',
+    });
+    expect(validasiInference({ ...BODY_INFERENCE_VALID, contoh: [] })).toEqual({
+      ok: false,
+      error: 'Field "contoh" minimal 1 item',
+    });
+  });
+
+  test('item daftar bukan objek → tolak eksplisit', () => {
+    expect(validasiInference({ ...BODY_INFERENCE_VALID, alur: ['bukan objek'] })).toEqual({
+      ok: false,
+      error: 'Item "alur" ke-1 tidak valid',
+    });
+  });
+
+  test('field di dalam langkah/contoh wajib & berbatas → tolak menyebut langkah', () => {
+    expect(
+      validasiInference({
+        ...BODY_INFERENCE_VALID,
+        alur: [{ nomor: '01', judul: '  ', deskripsi: 'Memetakan use case.' }],
+      }),
+    ).toEqual({ ok: false, error: 'Langkah ke-1: field "judul" wajib diisi' });
+    expect(
+      validasiInference({
+        ...BODY_INFERENCE_VALID,
+        alur: [{ nomor: '01', judul: 'Konsultasi', deskripsi: 'x'.repeat(1_001) }],
+      }),
+    ).toEqual({ ok: false, error: 'Langkah ke-1: field "deskripsi" maksimal 1000 karakter' });
+    expect(
+      validasiInference({
+        ...BODY_INFERENCE_VALID,
+        contoh: [{ slug: 'x'.repeat(201), judul: 'Algae Finder' }],
+      }),
+    ).toEqual({ ok: false, error: 'Contoh ke-1: field "slug" maksimal 200 karakter' });
+  });
+
+  test('batas panjang: judul >200, deskripsi >5000, kebutuhan item >300 → tolak', () => {
+    expect(validasiInference({ ...BODY_INFERENCE_VALID, judulApaItu: 'x'.repeat(201) })).toEqual({
+      ok: false,
+      error: 'Field "judulApaItu" maksimal 200 karakter',
+    });
+    expect(
+      validasiInference({ ...BODY_INFERENCE_VALID, deskripsiApaItu: 'x'.repeat(5_001) }),
+    ).toEqual({ ok: false, error: 'Field "deskripsiApaItu" maksimal 5000 karakter' });
+    expect(
+      validasiInference({ ...BODY_INFERENCE_VALID, kebutuhan: ['x'.repeat(301)] }),
+    ).toEqual({ ok: false, error: 'Field "kebutuhan" maksimal 300 karakter per item' });
+  });
+
+  test('edge: body bukan objek → tolak', () => {
+    expect(validasiInference(null)).toEqual({ ok: false, error: 'Body harus objek JSON' });
   });
 });

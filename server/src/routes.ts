@@ -2,8 +2,8 @@
  * Endpoint API (baca publik + tulis admin). Semua route memakai helper query
  * murni dari lib/query dan repository yang disuntikkan — tanpa akses DB langsung.
  *
- * Route tulis (dokumentasi, berita, kursus — lalu profil & tim pada Prioritas 2)
- * dijaga token hasil POST /api/admin/login (konsul PROGRESS 2: login sederhana
+ * Route tulis (dokumentasi, berita, kursus — lalu profil & tim pada Prioritas 2,
+ * kemudian konten inference) dijaga token hasil POST /api/admin/login (konsul PROGRESS 2: login sederhana
  * 1 akun); login itu sendiri dibatasi rate-limit 5 gagal / 10 menit per IP → 429.
  * Semua field teks punya batas panjang di lib/tulis (Prioritas 2) → 400 eksplisit.
  *
@@ -17,6 +17,7 @@ import {
   slugDariJudul,
   validasiBerita,
   validasiDokumentasi,
+  validasiInference,
   validasiKursus,
   validasiProfil,
   validasiTim,
@@ -164,6 +165,16 @@ export function registerRoutes(
       if (item === null) {
         set.status = 404;
         return { error: 'Profil belum diisi' };
+      }
+      return item;
+    })
+
+    // — Konten halaman Inference (baris tunggal id = 1) ————————————————
+    .get('/api/inference', async ({ set }) => {
+      const item = await repos.inference.get();
+      if (item === null) {
+        set.status = 404;
+        return { error: 'Konten inference belum diisi' };
       }
       return item;
     })
@@ -369,6 +380,25 @@ export function registerRoutes(
         return { error: 'Profil tidak ditemukan — jalankan seed dulu' };
       }
       return profilBaru;
+    })
+
+    // — Tulis konten inference (baris tunggal id = 1) ————————————————————
+    .put('/api/inference', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiInference(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      const kontenBaru = await repos.inference.update(hasil.data);
+      if (kontenBaru === null) {
+        set.status = 404;
+        return { error: 'Konten inference tidak ditemukan — jalankan seed dulu' };
+      }
+      return kontenBaru;
     })
 
     // — Tulis tim (CRUD admin; kunci = id numerik; Prioritas 2) ————————————

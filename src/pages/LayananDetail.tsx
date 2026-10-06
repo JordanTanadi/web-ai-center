@@ -4,12 +4,9 @@ import { getLayananBySlug, type Layanan } from '../data/layanan.ts';
 import { useT } from '../lib/i18n.tsx';
 import { useApiDaftar, useApiObjek } from '../lib/useApiData.ts';
 import {
-  alurInference,
-  apaItuInference,
-  contohInference,
-  contohInferenceIntro,
-  kebutuhanInference,
+  kontenInferenceDummy,
   waDiskusiInference,
+  type KontenInference,
 } from '../data/inference.ts';
 import {
   aksiHeroPelatihan,
@@ -157,7 +154,7 @@ function ModulUnggulan() {
 }
 
 /** Panel penjelasan "Apa itu Inference Solution?" (khusus layanan inference). */
-function ApaItuInference() {
+function ApaItuInference({ konten }: { konten: KontenInference }) {
   const t = useT();
   return (
     <section
@@ -165,14 +162,14 @@ function ApaItuInference() {
       className="mt-8 rounded-2xl border border-line bg-soft p-6 text-center md:p-8"
     >
       <h2 id="apa-itu-inference-heading" className="font-display text-xl font-bold">
-        {t(apaItuInference.judul)}
+        {t(konten.judulApaItu)}
       </h2>
-      <p className="mx-auto mt-3 max-w-2xl text-muted">{t(apaItuInference.deskripsi)}</p>
+      <p className="mx-auto mt-3 max-w-2xl text-muted">{t(konten.deskripsiApaItu)}</p>
       <p className="mt-5 font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
         {t('Kapan Anda membutuhkannya?')}
       </p>
       <ul className="mx-auto mt-3 max-w-2xl space-y-2 text-left">
-        {kebutuhanInference.map((k) => (
+        {konten.kebutuhan.map((k) => (
           <li key={k} className="flex items-start gap-3">
             <span aria-hidden="true" className="mt-0.5 text-brand">
               ✦
@@ -186,7 +183,7 @@ function ApaItuInference() {
 }
 
 /** Alur kerja layanan inference — 5 langkah (khusus layanan inference). */
-function AlurKerjaInference() {
+function AlurKerjaInference({ konten }: { konten: KontenInference }) {
   const t = useT();
   return (
     <section aria-labelledby="alur-kerja-heading" className="mt-12 text-center">
@@ -194,7 +191,7 @@ function AlurKerjaInference() {
         {t('Bagaimana cara kerjanya?')}
       </h2>
       <ol className="mt-5 grid gap-4 text-left sm:grid-cols-2 lg:grid-cols-3">
-        {alurInference.map((l) => (
+        {konten.alur.map((l) => (
           <li key={l.nomor} className="rounded-2xl border border-line bg-surface p-5">
             <p className="font-display text-lg font-bold text-brand">{l.nomor}</p>
             <h3 className="mt-1 font-display font-bold">{t(l.judul)}</h3>
@@ -207,7 +204,7 @@ function AlurKerjaInference() {
 }
 
 /** Contoh penerapan dari portofolio + CTA (khusus layanan inference). */
-function ContohPenerapanInference() {
+function ContohPenerapanInference({ konten }: { konten: KontenInference }) {
   const t = useT();
   return (
     <section
@@ -217,9 +214,9 @@ function ContohPenerapanInference() {
       <h2 id="contoh-penerapan-heading" className="font-display text-xl font-bold">
         {t('Contoh penerapan')}
       </h2>
-      <p className="mx-auto mt-2 max-w-2xl text-muted">{t(contohInferenceIntro)}</p>
+      <p className="mx-auto mt-2 max-w-2xl text-muted">{t(konten.contohIntro)}</p>
       <ul className="mt-4 flex flex-wrap justify-center gap-2">
-        {contohInference.map((c) => (
+        {konten.contoh.map((c) => (
           <li
             key={c.slug}
             className="rounded-full border border-line bg-soft px-3 py-1 text-sm font-medium"
@@ -280,6 +277,14 @@ export default function LayananDetail() {
     `/layanan/${encodeURIComponent(slug || 'tidak-ada')}`,
     getLayananBySlug(slug),
   );
+  // Konten inference dari GET /api/inference (baris tunggal, tab "Inference"
+  // di /admin) — dimuat sekali di sini lalu diserahkan ke ketiga section, bukan
+  // per-section (hemat 2 request). Path sengaja konstan (hook tidak boleh
+  // kondisional), jadi slug pelatihan ikut meminta endpoint ini sekali;
+  // payload kecil dan hasilnya tidak dipakai di luar section inference.
+  // Fallback = kontenInferenceDummy (tak ada request saat backend mati/test).
+  const kontenInference =
+    useApiObjek<KontenInference>('/inference', kontenInferenceDummy) ?? kontenInferenceDummy;
 
   if (!item) {
     return (
@@ -369,7 +374,7 @@ export default function LayananDetail() {
       )}
 
       {/* Penjelasan inference: apa itu + tanda kebutuhan, mengikuti ritme center halaman. */}
-      {isInference && <ApaItuInference />}
+      {isInference && <ApaItuInference konten={kontenInference} />}
 
       <h2 className="mt-8 text-center font-display text-xl font-bold">{t('Yang Anda dapatkan')}</h2>
       <ul className="mx-auto mt-4 max-w-md space-y-3">
@@ -394,8 +399,8 @@ export default function LayananDetail() {
 
       {isInference && (
         <>
-          <AlurKerjaInference />
-          <ContohPenerapanInference />
+          <AlurKerjaInference konten={kontenInference} />
+          <ContohPenerapanInference konten={kontenInference} />
         </>
       )}
 

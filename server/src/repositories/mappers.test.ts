@@ -3,13 +3,14 @@
  * frontend, dan kolom NULL tidak boleh bocor sebagai `null` di JSON.
  */
 import { describe, expect, test } from 'bun:test';
-import { heroSlides, kursus, layanan, profil, tim, berita, dokumentasi } from '../db/schema';
+import { heroSlides, inference, kursus, layanan, profil, tim, berita, dokumentasi } from '../db/schema';
 import {
   toAnggotaTim,
   toBeritaItem,
   toDokumentasiItem,
   toHeroSlide,
   toKlien,
+  toKontenInference,
   toKursus,
   toLayanan,
   toProfil,
@@ -22,6 +23,7 @@ type TimRow = typeof tim.$inferSelect;
 type LayananRow = typeof layanan.$inferSelect;
 type HeroRow = typeof heroSlides.$inferSelect;
 type ProfilRow = typeof profil.$inferSelect;
+type InferenceRow = typeof inference.$inferSelect;
 type KursusRow = typeof kursus.$inferSelect;
 
 const baseBerita: BeritaRow = {
@@ -212,6 +214,43 @@ describe('toProfil', () => {
     expect(p.visi).toBe('Visi');
     expect(p.misi).toBe('Misi');
     expect(p.statistik).toEqual([{ label: 'Riset', value: '12' }]);
+  });
+});
+
+const baseInference: InferenceRow = {
+  id: 1,
+  judulApaItu: 'Apa itu Inference Solution?',
+  deskripsiApaItu: 'Deskripsi inference.',
+  kebutuhan: ['Kebutuhan 1'],
+  alur: [{ nomor: '01', judul: 'Konsultasi', deskripsi: 'Memetakan kebutuhan.' }],
+  contohIntro: 'Contoh penerapan:',
+  contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
+};
+
+describe('toKontenInference', () => {
+  test('semua kolom NOT NULL dipetakan lurus (id tidak ikut)', () => {
+    const konten = toKontenInference(baseInference);
+    expect(konten).toEqual({
+      judulApaItu: 'Apa itu Inference Solution?',
+      deskripsiApaItu: 'Deskripsi inference.',
+      kebutuhan: ['Kebutuhan 1'],
+      alur: [{ nomor: '01', judul: 'Konsultasi', deskripsi: 'Memetakan kebutuhan.' }],
+      contohIntro: 'Contoh penerapan:',
+      contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
+    });
+    expect('id' in konten).toBe(false);
+  });
+
+  test('edge: daftar jsonb kosong tetap [] (bukan null)', () => {
+    const konten = toKontenInference({
+      ...baseInference,
+      kebutuhan: [],
+      alur: [],
+      contoh: [],
+    });
+    expect(konten.kebutuhan).toEqual([]);
+    expect(konten.alur).toEqual([]);
+    expect(konten.contoh).toEqual([]);
   });
 });
 

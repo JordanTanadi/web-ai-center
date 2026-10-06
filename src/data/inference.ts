@@ -3,9 +3,9 @@
 // (API) untuk mitra, dari integrasi sampai purna implementasi — konsisten dengan hero slide 2
 // (hero.ts) dan deskripsi layanan di layanan.ts. Situs lama tidak punya section ini sendiri
 // (pillar lama: Kolaborasi Penelitian, Pelatihan & Talenta, Komputasi Performa Tinggi).
-// TODO_BACKEND: endpoint GET /api/inference belum ada — konten inference masih
-// statis di file ini. Bila nanti mau dikelola CMS, buat endpoint + tabel dulu,
-// lalu wire seperti halaman lain (useApiObjek).
+// Terintegrasi GET/PUT /api/inference (baris tunggal di DB, dikelola tab "Inference" di
+// /admin) — konstanta di bawah jadi FALLBACK saat backend mati; guard sinkronisasi
+// dengan seed ada di server/src/db/sinkron.test.ts.
 import { buildWaLink, kontakDummy } from './kontak.ts';
 import { portofolioDummy } from './portofolio.ts';
 
@@ -82,6 +82,34 @@ export const contohInference = portofolioDummy.map((k) => ({
   slug: k.slug,
   judul: k.judul,
 }));
+
+/**
+ * Konten halaman inference dalam satu objek — kontrak GET /api/inference
+ * (server: interface KontenInference di src/api/types.ts). Field-nya adalah
+ * gabungan konstanta di atas supaya fallback satu sumber dengan data CMS.
+ */
+export interface KontenInference {
+  /** Panel "Apa itu Inference Solution?" */
+  judulApaItu: string;
+  deskripsiApaItu: string;
+  /** Tanda kebutuhan ("Kapan Anda membutuhkannya?"). */
+  kebutuhan: string[];
+  /** Alur kerja 5 langkah. */
+  alur: LangkahInference[];
+  contohIntro: string;
+  /** Chip "Contoh penerapan" (slug dipakai sebagai key React). */
+  contoh: Array<{ slug: string; judul: string }>;
+}
+
+/** Fallback konten inference — identik dengan SEED_INFERENCE di backend. */
+export const kontenInferenceDummy: KontenInference = {
+  judulApaItu: apaItuInference.judul,
+  deskripsiApaItu: apaItuInference.deskripsi,
+  kebutuhan: kebutuhanInference,
+  alur: alurInference,
+  contohIntro: contohInferenceIntro,
+  contoh: contohInference,
+};
 
 /** Link WhatsApp diskusi kebutuhan inference solution. */
 export function waDiskusiInference(): string {

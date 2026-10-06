@@ -5,6 +5,7 @@ import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/a
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { BeritaItem } from '../data/berita.ts';
 import type { Kursus } from '../data/pelatihan.ts';
+import type { KontenInference } from '../data/inference.ts';
 import type { ProfilApi } from '../data/profil.ts';
 import type { AnggotaTim } from '../data/tim.ts';
 
@@ -79,6 +80,19 @@ const PROFIL: ProfilApi = {
   telepon: '0895-6342-22240',
   visi: 'Judul visi — Deskripsi visi.',
   misi: 'Poin satu.\nPoin dua.',
+};
+
+/** Fixture konten halaman inference (GET/PUT /api/inference). */
+const KONTEN_INFERENCE: KontenInference = {
+  judulApaItu: 'Apa itu Inference Solution?',
+  deskripsiApaItu: 'Inference adalah tahap menjalankan model machine learning.',
+  kebutuhan: ['Model belum dipakai tim lain', 'Butuh fitur AI di aplikasi'],
+  alur: [
+    { nomor: '01', judul: 'Konsultasi', deskripsi: 'Memetakan use case.' },
+    { nomor: '02', judul: 'Deployment', deskripsi: 'Menjalankan model sebagai API.' },
+  ],
+  contohIntro: 'Beberapa produk AI Center:',
+  contoh: [{ slug: 'algae-finder', judul: 'Algae Finder' }],
 };
 
 /** Render dengan sesi sudah ada di localStorage (langsung ke dashboard). */
@@ -621,6 +635,95 @@ describe('Admin — tab Profil (Prioritas 2)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Simpan profil' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('maksimal 50 karakter');
+  });
+});
+
+describe('Admin — tab Inference', () => {
+  it('tab Inference → GET /inference mengisi form (kebutuhan, alur & contoh ikut)', async () => {
+    mockAmbilJson.mockResolvedValue(KONTEN_INFERENCE as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Inference' }));
+
+    expect(mockAmbilJson).toHaveBeenCalledWith('/inference', null);
+    const judul = (await screen.findByLabelText(/Judul panel/)) as HTMLInputElement;
+    await waitFor(() => expect(judul.value).toBe(KONTEN_INFERENCE.judulApaItu));
+    expect((screen.getByLabelText(/Deskripsi panel/) as HTMLTextAreaElement).value).toBe(
+      KONTEN_INFERENCE.deskripsiApaItu,
+    );
+    expect((screen.getByLabelText(/Kapan dibutuhkan/) as HTMLTextAreaElement).value).toBe(
+      KONTEN_INFERENCE.kebutuhan.join('\n'),
+    );
+    expect((screen.getByLabelText('Judul langkah 1') as HTMLInputElement).value).toBe('Konsultasi');
+    expect((screen.getByLabelText('Judul langkah 2') as HTMLInputElement).value).toBe('Deployment');
+    expect((screen.getByLabelText('Slug contoh 1') as HTMLInputElement).value).toBe('algae-finder');
+  });
+
+  it('Simpan → PUT /inference dengan daftar kebutuhan dipecah per baris', async () => {
+    mockAmbilJson.mockResolvedValue(KONTEN_INFERENCE as never);
+    mockKirim.mockResolvedValue(KONTEN_INFERENCE as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Inference' }));
+
+    const judul = (await screen.findByLabelText(/Judul panel/)) as HTMLInputElement;
+    await waitFor(() => expect(judul.value).toBe(KONTEN_INFERENCE.judulApaItu));
+    fireEvent.change(judul, { target: { value: 'Apa itu Inference?' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan inference' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Konten inference disimpan.');
+    expect(mockKirim).toHaveBeenCalledWith('/inference', {
+      method: 'PUT',
+      body: {
+        judulApaItu: 'Apa itu Inference?',
+        deskripsiApaItu: KONTEN_INFERENCE.deskripsiApaItu,
+        kebutuhan: KONTEN_INFERENCE.kebutuhan,
+        alur: KONTEN_INFERENCE.alur,
+        contohIntro: KONTEN_INFERENCE.contohIntro,
+        contoh: KONTEN_INFERENCE.contoh,
+      },
+      token: TOKEN,
+    });
+  });
+
+  it('kebutuhan kosong → pesan validasi lokal, tanpa request PUT', async () => {
+    mockAmbilJson.mockResolvedValue(KONTEN_INFERENCE as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Inference' }));
+
+    const kebutuhan = (await screen.findByLabelText(/Kapan dibutuhkan/)) as HTMLTextAreaElement;
+    await waitFor(() => expect(kebutuhan.value).not.toBe(''));
+    fireEvent.change(kebutuhan, { target: { value: '   \n  ' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan inference' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('minimal 1 poin');
+    expect(mockKirim).not.toHaveBeenCalled();
+  });
+
+  it('tambah langkah → baris baru; tombol hapus muncul saat lebih dari 1 langkah', async () => {
+    mockAmbilJson.mockResolvedValue(KONTEN_INFERENCE as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Inference' }));
+    await screen.findByLabelText('Judul langkah 1');
+
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah langkah' }));
+    expect(screen.getByLabelText('Judul langkah 3')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Hapus langkah ini' })).toHaveLength(3);
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Hapus langkah ini' })[2]);
+    expect(screen.queryByLabelText('Judul langkah 3')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: 'Hapus langkah ini' })).toHaveLength(2);
+  });
+
+  it('simpan gagal (400 dari server) → pesan role alert tampil', async () => {
+    mockAmbilJson.mockResolvedValue(KONTEN_INFERENCE as never);
+    mockKirim.mockRejectedValue(
+      new Error('Field "kebutuhan" maksimal 300 karakter per item') as never,
+    );
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Inference' }));
+    await screen.findByLabelText(/Judul panel/);
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan inference' }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('maksimal 300 karakter');
   });
 });
 

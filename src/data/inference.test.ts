@@ -5,6 +5,7 @@ import {
   contohInference,
   contohInferenceIntro,
   kebutuhanInference,
+  kontenInferenceDummy,
   waDiskusiInference,
 } from './inference.ts';
 import { portofolioDummy } from './portofolio.ts';
@@ -41,5 +42,33 @@ describe('data inference (disusun dari pemahaman layanan — situs lama tidak pu
     const wa = waDiskusiInference();
     expect(wa).toMatch(/^https:\/\/wa\.me\/62\d+\?text=/);
     expect(decodeURIComponent(wa)).toContain('inference');
+  });
+});
+
+describe('kontenInferenceDummy (kontrak GET /api/inference — fallback halaman)', () => {
+  it('menggabungkan konstanta panel/alur/kebutuhan/contoh jadi satu objek', () => {
+    expect(kontenInferenceDummy).toEqual({
+      judulApaItu: apaItuInference.judul,
+      deskripsiApaItu: apaItuInference.deskripsi,
+      kebutuhan: kebutuhanInference,
+      alur: alurInference,
+      contohIntro: contohInferenceIntro,
+      contoh: contohInference,
+    });
+  });
+
+  it('semua field terisi — tidak ada daftar kosong yang membuat section kosong', () => {
+    expect(kontenInferenceDummy.judulApaItu.length).toBeGreaterThan(0);
+    expect(kontenInferenceDummy.deskripsiApaItu.length).toBeGreaterThan(0);
+    expect(kontenInferenceDummy.contohIntro.length).toBeGreaterThan(0);
+    expect(kontenInferenceDummy.kebutuhan.length).toBeGreaterThan(0);
+    expect(kontenInferenceDummy.alur.length).toBeGreaterThan(0);
+    expect(kontenInferenceDummy.contoh.length).toBeGreaterThan(0);
+  });
+
+  it('daftar alur & contoh tidak di-copy ulang (referensi konstanta modul)', () => {
+    expect(kontenInferenceDummy.alur).toBe(alurInference);
+    expect(kontenInferenceDummy.kebutuhan).toBe(kebutuhanInference);
+    expect(kontenInferenceDummy.contoh).toBe(contohInference);
   });
 });

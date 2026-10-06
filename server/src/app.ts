@@ -32,6 +32,12 @@ export function createApp({ repos, corsOrigins, adminPassword }: AppDeps): AnyEl
         set.status = 404;
         return { error: 'Not Found' };
       }
+      // Body bukan JSON valid (ParseError Elysia) → 400 eksplisit, bukan 500:
+      // body rusak adalah kesalahan klien, bukan kegagalan server.
+      if (code === 'PARSE') {
+        set.status = 400;
+        return { error: 'Body bukan JSON valid' };
+      }
       // Log eksplisit — jangan pernah menelan error tanpa jejak.
       console.error('[api] error tidak tertangani:', error);
       set.status = 500;

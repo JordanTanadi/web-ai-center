@@ -5,7 +5,7 @@
 import { describe, expect, test } from 'bun:test';
 import { getTableColumns } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
-import { berita, dokumentasi, heroSlides, klien, kursus, layanan, profil, tim, testimoni } from './schema';
+import { berita, dokumentasi, heroSlides, inference, klien, kursus, layanan, profil, tim, testimoni } from './schema';
 
 const columnNames = (table: PgTable): string[] => Object.keys(getTableColumns(table)).sort();
 
@@ -127,5 +127,24 @@ describe('kontrak kolom vs interface frontend', () => {
     expect(cols.target.dataType).toBe('json');
     expect(cols.hasil.dataType).toBe('json');
     expect(cols.modul.dataType).toBe('json');
+  });
+
+  test('inference — baris tunggal konten halaman (jsonb kebutuhan/alur/contoh)', () => {
+    expect(columnNames(inference)).toEqual([
+      'alur',
+      'contoh',
+      'contohIntro',
+      'deskripsiApaItu',
+      'id',
+      'judulApaItu',
+      'kebutuhan',
+    ]);
+    const cols = getTableColumns(inference);
+    expect(cols.judulApaItu.name).toBe('judul_apa_itu');
+    expect(cols.deskripsiApaItu.name).toBe('deskripsi_apa_itu');
+    expect(cols.contohIntro.name).toBe('contoh_intro');
+    expect(cols.kebutuhan.dataType).toBe('json');
+    expect(cols.alur.dataType).toBe('json');
+    expect(cols.contoh.dataType).toBe('json');
   });
 });

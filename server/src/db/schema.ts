@@ -121,6 +121,35 @@ export const profil = pgTable('profil', {
   statistik: jsonb('statistik').$type<StatistikItem[]>(),
 });
 
+/** Satu langkah alur inference (jsonb) — ↔ src/data/inference.ts LangkahInference. */
+export interface LangkahInference {
+  nomor: string;
+  judul: string;
+  deskripsi: string;
+}
+
+/** Contoh penerapan inference (jsonb) — ↔ src/data/inference.ts contohInference. */
+export interface ContohPenerapan {
+  slug: string;
+  judul: string;
+}
+
+/**
+ * Konten halaman Inference Solution — baris tunggal (id = 1).
+ * Panel "Apa itu", tanda kebutuhan, alur kerja, dan contoh penerapan
+ * sebelumnya statis di src/data/inference.ts (TODO_BACKEND); kini dikelola CMS
+ * lewat GET/PUT /api/inference.
+ */
+export const inference = pgTable('inference', {
+  id: integer('id').primaryKey(),
+  judulApaItu: text('judul_apa_itu').notNull(),
+  deskripsiApaItu: text('deskripsi_apa_itu').notNull(),
+  kebutuhan: jsonb('kebutuhan').$type<string[]>().notNull(),
+  alur: jsonb('alur').$type<LangkahInference[]>().notNull(),
+  contohIntro: text('contoh_intro').notNull(),
+  contoh: jsonb('contoh').$type<ContohPenerapan[]>().notNull(),
+});
+
 /**
  * Kursus (Pelatihan) — interface frontend: Kursus.
  * `target`, `hasil`, `modul` bertipe jsonb (array); `urutan` menentukan

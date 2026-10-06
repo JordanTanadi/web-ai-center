@@ -1,7 +1,8 @@
 /**
  * Dashboard admin (konsul PROGRESS 2 fase 3 + lanjutan + Prioritas 2): login
  * sederhana (1 akun) + CRUD dokumentasi, berita, kursus — lalu tim & profil
- * (tab baru Prioritas 2; lihat komponen TimAdmin & ProfilAdmin di bawah).
+ * (tab Prioritas 2; lihat komponen TimAdmin & ProfilAdmin) dan konten halaman
+ * inference (tab Inference → InferenceAdmin, GET/PUT /api/inference).
  *
  * - UI sengaja bahasa Indonesia tanpa i18n — alat internal, bukan halaman publik.
  * - Token hasil POST /api/admin/login disimpan di localStorage; semua aksi tulis
@@ -22,15 +23,16 @@ import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/a
 import type { BeritaItem } from '../data/berita.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { Kursus, Modul } from '../data/pelatihan.ts';
+import type { KontenInference } from '../data/inference.ts';
 import type { ProfilApi } from '../data/profil.ts';
 import type { AnggotaTim } from '../data/tim.ts';
 
 /** Kunci localStorage untuk token sesi admin. */
 export const KEY_TOKEN_ADMIN = 'token-admin';
 
-type Jenis = 'dokumentasi' | 'berita' | 'kursus' | 'tim' | 'profil';
-/** Jenis yang memakai alur daftar+form generik di komponen utama (kursus/tim/profil
-    punya komponen admin sendiri karena bentuk datanya beda). */
+type Jenis = 'dokumentasi' | 'berita' | 'kursus' | 'tim' | 'profil' | 'inference';
+/** Jenis yang memakai alur daftar+form generik di komponen utama (kursus/tim/
+    profil/inference punya komponen admin sendiri karena bentuk datanya beda). */
 type JenisDaftar = 'dokumentasi' | 'berita';
 type ItemAdmin = DokumentasiItem | BeritaItem;
 
@@ -71,6 +73,11 @@ interface Pesan {
   teks: string;
   sukses: boolean;
 }
+
+/** Bentuk baris editor alur inference (tab Inference) — ↔ LangkahInference. */
+type LangkahForm = { nomor: string; judul: string; deskripsi: string };
+/** Bentuk baris editor contoh penerapan (tab Inference). */
+type ContohForm = { slug: string; judul: string };
 
 /** Form kosong — tanggal default hari ini (UTC) agar operator tinggal sesuaikan. */
 function formKosong(): Record<string, string> {
@@ -300,7 +307,7 @@ export default function Admin() {
       <main className="mx-auto max-w-md px-6 py-16">
         <h1 className="font-display text-3xl font-bold">Masuk Admin</h1>
         <p className="mt-2 text-sm text-muted">
-          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita, kursus, tim & profil.
+          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita, kursus, tim, profil & konten inference.
         </p>
         <form onSubmit={masuk} className="mt-8 space-y-4">
           <div>
@@ -341,6 +348,7 @@ export default function Admin() {
     kursus: 'Kursus',
     tim: 'Tim',
     profil: 'Profil',
+    inference: 'Inference',
   };
   const labelJenis = LABEL_JENIS[jenis];
   /** Handler 401 bersama untuk section admin yang punya token sendiri. */
@@ -354,7 +362,7 @@ export default function Admin() {
         <div>
           <h1 className="font-display text-3xl font-bold">Dashboard Admin</h1>
           <p className="mt-1 text-sm text-muted">
-            Kelola dokumentasi, berita, kursus, tim & profil AI Center.
+            Kelola dokumentasi, berita, kursus, tim, profil & konten inference.
           </p>
         </div>
         <div className="flex gap-2">
@@ -375,8 +383,8 @@ export default function Admin() {
         </div>
       </header>
 
-      <div role="tablist" aria-label="Jenis konten" className="mt-6 flex gap-2">
-        {(['dokumentasi', 'berita', 'kursus', 'tim', 'profil'] as const).map((j) => (
+      <div role="tablist" aria-label="Jenis konten" className="mt-6 flex flex-wrap gap-2">
+        {(['dokumentasi', 'berita', 'kursus', 'tim', 'profil', 'inference'] as const).map((j) => (
           <button
             key={j}
             type="button"
@@ -408,6 +416,8 @@ export default function Admin() {
         <TimAdmin token={token} gagal401={sesiBerakhir} />
       ) : jenis === 'profil' ? (
         <ProfilAdmin token={token} gagal401={sesiBerakhir} />
+      ) : jenis === 'inference' ? (
+        <InferenceAdmin token={token} gagal401={sesiBerakhir} />
       ) : (
       <section className="mt-6">
         <div className="flex items-center justify-between gap-3">
@@ -1426,6 +1436,300 @@ function ProfilAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
             className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:opacity-90"
           >
             Simpan profil
+          </button>
+        </div>
+      </form>
+    </section>
+  );
+}
+
+/**
+ * Section edit konten halaman Inference (tab "Inference" — GET/PUT /api/inference).
+ * Isi awal dari GET /api/inference (ambilJson; form kosong bila backend mati atau
+ * baris belum di-seed — simpan tetap divalidasi server, 404 bila belum seed).
+ *
+ * Bentuk edit mengikuti pola yang sudah ada: teks panjang (deskripsi & daftar
+ * kebutuhan) berupa textarea satu per baris, sedangkan alur & contoh berupa
+ * baris terstruktur seperti editor modul kursus. Batas panjang disalin dari
+ * BATAS di server/src/lib/tulis.ts; server tetap penegak utamanya.
+ */
+function InferenceAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
+  const [judulApaItu, setJudulApaItu] = useState('');
+  const [deskripsiApaItu, setDeskripsiApaItu] = useState('');
+  const [contohIntro, setContohIntro] = useState('');
+  /** Satu poin per baris; dipecah jadi array saat Simpan. */
+  const [kebutuhanTeks, setKebutuhanTeks] = useState('');
+  const [alur, setAlur] = useState<LangkahForm[]>([
+    { nomor: '', judul: '', deskripsi: '' },
+  ]);
+  const [contoh, setContoh] = useState<ContohForm[]>([{ slug: '', judul: '' }]);
+  const [pesan, setPesan] = useState<{ teks: string; sukses: boolean } | null>(null);
+
+  useEffect(() => {
+    void (async () => {
+      const konten = await ambilJson<KontenInference | null>('/inference', null);
+      if (konten !== null) {
+        setJudulApaItu(konten.judulApaItu);
+        setDeskripsiApaItu(konten.deskripsiApaItu);
+        setContohIntro(konten.contohIntro);
+        setKebutuhanTeks(konten.kebutuhan.join('\n'));
+        setAlur(konten.alur.length > 0 ? konten.alur : [{ nomor: '', judul: '', deskripsi: '' }]);
+        setContoh(konten.contoh.length > 0 ? konten.contoh : [{ slug: '', judul: '' }]);
+      }
+    })();
+  }, []);
+
+  async function simpan(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setPesan(null);
+    const kebutuhan = kebutuhanTeks
+      .split('\n')
+      .map((p) => p.trim())
+      .filter((p) => p !== '');
+    if (kebutuhan.length === 0) {
+      setPesan({ teks: 'Daftar kebutuhan minimal 1 poin (satu per baris).', sukses: false });
+      return;
+    }
+    try {
+      await kirimJsonAdmin('/inference', {
+        method: 'PUT',
+        body: { judulApaItu, deskripsiApaItu, kebutuhan, alur, contohIntro, contoh },
+        token,
+      });
+      setPesan({ teks: 'Konten inference disimpan.', sukses: true });
+    } catch (error) {
+      if ((error as { status?: number } | null)?.status === 401) {
+        gagal401();
+        return;
+      }
+      setPesan({
+        teks: error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak dikenal',
+        sukses: false,
+      });
+    }
+  }
+
+  const elemenPesan =
+    pesan === null ? null : (
+      <p
+        role={pesan.sukses ? 'status' : 'alert'}
+        className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+          pesan.sukses ? 'bg-soft text-emerald-800' : 'bg-red-50 text-red-800'
+        }`}
+      >
+        {pesan.teks}
+      </p>
+    );
+
+  const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
+  const labelCls = 'block text-sm font-semibold';
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-bold">Inference</h2>
+      </div>
+
+      {elemenPesan}
+
+      <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
+        <p className="text-sm text-muted">
+          Konten halaman layanan Inference Solution — panel &quot;Apa itu&quot;, tanda kebutuhan,
+          alur kerja, dan contoh penerapan.
+        </p>
+
+        <div>
+          <label htmlFor="inference-judul" className={labelCls}>
+            Judul panel &quot;Apa itu&quot; *
+          </label>
+          <input
+            id="inference-judul"
+            type="text"
+            required
+            maxLength={200}
+            className={inputCls}
+            value={judulApaItu}
+            onChange={(event) => setJudulApaItu(event.target.value)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="inference-deskripsi" className={labelCls}>
+            Deskripsi panel &quot;Apa itu&quot; *
+          </label>
+          <textarea
+            id="inference-deskripsi"
+            required
+            rows={5}
+            maxLength={5000}
+            className={inputCls}
+            value={deskripsiApaItu}
+            onChange={(event) => setDeskripsiApaItu(event.target.value)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="inference-kebutuhan" className={labelCls}>
+            Kapan dibutuhkan (satu poin per baris) *
+          </label>
+          <textarea
+            id="inference-kebutuhan"
+            required
+            rows={4}
+            className={inputCls}
+            value={kebutuhanTeks}
+            onChange={(event) => setKebutuhanTeks(event.target.value)}
+          />
+          <p className="mt-1 text-xs text-muted">
+            Maksimal 20 poin, masing-masing maksimal 300 karakter.
+          </p>
+        </div>
+
+        <div>
+          <p className={labelCls}>Alur kerja (langkah) *</p>
+          <ol className="mt-2 space-y-3">
+            {alur.map((langkah, i) => (
+              <li key={i} className="rounded-lg border border-line p-3">
+                <p className="text-xs font-bold text-muted">Langkah {i + 1}</p>
+                <input
+                  type="text"
+                  required
+                  aria-label={`Nomor langkah ${i + 1}`}
+                  placeholder="01"
+                  maxLength={10}
+                  className={inputCls}
+                  value={langkah.nomor}
+                  onChange={(event) =>
+                    setAlur((prev) =>
+                      prev.map((l, j) => (j === i ? { ...l, nomor: event.target.value } : l)),
+                    )
+                  }
+                />
+                <input
+                  type="text"
+                  required
+                  aria-label={`Judul langkah ${i + 1}`}
+                  placeholder="Judul langkah"
+                  maxLength={200}
+                  className={inputCls}
+                  value={langkah.judul}
+                  onChange={(event) =>
+                    setAlur((prev) =>
+                      prev.map((l, j) => (j === i ? { ...l, judul: event.target.value } : l)),
+                    )
+                  }
+                />
+                <textarea
+                  required
+                  aria-label={`Deskripsi langkah ${i + 1}`}
+                  placeholder="Deskripsi langkah"
+                  rows={2}
+                  maxLength={1000}
+                  className={inputCls}
+                  value={langkah.deskripsi}
+                  onChange={(event) =>
+                    setAlur((prev) =>
+                      prev.map((l, j) => (j === i ? { ...l, deskripsi: event.target.value } : l)),
+                    )
+                  }
+                />
+                {alur.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setAlur((prev) => prev.filter((_, j) => j !== i))}
+                    className="mt-2 text-sm font-semibold text-red-700 hover:underline"
+                  >
+                    Hapus langkah ini
+                  </button>
+                )}
+              </li>
+            ))}
+          </ol>
+          <button
+            type="button"
+            onClick={() => setAlur((prev) => [...prev, { nomor: '', judul: '', deskripsi: '' }])}
+            className="mt-2 rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
+          >
+            + Tambah langkah
+          </button>
+        </div>
+
+        <div>
+          <label htmlFor="inference-contoh-intro" className={labelCls}>
+            Pengantar contoh penerapan *
+          </label>
+          <input
+            id="inference-contoh-intro"
+            type="text"
+            required
+            maxLength={500}
+            className={inputCls}
+            value={contohIntro}
+            onChange={(event) => setContohIntro(event.target.value)}
+          />
+        </div>
+
+        <div>
+          <p className={labelCls}>Contoh penerapan (chip) *</p>
+          <ol className="mt-2 space-y-3">
+            {contoh.map((item, i) => (
+              <li key={i} className="rounded-lg border border-line p-3">
+                <p className="text-xs font-bold text-muted">Contoh {i + 1}</p>
+                <input
+                  type="text"
+                  required
+                  aria-label={`Slug contoh ${i + 1}`}
+                  placeholder="algae-finder"
+                  maxLength={200}
+                  className={inputCls}
+                  value={item.slug}
+                  onChange={(event) =>
+                    setContoh((prev) =>
+                      prev.map((c, j) => (j === i ? { ...c, slug: event.target.value } : c)),
+                    )
+                  }
+                />
+                <input
+                  type="text"
+                  required
+                  aria-label={`Judul contoh ${i + 1}`}
+                  placeholder="Judul karya"
+                  maxLength={200}
+                  className={inputCls}
+                  value={item.judul}
+                  onChange={(event) =>
+                    setContoh((prev) =>
+                      prev.map((c, j) => (j === i ? { ...c, judul: event.target.value } : c)),
+                    )
+                  }
+                />
+                {contoh.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => setContoh((prev) => prev.filter((_, j) => j !== i))}
+                    className="mt-2 text-sm font-semibold text-red-700 hover:underline"
+                  >
+                    Hapus contoh ini
+                  </button>
+                )}
+              </li>
+            ))}
+          </ol>
+          <button
+            type="button"
+            onClick={() => setContoh((prev) => [...prev, { slug: '', judul: '' }])}
+            className="mt-2 rounded-lg border border-line px-4 py-2 text-sm font-semibold hover:bg-soft"
+          >
+            + Tambah contoh
+          </button>
+        </div>
+
+        <div>
+          <button
+            type="submit"
+            className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:opacity-90"
+          >
+            Simpan inference
           </button>
         </div>
       </form>

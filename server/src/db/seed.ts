@@ -8,7 +8,7 @@
 import type { Db } from './client';
 import { createDb, resolveDbTarget } from './client';
 import { resolveConfig } from '../config';
-import { berita, dokumentasi, heroSlides, klien, kursus, layanan, profil, tim, testimoni } from './schema';
+import { berita, dokumentasi, heroSlides, inference, klien, kursus, layanan, profil, tim, testimoni } from './schema';
 
 type BeritaSeed = Omit<typeof berita.$inferInsert, 'id' | 'createdAt'>;
 type DokumentasiSeed = Omit<typeof dokumentasi.$inferInsert, 'id' | 'createdAt'>;
@@ -18,6 +18,7 @@ type HeroSeed = Omit<typeof heroSlides.$inferInsert, 'id'>;
 type KlienSeed = Omit<typeof klien.$inferInsert, 'id'>;
 type TestimoniSeed = Omit<typeof testimoni.$inferInsert, 'id'>;
 type ProfilSeed = typeof profil.$inferInsert;
+type InferenceSeed = typeof inference.$inferInsert;
 type KursusSeed = Omit<typeof kursus.$inferInsert, 'id'>;
 
 export const SEED_BERITA: BeritaSeed[] = [
@@ -296,6 +297,69 @@ export const SEED_PROFIL: ProfilSeed = {
   statistik: null,
 };
 
+/**
+ * Konten halaman Inference Solution — disalin dari src/data/inference.ts
+ * (`apaItuInference`, `kebutuhanInference`, `alurInference`,
+ * `contohInferenceIntro`, `contohInference`). Guard di sinkron.test.ts.
+ */
+export const SEED_INFERENCE: InferenceSeed = {
+  id: 1,
+  judulApaItu: 'Apa itu Inference Solution?',
+  deskripsiApaItu:
+    'Inference adalah tahap menjalankan model machine learning untuk memprediksi data baru — bagian ' +
+    'yang membuat model benar-benar dipakai, bukan sekadar dilatih. Inference Solution adalah layanan ' +
+    'Ubaya AI Center yang mengubah model Anda menjadi layanan siap pakai — biasanya berupa API — ' +
+    'sehingga aplikasi, website, atau sistem internal Anda dapat memanggil prediksi kapan pun ' +
+    'dibutuhkan, diinfrastruktur yang terkelola dan didampingi tim kami.',
+  kebutuhan: [
+    'Model riset atau prototipe sudah jadi, tetapi belum bisa dipakai tim lain',
+    'Butuh fitur AI di aplikasi atau website tanpa membangun infrastruktur ML sendiri',
+    'Perlu prediksi otomatis yang konsisten untuk gambar, teks, atau data',
+    'Ingin hasil model tetap andal performanya saat dipakai banyak pengguna',
+  ],
+  alur: [
+    {
+      nomor: '01',
+      judul: 'Konsultasi & audit kebutuhan',
+      deskripsi:
+        'Kami memetakan use case, data, dan model yang sudah — atau yang perlu disiapkan — bersama tim Anda.',
+    },
+    {
+      nomor: '02',
+      judul: 'Persiapan model',
+      deskripsi:
+        'Model dioptimalkan dan dibungkus agar siap dijalankan di server, termasuk preprocessing dan versi yang terkendali.',
+    },
+    {
+      nomor: '03',
+      judul: 'Deployment sebagai API',
+      deskripsi:
+        'Model dijalankan sebagai endpoint layanan (API) yang stabil, lengkap dengan dokumentasi pemakaian.',
+    },
+    {
+      nomor: '04',
+      judul: 'Integrasi & pengujian',
+      deskripsi:
+        'API disambungkan ke aplikasi Anda lalu diuji pada data nyata: akurasi, latensi, dan perilakunya.',
+    },
+    {
+      nomor: '05',
+      judul: 'Operasional & purna implementasi',
+      deskripsi:
+        'Monitoring, pembaruan model, dan dukungan teknis agar layanan tetap andal setelah berjalan.',
+    },
+  ],
+  contohIntro: 'Beberapa produk AI Center yang menjalankan prediksi model secara langsung:',
+  contoh: [
+    { slug: 'implan-gigi-otomatis', judul: 'Rekomendasi Implan Gigi Otomatis' },
+    { slug: 'algae-finder', judul: 'Algae Finder' },
+    { slug: 'translator-bahasa-isyarat', judul: 'Translator Bahasa Isyarat' },
+    { slug: 'deteksi-cacat-las', judul: 'Deteksi Cacat Las (Welding)' },
+    { slug: 'klasifikasi-xray-pneumonia', judul: 'Klasifikasi X-Ray Pneumonia' },
+    { slug: 'deteksi-kesegaran-ikan', judul: 'Deteksi Kesegaran Ikan' },
+  ],
+};
+
 /** Data kursus — disalin dari `kursusDummy` frontend (src/data/pelatihan.ts). */
 export const SEED_KURSUS: KursusSeed[] = [
   {
@@ -439,6 +503,7 @@ export async function runSeed(db: Db): Promise<void> {
   await db.delete(testimoni);
   await db.delete(kursus);
   await db.delete(profil);
+  await db.delete(inference);
 
   if (SEED_BERITA.length > 0) await db.insert(berita).values(SEED_BERITA);
   if (SEED_DOKUMENTASI.length > 0) await db.insert(dokumentasi).values(SEED_DOKUMENTASI);
@@ -449,6 +514,7 @@ export async function runSeed(db: Db): Promise<void> {
   if (SEED_TESTIMONI.length > 0) await db.insert(testimoni).values(SEED_TESTIMONI);
   if (SEED_KURSUS.length > 0) await db.insert(kursus).values(SEED_KURSUS);
   await db.insert(profil).values(SEED_PROFIL);
+  await db.insert(inference).values(SEED_INFERENCE);
 }
 
 /** CLI: `bun run db:seed` — exit code 1 bila gagal (tidak silent). */

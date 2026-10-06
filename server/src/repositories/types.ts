@@ -10,6 +10,7 @@ import type {
   HeroSlide,
   Klien,
   Kursus,
+  KontenInference,
   Layanan,
   Profil,
   Testimoni,
@@ -17,7 +18,14 @@ import type {
 import type { Pagination } from '../lib/query';
 // Input tulis admin (PROGRESS 2 + Prioritas 2) hidup di lib/tulis — satu
 // sumber kontrak validasi body, dipakai route & repository.
-import type { InputBerita, InputDokumentasi, InputKursus, InputProfil, InputTim } from '../lib/tulis';
+import type {
+  InputBerita,
+  InputDokumentasi,
+  InputInference,
+  InputKursus,
+  InputProfil,
+  InputTim,
+} from '../lib/tulis';
 
 /** Alias agar interface repository tidak perlu import langsung dari lib/tulis. */
 export type BeritaInput = InputBerita;
@@ -25,6 +33,7 @@ export type DokumentasiInput = InputDokumentasi;
 export type KursusInput = InputKursus;
 export type ProfilInput = InputProfil;
 export type TimInput = InputTim;
+export type InferenceInput = InputInference;
 
 export interface ListParams {
   /** Kata kunci pencarian; `null` = tanpa filter. */
@@ -99,6 +108,13 @@ export interface ProfilRepository {
   update(data: ProfilInput): Promise<Profil | null>;
 }
 
+export interface InferenceRepository {
+  /** Konten halaman inference (baris tunggal id = 1); `null` bila belum di-seed. */
+  get(): Promise<KontenInference | null>;
+  /** Perbarui konten inference; `null` bila baris belum ada (belum di-seed). */
+  update(data: InferenceInput): Promise<KontenInference | null>;
+}
+
 export interface KursusRepository {
   list(params: ListParams): Promise<Kursus[]>;
   /** Detail kursus; kode case-insensitive (URL lama memakai 'r01'). */
@@ -121,6 +137,7 @@ export interface Repositories {
   klien: KlienRepository;
   testimoni: TestimoniRepository;
   profil: ProfilRepository;
+  inference: InferenceRepository;
   kursus: KursusRepository;
   /** Cek koneksi DB untuk `/api/health`; lempar bila DB tidak terjangkau. */
   ping: () => Promise<void>;

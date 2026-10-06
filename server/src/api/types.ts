@@ -125,6 +125,32 @@ export interface Kursus {
   modul: ModulKursus[];
 }
 
+/** ↔ src/data/inference.ts LangkahInference (alur kerja 5 langkah). */
+export interface LangkahInference {
+  nomor: string;
+  judul: string;
+  deskripsi: string;
+}
+
+/** ↔ src/data/inference.ts contohInference (chip "Contoh penerapan"). */
+export interface ContohPenerapan {
+  slug: string;
+  judul: string;
+}
+
+/**
+ * ↔ src/data/inference.ts KontenInference — konten halaman Inference Solution
+ * (baris tunggal id = 1, dikelola lewat tab "Inference" di /admin).
+ */
+export interface KontenInference {
+  judulApaItu: string;
+  deskripsiApaItu: string;
+  kebutuhan: string[];
+  alur: LangkahInference[];
+  contohIntro: string;
+  contoh: ContohPenerapan[];
+}
+
 /** Bentuk standar daftar — { items: [...] } sesuai komentar TODO_BACKEND. */
 export interface ListResponse<T> {
   items: T[];

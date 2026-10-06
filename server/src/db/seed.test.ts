@@ -7,6 +7,7 @@ import {
   SEED_BERITA,
   SEED_DOKUMENTASI,
   SEED_HERO,
+  SEED_INFERENCE,
   SEED_KLIEN,
   SEED_KURSUS,
   SEED_LAYANAN,
@@ -145,5 +146,29 @@ describe('SEED_PROFIL', () => {
     // Kontak mengikuti keputusan rapat: email AI Center + nomor WhatsApp
     expect(SEED_PROFIL.email).toBe('aicenter@unit.ubaya.ac.id');
     expect(SEED_PROFIL.telepon).toBe('0895-6342-22240');
+  });
+});
+
+describe('SEED_INFERENCE', () => {
+  test('baris tunggal id=1; daftar minimal 1 item & penomoran alur berurutan', () => {
+    expect(SEED_INFERENCE.id).toBe(1);
+    expect(SEED_INFERENCE.judulApaItu.length).toBeGreaterThan(0);
+    expect(SEED_INFERENCE.deskripsiApaItu.length).toBeGreaterThan(0);
+    expect(SEED_INFERENCE.contohIntro.length).toBeGreaterThan(0);
+    expect(SEED_INFERENCE.kebutuhan.length).toBeGreaterThan(0);
+    expect(SEED_INFERENCE.alur.length).toBeGreaterThan(0);
+    expect(SEED_INFERENCE.contoh.length).toBeGreaterThan(0);
+  });
+
+  test('alur 5 langkah bernomor 01-05; slug contoh format slug', () => {
+    expect(SEED_INFERENCE.alur.map((l) => l.nomor)).toEqual(['01', '02', '03', '04', '05']);
+    for (const langkah of SEED_INFERENCE.alur) {
+      expect(langkah.judul.length).toBeGreaterThan(0);
+      expect(langkah.deskripsi.length).toBeGreaterThan(0);
+    }
+    for (const contoh of SEED_INFERENCE.contoh) {
+      expect(contoh.slug).toMatch(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+      expect(contoh.judul.length).toBeGreaterThan(0);
+    }
   });
 });

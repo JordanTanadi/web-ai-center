@@ -13,12 +13,14 @@ import { klienDummy } from '../../../src/data/klien';
 import { layananDummy } from '../../../src/data/layanan';
 import { kursusDummy } from '../../../src/data/pelatihan';
 import { profilDummy } from '../../../src/data/profil';
+import { kontenInferenceDummy } from '../../../src/data/inference';
 import { testimoniDummy } from '../../../src/data/testimoni';
 import { timDummy } from '../../../src/data/tim';
 import {
   SEED_BERITA,
   SEED_DOKUMENTASI,
   SEED_HERO,
+  SEED_INFERENCE,
   SEED_KLIEN,
   SEED_KURSUS,
   SEED_LAYANAN,
@@ -80,5 +82,16 @@ describe('sinkronisasi seed ↔ data frontend', () => {
     const misiFe = profilDummy.misi.join('\n');
     expect(String(SEED_PROFIL.visi)).toBe(visiFe);
     expect(String(SEED_PROFIL.misi)).toBe(misiFe);
+  });
+
+  test('inference: seluruh field identik dengan konten dummy frontend', () => {
+    expect({
+      judulApaItu: SEED_INFERENCE.judulApaItu,
+      deskripsiApaItu: SEED_INFERENCE.deskripsiApaItu,
+      kebutuhan: SEED_INFERENCE.kebutuhan,
+      alur: SEED_INFERENCE.alur,
+      contohIntro: SEED_INFERENCE.contohIntro,
+      contoh: SEED_INFERENCE.contoh,
+    }).toEqual(kontenInferenceDummy);
   });
 });

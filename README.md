@@ -84,11 +84,13 @@ bun run db:generate     # generate migrasi — hanya setelah ubah schema.ts
 | `GET /api/kursus` · `/api/kursus/:kode` | `q`, `page`, `limit` | `{ items }` / 404; kode case-insensitive (`r01`) |
 | `GET /api/hero-slides` · `/api/klien` · `/api/testimoni` | — | `{ items }` |
 | `GET /api/profil` | — | Tentang Kami + kontak footer; 404 bila belum di-seed |
+| `GET /api/inference` | — | konten halaman Inference; 404 bila belum di-seed |
 | `POST /api/admin/login` | body `{ password }` | rate-limit 5 gagal / 10 menit per IP → 429; balikan `{ token }` |
 | `POST` · `PUT` · `DELETE /api/dokumentasi[/:slug]` | — | butuh `Authorization: Bearer <token>`; 400/404/409 eksplisit |
 | `POST` · `PUT` · `DELETE /api/berita[/:slug]` | — | idem; slug dibuat server dari judul |
 | `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | idem; `kode` jadi kunci unik |
 | `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan |
+| `PUT /api/inference` | — | konten halaman inference (id = 1); wajib ≥1 item tiap daftar |
 | `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | kunci `id` numerik; `urutan` = posisi tampil |
 | `POST /api/admin/upload` | multipart `gambar` | file ≤ 2 MB (jpg/png/webp) → `{ url }` `/uploads/<nama>` |
 | `POST /api/admin/uploads/bersihkan` | `{ kering? }` | hapus file unggahan yatim (tak dirujuk kolom manapun); `kering: true` = mode uji |
@@ -106,7 +108,8 @@ backend mati, respons gagal, atau saat unit test:
 
 - Beranda: hero, layanan, testimoni, highlight berita & dokumentasi
 - `/berita` + `/berita/:slug`, `/dokumentasi` + `/:slug`, `/tim`
-- `/layanan/:slug`, katalog kursus + detail (`/api/kursus`, `/api/kursus/:kode`)
+- `/layanan/:slug`, katalog kursus + detail (`/api/kursus`, `/api/kursus/:kode`);
+  konten inference (panel "Apa itu", kebutuhan, alur, contoh) dari `GET /api/inference`
 - `/tentang-kami` visi/misi (`GET /api/profil` → pemetaan `petakanProfilApi`)
 
 Kontak footer/WA **sengaja statis** dari situs lama (nomor + pesan persis link
@@ -114,15 +117,16 @@ Kontak footer/WA **sengaja statis** dari situs lama (nomor + pesan persis link
 
 Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
 
-- konten halaman Inference — endpoint `GET /api/inference` belum ada
-- video lesson + progress LMS per peserta — butuh konten video & akun
+- video lesson + progress LMS per peserta — butuh konten video & akun peserta
 - section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
 
 CRUD admin sudah lengkap (Prioritas 2): dokumentasi, berita, kursus — lalu
 **profil** (`PUT /api/profil` + tab Profil di `/admin`) dan **tim**
 (CRUD `/api/tim` + tab Tim), batas panjang semua field teks, serta pembersih
 file gambar yatim (`POST /api/admin/uploads/bersihkan` + tombol "Bersihkan
-gambar yatim" di dashboard admin).
+gambar yatim" di dashboard admin). Lanjutannya: konten halaman **Inference**
+(`GET`/`PUT /api/inference` + tab Inference di `/admin`) kini ikut dikelola
+lewat database, bukan lagi hardcode.
 
 ## Ringkasan pengerjaan
 
@@ -133,6 +137,7 @@ gambar yatim" di dashboard admin).
 5. Keputusan rapat 16 Sept: layanan tinggal 2 (Pelatihan + Inference Solution), Our Client dikomentari (kode dipertahankan), testimoni naik ke posisi Our Client dengan background `bg-soft`, kontak footer/Tentang Kami disentralisasi di `src/data/kontak.ts` (email `aicenter@unit.ubaya.ac.id`, WA 0895-6342-22240, website LPPM).
 6. Unit test: frontend **238 test / 30 file** (lib, data, komponen, halaman, routing); backend **86 test**. `tsc` bersih di dua sisi.
 7. Integrasi frontend↔backend: tabel + route `GET /api/kursus` (+ migrasi `0001`), lapisan `src/lib/api.ts` + hook `useApiData`, wiring semua halaman konten; seed disinkronkan dengan data frontend (tim 6 anggota, teks layanan, gambar hero).
+8. Prioritas 2 (CRUD profil & tim, batas panjang field, pembersih gambar yatim) lalu konten halaman **Inference** pindah ke CMS: tabel `inference` (+ migrasi `0003`), `GET`/`PUT /api/inference`, tab Inference di `/admin`, dan `LayananDetail` memakai `useApiObjek('/inference', …)`. Gerbang saat ini: frontend **374 test / 36 file**, backend **203 test / 14 file**, `tsc` bersih + build produksi OK.
 
 ### Penanda TODO
 
