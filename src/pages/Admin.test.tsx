@@ -377,12 +377,15 @@ describe('Admin — tab Kursus', () => {
 
   it('tambah kursus + modul → POST /kursus dengan modul terisi', async () => {
     mockDaftar.mockResolvedValue([]);
-    mockKirim.mockResolvedValue({ ...KURSUS, kode: 'P02', judul: 'Kursus Baru' } as never);
+    mockKirim.mockResolvedValue({ ...KURSUS, kode: 'M01', judul: 'Kursus Baru' } as never);
     await renderDashboard();
     fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
 
-    fireEvent.change(screen.getByLabelText(/kode/i), { target: { value: 'P02' } });
+    // Target berupa centang → kode terisi otomatis (daftar masih kosong → M01).
+    fireEvent.click(screen.getByLabelText('Mahasiswa'));
+    expect(screen.getByLabelText(/kode/i)).toHaveValue('M01');
+    expect(screen.getByLabelText(/kode/i)).toHaveAttribute('readonly');
     fireEvent.change(screen.getByLabelText('Judul *'), { target: { value: 'Kursus Baru' } });
     fireEvent.change(screen.getByLabelText(/deskripsi singkat/i), {
       target: { value: 'Deskripsi.' },
@@ -394,7 +397,6 @@ describe('Admin — tab Kursus', () => {
     fireEvent.change(screen.getByLabelText('Instruktur *'), { target: { value: 'Tim' } });
     fireEvent.change(screen.getByLabelText(/peran instruktur/i), { target: { value: 'Pengajar' } });
     fireEvent.change(screen.getByLabelText(/inisial/i), { target: { value: 'T' } });
-    fireEvent.change(screen.getByLabelText(/target peserta/i), { target: { value: 'Mahasiswa' } });
     fireEvent.change(screen.getByLabelText(/hasil belajar/i), { target: { value: 'Hasil 1' } });
     fireEvent.change(screen.getByLabelText('Judul modul 1'), { target: { value: 'M1' } });
     fireEvent.change(screen.getByLabelText('Meta modul 1'), { target: { value: '2 video' } });
@@ -408,7 +410,7 @@ describe('Admin — tab Kursus', () => {
         method: 'POST',
         token: TOKEN,
         body: expect.objectContaining({
-          kode: 'P02',
+          kode: 'M01',
           target: ['Mahasiswa'],
           modul: [{ judul: 'M1', deskripsi: 'D1', meta: '2 video' }],
         }),
@@ -425,6 +427,66 @@ describe('Admin — tab Kursus', () => {
     expect(screen.getByLabelText('Judul modul 2')).toBeInTheDocument();
   });
 
+  it('kode auto dari peserta: Guru → G01, ganti centang → M01 (input read-only)', async () => {
+    mockDaftar.mockResolvedValue([]);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    // Belum ada peserta → kode masih kosong (placeholder "Pilih target peserta dulu").
+    expect(screen.getByLabelText(/kode/i)).toHaveValue('');
+
+    fireEvent.click(screen.getByLabelText('Guru'));
+    expect(screen.getByLabelText(/kode/i)).toHaveValue('G01');
+    expect(screen.getByLabelText(/kode/i)).toHaveAttribute('readonly');
+
+    // Mahasiswa mendahului label lain pada urutan katalog; centang lain tetap tersimpan.
+    fireEvent.click(screen.getByLabelText('Mahasiswa'));
+    expect(screen.getByLabelText(/kode/i)).toHaveValue('M01');
+    expect(screen.getByLabelText('Guru')).toBeChecked();
+  });
+
+  it('kode lanjut dari nomor terpakai (M01 → M02); kode lama R01 tidak ikut dihitung', async () => {
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/kursus' ? [{ ...KURSUS, kode: 'M01' }] : [DOK, DOK2],
+    );
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    expect(await screen.findByText('Dasar ML')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.click(screen.getByLabelText('Mahasiswa'));
+    expect(screen.getByLabelText(/kode/i)).toHaveValue('M02');
+  });
+
+  it('tanpa target peserta → Simpan menampilkan error eksplisit tanpa request', async () => {
+    mockDaftar.mockResolvedValue([]);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    // Semua field wajib lain diisi lebih dulu supaya guard target yang teruji.
+    fireEvent.change(screen.getByLabelText('Judul *'), { target: { value: 'Kursus Baru' } });
+    fireEvent.change(screen.getByLabelText(/deskripsi singkat/i), {
+      target: { value: 'Deskripsi.' },
+    });
+    fireEvent.change(screen.getByLabelText(/tentang kursus/i), { target: { value: 'Tentang.' } });
+    fireEvent.change(screen.getByLabelText(/durasi/i), { target: { value: '2 sesi' } });
+    fireEvent.change(screen.getByLabelText(/level/i), { target: { value: 'Pemula' } });
+    fireEvent.change(screen.getByLabelText(/format/i), { target: { value: 'Online' } });
+    fireEvent.change(screen.getByLabelText('Instruktur *'), { target: { value: 'Tim' } });
+    fireEvent.change(screen.getByLabelText(/peran instruktur/i), { target: { value: 'Pengajar' } });
+    fireEvent.change(screen.getByLabelText(/inisial/i), { target: { value: 'T' } });
+    fireEvent.change(screen.getByLabelText(/hasil belajar/i), { target: { value: 'Hasil 1' } });
+    fireEvent.change(screen.getByLabelText('Judul modul 1'), { target: { value: 'M1' } });
+    fireEvent.change(screen.getByLabelText('Meta modul 1'), { target: { value: '2 video' } });
+    fireEvent.change(screen.getByLabelText('Deskripsi modul 1'), { target: { value: 'D1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Target peserta wajib dipilih');
+    expect(mockKirim).not.toHaveBeenCalled();
+  });
+
   it('Ubah kursus → form terisi, kode terkunci, Simpan → PUT /kursus/:kode', async () => {
     mockDaftar.mockImplementation(async (path: string) =>
       path === '/kursus' ? [KURSUS] : [DOK, DOK2],
@@ -437,8 +499,9 @@ describe('Admin — tab Kursus', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
 
     expect(screen.getByLabelText('Judul *')).toHaveValue('Dasar ML');
-    // Kode adalah kunci: tidak boleh diganti saat edit.
+    // Kode adalah kunci: tidak boleh diganti saat edit; centang peserta ikut terisi.
     expect(screen.getByLabelText(/^Kode/)).toBeDisabled();
+    expect(screen.getByLabelText('Mahasiswa')).toBeChecked();
     expect(screen.getByText(/kode kunci tidak bisa diganti/i)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));

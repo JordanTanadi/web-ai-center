@@ -13,7 +13,8 @@
  * - Read memakai ambilDaftar (fallback [] bila backend mati), write memakai
  *   kirimJsonAdmin/kirimFileAdmin yang MELEMPAR ErrorApi — kegagalan wajib tampil.
  * - Slug dibuat server dari judul; saat edit slug dipegang tetap supaya tautan lama hidup.
- *   Kursus memakai `kode` (mis. 'R01') sebagai kunci yang juga tidak boleh diganti saat edit.
+ *   Kursus memakai `kode` sebagai kunci: dibuat otomatis saat tambah (lihat
+ *   lib/kodeKursus) lalu tidak boleh diganti saat edit.
  * - Batas panjang field (atribut `maks` → maxLength) disejajarkan dengan
  *   server/src/lib/tulis.ts — server tetap penegak utamanya (400 eksplisit).
  * - Kategori dokumentasi memakai DROPDOWN opsi umum + "Lainnya (ketik sendiri)"
@@ -22,9 +23,13 @@
  * - Tombol "Bersihkan gambar tidak terpakai" memanggil POST
  *   /api/admin/uploads/bersihkan (Prioritas 2) — menghapus file unggahan yang
  *   tidak dirujuk konten manapun.
+ * - Kode kursus dibuat OTOMATIS dari target peserta (prefiks M/D/G/U + nomor
+ *   berikutnya, lihat lib/kodeKursus) dan tidak bisa diketik; target peserta
+ *   kini berupa centang 4 label filter katalog (bukan teks bebas).
  */
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
+import { LABEL_PESERTA, kodeOtomatis } from '../lib/kodeKursus.ts';
 import type { BeritaItem } from '../data/berita.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { HeroSlide } from '../data/hero.ts';
@@ -704,7 +709,6 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
   const [mode, setMode] = useState<'daftar' | 'tambah' | 'ubah'>('daftar');
   const [kodeEdit, setKodeEdit] = useState<string | null>(null);
   const [k, setK] = useState({
-    kode: '',
     judul: '',
     deskripsi: '',
     tentang: '',
@@ -715,7 +719,8 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
     peran: '',
     inisial: '',
   });
-  const [targetText, setTargetText] = useState('');
+  /** Label peserta yang dicentang — menentukan kode otomatis & field `target`. */
+  const [peserta, setPeserta] = useState<string[]>([]);
   const [hasilText, setHasilText] = useState('');
   const [modul, setModul] = useState<Modul[]>([{ ...MODUL_KOSONG }]);
   const [pesan, setPesan] = useState<Pesan | null>(null);
@@ -739,8 +744,8 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
   }
 
   function mulaiTambah(): void {
-    setK({ kode: '', judul: '', deskripsi: '', tentang: '', durasi: '', level: '', format: '', instruktur: '', peran: '', inisial: '' });
-    setTargetText('');
+    setK({ judul: '', deskripsi: '', tentang: '', durasi: '', level: '', format: '', instruktur: '', peran: '', inisial: '' });
+    setPeserta([]);
     setHasilText('');
     setModul([{ ...MODUL_KOSONG }]);
     setKodeEdit(null);
@@ -750,7 +755,6 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
 
   function mulaiUbah(item: Kursus): void {
     setK({
-      kode: item.kode,
       judul: item.judul,
       deskripsi: item.deskripsi,
       tentang: item.tentang,
@@ -761,7 +765,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       peran: item.peran,
       inisial: item.inisial,
     });
-    setTargetText(item.target.join('\n'));
+    setPeserta(item.target);
     setHasilText(item.hasil.join('\n'));
     setModul(item.modul.length > 0 ? item.modul.map((m) => ({ ...m })) : [{ ...MODUL_KOSONG }]);
     setKodeEdit(item.kode);
@@ -780,12 +784,29 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
     });
   }
 
+  // Kode baru dibuat dari peserta terpilih + kode yang sudah terpakai (read-only
+  // di form); saat edit, kode kunci (kodeEdit) dipakai apa adanya.
+  const kodeBaru = kodeOtomatis(peserta, daftar.map((d) => d.kode));
+  // Label luar 4 pilihan (data lama) tetap ikut tersimpan walau tak bisa dicentang.
+  const pesertaLain = peserta.filter((label) => !LABEL_PESERTA.includes(label));
+
   async function simpan(event: FormEvent): Promise<void> {
     event.preventDefault();
     if (mode === 'daftar') return;
     setPesan(null);
     const ubah = mode === 'ubah' && kodeEdit !== null;
-    const kode = ubah ? kodeEdit : k.kode;
+    if (peserta.length === 0) {
+      setPesan({ teks: 'Target peserta wajib dipilih minimal satu.', sukses: false });
+      return;
+    }
+    if (!ubah && kodeBaru === '') {
+      setPesan({
+        teks: 'Kode otomatis belum bisa dibuat — pilih peserta yang punya prefiks (M/D/G/U).',
+        sukses: false,
+      });
+      return;
+    }
+    const kode = ubah ? kodeEdit : kodeBaru;
     const body = {
       kode,
       judul: k.judul,
@@ -797,7 +818,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       instruktur: k.instruktur,
       peran: k.peran,
       inisial: k.inisial,
-      target: barisDaftar(targetText),
+      target: peserta,
       hasil: barisDaftar(hasilText),
       // Baris modul yang ketiga kolomnya kosong diabaikan (sisa divalidasi server).
       modul: modul
@@ -915,21 +936,24 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
           </h3>
           <div>
             <label htmlFor="kursus-kode" className={labelCls}>
-              Kode (mis. R01) *
+              {mode === 'ubah' ? 'Kode (kunci) *' : 'Kode (otomatis dari target peserta) *'}
             </label>
             <input
               id="kursus-kode"
               type="text"
-              required
-              maxLength={12}
+              readOnly={mode === 'tambah'}
               disabled={mode === 'ubah'}
-              placeholder="R01"
-              className={`${inputCls} disabled:bg-soft`}
-              value={mode === 'ubah' ? (kodeEdit ?? '') : k.kode}
-              onChange={(event) => atur('kode', event.target.value)}
+              placeholder={mode === 'ubah' ? '' : 'Pilih target peserta dulu'}
+              className={`${inputCls} bg-soft`}
+              value={mode === 'ubah' ? (kodeEdit ?? '') : kodeBaru}
             />
-            {mode === 'ubah' && (
+            {mode === 'ubah' ? (
               <p className="mt-1 text-xs text-muted">Kode kunci tidak bisa diganti saat edit.</p>
+            ) : (
+              <p className="mt-1 text-xs text-muted">
+                Dibuat otomatis dari target peserta: prefiks M (Mahasiswa) · D (Dosen) · G (Guru) ·
+                U (masyarakat umum) + nomor berikutnya, mis. M01, G01.
+              </p>
             )}
           </div>
           {teksSingkat.map((f) => (
@@ -976,20 +1000,36 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
               onChange={(event) => atur('tentang', event.target.value)}
             />
           </div>
-          <div>
-            <label htmlFor="kursus-target" className={labelCls}>
-              Target peserta (satu per baris) *
-            </label>
-            <textarea
-              id="kursus-target"
-              required
-              rows={3}
-              placeholder={'Mahasiswa\nDosen'}
-              className={inputCls}
-              value={targetText}
-              onChange={(event) => setTargetText(event.target.value)}
-            />
-          </div>
+          <fieldset>
+            <legend className={labelCls}>
+              Target peserta *{' '}
+              <span className="font-normal text-muted">(menentukan kode otomatis)</span>
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+              {LABEL_PESERTA.map((label) => (
+                <label key={label} className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="size-4 accent-brand"
+                    checked={peserta.includes(label)}
+                    onChange={() =>
+                      setPeserta((prev) =>
+                        prev.includes(label)
+                          ? prev.filter((l) => l !== label)
+                          : [...prev, label],
+                      )
+                    }
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            {pesertaLain.length > 0 && (
+              <p className="mt-2 text-xs text-muted">
+                Label di luar pilihan (dipertahankan): {pesertaLain.join(', ')}
+              </p>
+            )}
+          </fieldset>
           <div>
             <label htmlFor="kursus-hasil" className={labelCls}>
               Hasil belajar (satu per baris) *

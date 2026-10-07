@@ -208,6 +208,16 @@ karakter, sejajar server). Kategori custom lama tetap tampil di input saat
 diedit, jadi daftar pilihan tidak menumpuk dan tidak ambigu; menambah kategori
 umum cukup satu entri di `OPSI_KATEGORI`.
 
+Form **Kursus** juga berubah: **Target peserta** kini berupa centang 4 label
+katalog (Mahasiswa, Dosen, Guru, Masyarakat umum) — label selalu persis sama
+dengan filter katalog publik (dulu salah ketik membuat kursus tidak muncul di
+filter mana pun), dan **Kode dibuat otomatis** dari peserta terpilih + nomor
+berikutnya (prefiks M/D/G/U, `src/lib/kodeKursus.ts`): Mahasiswa → M01, Guru →
+G01. Kode read-only saat tambah dan tetap terkunci saat edit; kode lama
+(R01/E01/P01) berprefiks lain sehingga tidak ikut menaikkan nomor. Simpan tanpa
+target peserta ditolak dengan pesan eksplisit, dan label target di luar 4
+pilihan (data lama) tetap dipertahankan saat diedit.
+
 Catatan khusus tab Hero: memilih file gambar baru mengosongkan `srcSet`
 otomatis (varian lama menunjuk file lain — kalau dibiarkan, slide tetap tampil
 gambar lama), dan tombol Hapus dinonaktifkan saat tersisa 1 slide (hero
@@ -238,6 +248,12 @@ beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak te
     (dropdown menunjuk "Lainnya"). Gerbang saat ini: frontend **384 test /
     36 file** (3 test baru di `Admin.test.tsx`), `tsc -b` bersih, build OK;
     backend 221 test / 14 file.
+12. Form **Kursus**: target peserta jadi **centang 4 label katalog** + **kode
+    auto generate** dari peserta terpilih (`lib/kodeKursus.ts`: prefiks M/D/G/U
+    + nomor terbesar berikutnya, read-only saat tambah, terkunci saat edit;
+    guard "Target peserta wajib dipilih minimal satu" sebelum request). Gerbang
+    saat ini: frontend **393 test / 37 file** (6 test lib baru + 3 test admin),
+    `tsc -b` bersih, build OK; backend 221 test / 14 file.
 
 ### Penanda TODO
 
