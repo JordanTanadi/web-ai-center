@@ -382,10 +382,10 @@ describe('Admin — tab Kursus', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
 
-    // Target berupa centang → kode terisi otomatis (daftar masih kosong → M01).
-    fireEvent.click(screen.getByLabelText('Mahasiswa'));
-    expect(screen.getByLabelText(/kode/i)).toHaveValue('M01');
-    expect(screen.getByLabelText(/kode/i)).toHaveAttribute('readonly');
+    // Target berupa dropdown → kode terisi otomatis (daftar masih kosong → M01).
+    fireEvent.change(screen.getByLabelText(/^Target peserta/), { target: { value: 'Mahasiswa' } });
+    expect(screen.getByLabelText(/^Kode/)).toHaveValue('M01');
+    expect(screen.getByLabelText(/^Kode/)).toHaveAttribute('readonly');
     fireEvent.change(screen.getByLabelText('Judul *'), { target: { value: 'Kursus Baru' } });
     fireEvent.change(screen.getByLabelText(/deskripsi singkat/i), {
       target: { value: 'Deskripsi.' },
@@ -427,23 +427,24 @@ describe('Admin — tab Kursus', () => {
     expect(screen.getByLabelText('Judul modul 2')).toBeInTheDocument();
   });
 
-  it('kode auto dari peserta: Guru → G01, ganti centang → M01 (input read-only)', async () => {
+  it('kode auto dari peserta: Guru → G01, ganti target → M01 (input read-only)', async () => {
     mockDaftar.mockResolvedValue([]);
     await renderDashboard();
     fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
 
     // Belum ada peserta → kode masih kosong (placeholder "Pilih target peserta dulu").
-    expect(screen.getByLabelText(/kode/i)).toHaveValue('');
+    const dropdown = screen.getByLabelText(/^Target peserta/);
+    expect(dropdown.tagName).toBe('SELECT');
+    expect(screen.getByLabelText(/^Kode/)).toHaveValue('');
 
-    fireEvent.click(screen.getByLabelText('Guru'));
-    expect(screen.getByLabelText(/kode/i)).toHaveValue('G01');
-    expect(screen.getByLabelText(/kode/i)).toHaveAttribute('readonly');
+    fireEvent.change(dropdown, { target: { value: 'Guru' } });
+    expect(screen.getByLabelText(/^Kode/)).toHaveValue('G01');
+    expect(screen.getByLabelText(/^Kode/)).toHaveAttribute('readonly');
 
-    // Mahasiswa mendahului label lain pada urutan katalog; centang lain tetap tersimpan.
-    fireEvent.click(screen.getByLabelText('Mahasiswa'));
-    expect(screen.getByLabelText(/kode/i)).toHaveValue('M01');
-    expect(screen.getByLabelText('Guru')).toBeChecked();
+    fireEvent.change(dropdown, { target: { value: 'Mahasiswa' } });
+    expect(screen.getByLabelText(/^Kode/)).toHaveValue('M01');
+    expect(dropdown).toHaveValue('Mahasiswa');
   });
 
   it('kode lanjut dari nomor terpakai (M01 → M02); kode lama R01 tidak ikut dihitung', async () => {
@@ -455,8 +456,23 @@ describe('Admin — tab Kursus', () => {
     expect(await screen.findByText('Dasar ML')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
 
-    fireEvent.click(screen.getByLabelText('Mahasiswa'));
-    expect(screen.getByLabelText(/kode/i)).toHaveValue('M02');
+    fireEvent.change(screen.getByLabelText(/^Target peserta/), { target: { value: 'Mahasiswa' } });
+    expect(screen.getByLabelText(/^Kode/)).toHaveValue('M02');
+  });
+
+  it('data lama multi-target → pilihan pertama dipilih + catatan simpan jadi 1 target', async () => {
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/kursus'
+        ? [{ ...KURSUS, target: ['Mahasiswa', 'Dosen', 'Masyarakat umum'] }]
+        : [DOK, DOK2],
+    );
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    expect(await screen.findByText('Dasar ML')).toBeInTheDocument();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
+
+    expect(screen.getByLabelText(/^Target peserta/)).toHaveValue('Mahasiswa');
+    expect(screen.getByText(/data lama punya 3 target/i)).toBeInTheDocument();
   });
 
   it('tanpa target peserta → Simpan menampilkan error eksplisit tanpa request', async () => {
@@ -499,10 +515,12 @@ describe('Admin — tab Kursus', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
 
     expect(screen.getByLabelText('Judul *')).toHaveValue('Dasar ML');
-    // Kode adalah kunci: tidak boleh diganti saat edit; centang peserta ikut terisi.
+    // Kode adalah kunci: tidak boleh diganti saat edit; target awal terpilih.
     expect(screen.getByLabelText(/^Kode/)).toBeDisabled();
-    expect(screen.getByLabelText('Mahasiswa')).toBeChecked();
+    expect(screen.getByLabelText(/^Target peserta/)).toHaveValue('Mahasiswa');
     expect(screen.getByText(/kode kunci tidak bisa diganti/i)).toBeInTheDocument();
+    // Fixture cuma 1 target → catatan "data lama" tidak ikut muncul.
+    expect(screen.queryByText(/data lama punya/i)).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
     expect(await screen.findByRole('status')).toHaveTextContent('diperbarui');

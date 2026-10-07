@@ -25,7 +25,7 @@
  *   tidak dirujuk konten manapun.
  * - Kode kursus dibuat OTOMATIS dari target peserta (prefiks M/D/G/U + nomor
  *   berikutnya, lihat lib/kodeKursus) dan tidak bisa diketik; target peserta
- *   kini berupa centang 4 label filter katalog (bukan teks bebas).
+ *   kini dropdown 1 pilihan dari 4 label filter katalog (bukan teks bebas).
  */
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
@@ -719,8 +719,10 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
     peran: '',
     inisial: '',
   });
-  /** Label peserta yang dicentang — menentukan kode otomatis & field `target`. */
-  const [peserta, setPeserta] = useState<string[]>([]);
+  /** Satu label peserta (dropdown) — menentukan kode otomatis & isi `target`. */
+  const [targetPilihan, setTargetPilihan] = useState('');
+  /** Target asli item saat mode ubah — dasar catatan bila data lama > 1 target. */
+  const [targetLama, setTargetLama] = useState<string[]>([]);
   const [hasilText, setHasilText] = useState('');
   const [modul, setModul] = useState<Modul[]>([{ ...MODUL_KOSONG }]);
   const [pesan, setPesan] = useState<Pesan | null>(null);
@@ -745,7 +747,8 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
 
   function mulaiTambah(): void {
     setK({ judul: '', deskripsi: '', tentang: '', durasi: '', level: '', format: '', instruktur: '', peran: '', inisial: '' });
-    setPeserta([]);
+    setTargetPilihan('');
+    setTargetLama([]);
     setHasilText('');
     setModul([{ ...MODUL_KOSONG }]);
     setKodeEdit(null);
@@ -765,7 +768,11 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       peran: item.peran,
       inisial: item.inisial,
     });
-    setPeserta(item.target);
+    // Dropdown hanya memuat 4 label katalog: target pertama jadi pilihan awal
+    // (label di luar katalog dipaksa kosong → admin wajib pilih ulang).
+    const pertama = item.target[0] ?? '';
+    setTargetPilihan(LABEL_PESERTA.includes(pertama) ? pertama : '');
+    setTargetLama(item.target);
     setHasilText(item.hasil.join('\n'));
     setModul(item.modul.length > 0 ? item.modul.map((m) => ({ ...m })) : [{ ...MODUL_KOSONG }]);
     setKodeEdit(item.kode);
@@ -786,17 +793,15 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
 
   // Kode baru dibuat dari peserta terpilih + kode yang sudah terpakai (read-only
   // di form); saat edit, kode kunci (kodeEdit) dipakai apa adanya.
-  const kodeBaru = kodeOtomatis(peserta, daftar.map((d) => d.kode));
-  // Label luar 4 pilihan (data lama) tetap ikut tersimpan walau tak bisa dicentang.
-  const pesertaLain = peserta.filter((label) => !LABEL_PESERTA.includes(label));
+  const kodeBaru = kodeOtomatis(targetPilihan, daftar.map((d) => d.kode));
 
   async function simpan(event: FormEvent): Promise<void> {
     event.preventDefault();
     if (mode === 'daftar') return;
     setPesan(null);
     const ubah = mode === 'ubah' && kodeEdit !== null;
-    if (peserta.length === 0) {
-      setPesan({ teks: 'Target peserta wajib dipilih minimal satu.', sukses: false });
+    if (targetPilihan === '') {
+      setPesan({ teks: 'Target peserta wajib dipilih (menentukan kode otomatis).', sukses: false });
       return;
     }
     if (!ubah && kodeBaru === '') {
@@ -818,7 +823,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       instruktur: k.instruktur,
       peran: k.peran,
       inisial: k.inisial,
-      target: peserta,
+      target: [targetPilihan],
       hasil: barisDaftar(hasilText),
       // Baris modul yang ketiga kolomnya kosong diabaikan (sisa divalidasi server).
       modul: modul
@@ -1000,36 +1005,31 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
               onChange={(event) => atur('tentang', event.target.value)}
             />
           </div>
-          <fieldset>
-            <legend className={labelCls}>
+          <div>
+            <label htmlFor="kursus-target" className={labelCls}>
               Target peserta *{' '}
               <span className="font-normal text-muted">(menentukan kode otomatis)</span>
-            </legend>
-            <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+            </label>
+            <select
+              id="kursus-target"
+              className={inputCls}
+              value={targetPilihan}
+              onChange={(event) => setTargetPilihan(event.target.value)}
+            >
+              <option value="">— pilih peserta —</option>
               {LABEL_PESERTA.map((label) => (
-                <label key={label} className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    className="size-4 accent-brand"
-                    checked={peserta.includes(label)}
-                    onChange={() =>
-                      setPeserta((prev) =>
-                        prev.includes(label)
-                          ? prev.filter((l) => l !== label)
-                          : [...prev, label],
-                      )
-                    }
-                  />
+                <option key={label} value={label}>
                   {label}
-                </label>
+                </option>
               ))}
-            </div>
-            {pesertaLain.length > 0 && (
-              <p className="mt-2 text-xs text-muted">
-                Label di luar pilihan (dipertahankan): {pesertaLain.join(', ')}
+            </select>
+            {targetLama.length > 1 && (
+              <p className="mt-1 text-xs text-muted">
+                Data lama punya {targetLama.length} target ({targetLama.join(', ')}) — simpan akan
+                menyimpan pilihan ini saja.
               </p>
             )}
-          </fieldset>
+          </div>
           <div>
             <label htmlFor="kursus-hasil" className={labelCls}>
               Hasil belajar (satu per baris) *
