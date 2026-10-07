@@ -16,6 +16,9 @@
  *   Kursus memakai `kode` (mis. 'R01') sebagai kunci yang juga tidak boleh diganti saat edit.
  * - Batas panjang field (atribut `maks` → maxLength) disejajarkan dengan
  *   server/src/lib/tulis.ts — server tetap penegak utamanya (400 eksplisit).
+ * - Kategori dokumentasi memakai DROPDOWN opsi umum + "Lainnya (ketik sendiri)"
+ *   (lihat OPSI_KATEGORI) — mencegah kategori bebas menumpuk & ambigu; nilai
+ *   custom tetap diterima (server hanya membatasi 100 karakter).
  * - Tombol "Bersihkan gambar tidak terpakai" memanggil POST
  *   /api/admin/uploads/bersihkan (Prioritas 2) — menghapus file unggahan yang
  *   tidak dirujuk konten manapun.
@@ -60,7 +63,19 @@ interface FieldDef {
   tanggal?: boolean;
   /** Batas panjang karakter → atribut maxLength (sama dengan BATAS di server). */
   maks?: number;
+  /** Field memakai dropdown berisi daftar ini (+ "Lainnya (ketik sendiri)"). */
+  pilihan?: readonly string[];
 }
+
+/**
+ * Opsi umum dropdown Kategori (dokumentasi): kategori kegiatan yang memang
+ * umum dipakai. Nilai di luar daftar ini dipilih lewat "Lainnya (ketik
+ * sendiri)" lalu diketik manual — bebas, tapi tidak menumpuk di dropdown.
+ * Menambah kategori umum = tambah satu entri di sini.
+ */
+export const OPSI_KATEGORI = ['Workshop', 'Kunjungan', 'Demo'] as const;
+/** Nilai internal `<select>` yang mengaktifkan input teks bebas. */
+export const KATEGORI_LAINNYA = '__lainnya';
 
 /** Definisi form dokumentasi & berita — urutan array = urutan render. Kursus,
     tim, & profil punya form sendiri (KursusAdmin/TimAdmin/ProfilAdmin). */
@@ -68,7 +83,7 @@ const FIELD: Record<JenisDaftar, FieldDef[]> = {
   dokumentasi: [
     { kunci: 'judul', label: 'Judul', wajib: true, maks: 200 },
     { kunci: 'tanggal', label: 'Tanggal', wajib: true, tanggal: true },
-    { kunci: 'kategori', label: 'Kategori', wajib: true, maks: 100 },
+    { kunci: 'kategori', label: 'Kategori', wajib: true, maks: 100, pilihan: OPSI_KATEGORI },
     { kunci: 'gambar', label: 'Gambar (file JPG/PNG/WebP, maks 2 MB)' },
     { kunci: 'deskripsi', label: 'Deskripsi', wajib: true, textarea: true, maks: 10000 },
   ],
@@ -125,6 +140,17 @@ function bodyDariForm(form: Record<string, string>, jenis: JenisDaftar): Record<
   return Object.fromEntries(FIELD[jenis].map((f) => [f.kunci, form[f.kunci] ?? '']));
 }
 
+/**
+ * Nilai `<select>` untuk field bertipe pilihan: kosong → placeholder; nilai
+ * yang ada di daftar opsi → nilai itu sendiri; nilai di luar daftar (kategori
+ * custom lama) → "Lainnya (ketik sendiri)" supaya ikut tampil di input teks.
+ */
+function nilaiPilihan(f: FieldDef, form: Record<string, string>): string {
+  const nilai = form[f.kunci] ?? '';
+  if (nilai === '') return '';
+  return f.pilihan?.includes(nilai) === true ? nilai : KATEGORI_LAINNYA;
+}
+
 export default function Admin() {
   const [token, setToken] = useState<string | null>(
     () => localStorage.getItem(KEY_TOKEN_ADMIN),
@@ -134,6 +160,13 @@ export default function Admin() {
   const [mode, setMode] = useState<'daftar' | 'tambah' | 'ubah'>('daftar');
   const [slugEdit, setSlugEdit] = useState<string | null>(null);
   const [form, setForm] = useState<Record<string, string>>(formKosong);
+  /**
+   * Nilai `<select>` untuk field bertipe pilihan (mis. Kategori) — dipisah dari
+   * `form` supaya pilihan "Lainnya (ketik sendiri)" tetap terpilih walau isinya
+   * masih kosong (bila disimpan di form, memilih Lainnya langsung balik ke
+   * placeholder). Di-reset tiap form dibuka/direset.
+   */
+  const [pilihanAktif, setPilihanAktif] = useState<Record<string, string>>({});
   /** File gambar baru (input file) + pratinjau lokalnya; null = tidak diganti. */
   const [fileGambar, setFileGambar] = useState<File | null>(null);
   const [pratinjau, setPratinjau] = useState<string | null>(null);
@@ -253,6 +286,7 @@ export default function Admin() {
       setMode('daftar');
       setSlugEdit(null);
       setForm(formKosong());
+      setPilihanAktif({});
       bersihkanGambar();
       await muatDaftar(jenis);
     } catch (error) {
@@ -457,6 +491,7 @@ export default function Admin() {
               type="button"
               onClick={() => {
                 setForm(formKosong());
+                setPilihanAktif({});
                 bersihkanGambar();
                 setMode('tambah');
                 setPesan(null);
@@ -487,6 +522,7 @@ export default function Admin() {
                     type="button"
                     onClick={() => {
                       setForm(formDariItem(item));
+                      setPilihanAktif({});
                       bersihkanGambar();
                       setSlugEdit(item.slug);
                       setMode('ubah');
@@ -539,6 +575,56 @@ export default function Admin() {
                         alt="Pratinjau gambar baru"
                         className="mt-2 aspect-video w-full max-w-xs rounded-lg border border-line bg-soft object-cover"
                       />
+                    )}
+                  </div>
+                ) : f.pilihan !== undefined ? (
+                  // Dropdown opsi umum; "Lainnya (ketik sendiri)" membuka input
+                  // teks di bawahnya untuk kategori di luar daftar.
+                  <div className="mt-1">
+                    <select
+                      id={`field-${f.kunci}`}
+                      required={f.wajib === true}
+                      className="w-full rounded-lg border border-line px-3 py-2"
+                      value={pilihanAktif[f.kunci] ?? nilaiPilihan(f, form)}
+                      onChange={(event) => {
+                        const nilai = event.target.value;
+                        setPilihanAktif((prev) => ({ ...prev, [f.kunci]: nilai }));
+                        setForm((prev) => ({
+                          ...prev,
+                          // Opsi umum → langsung jadi nilai; "Lainnya" → kosongkan
+                          // dulu supaya operator mengetik nilai barunya sendiri.
+                          [f.kunci]: nilai === KATEGORI_LAINNYA ? '' : nilai,
+                        }));
+                      }}
+                    >
+                      <option value="">— pilih kategori —</option>
+                      {f.pilihan.map((opsi) => (
+                        <option key={opsi} value={opsi}>
+                          {opsi}
+                        </option>
+                      ))}
+                      <option value={KATEGORI_LAINNYA}>Lainnya (ketik sendiri)</option>
+                    </select>
+                    {(pilihanAktif[f.kunci] ?? nilaiPilihan(f, form)) === KATEGORI_LAINNYA && (
+                      <div className="mt-2">
+                        <label
+                          htmlFor={`field-${f.kunci}-teks`}
+                          className="block text-xs font-semibold text-muted"
+                        >
+                          Tulis kategori sendiri
+                        </label>
+                        <input
+                          id={`field-${f.kunci}-teks`}
+                          type="text"
+                          required={f.wajib === true}
+                          maxLength={f.maks}
+                          className="mt-1 w-full rounded-lg border border-line px-3 py-2"
+                          value={form[f.kunci] ?? ''}
+                          onChange={(event) =>
+                            setForm((prev) => ({ ...prev, [f.kunci]: event.target.value }))
+                          }
+                        />
+                      </div>
                     )}
                   </div>
                 ) : f.textarea === true ? (

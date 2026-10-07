@@ -201,6 +201,13 @@ diedit dari `/admin` (tab Testimoni & Hero, CRUD `id` + `urutan`) — jadi semua
 konten yang tampil di beranda dikelola lewat CMS. Yang sengaja TIDAK diedit:
 layanan (copy disetujui rapat) dan klien (section Our Client dikomentari).
 
+Field **Kategori** (form dokumentasi) kini berupa **dropdown opsi umum** —
+Workshop, Kunjungan, Demo (`OPSI_KATEGORI` di `src/pages/Admin.tsx`) — plus
+pilihan **"Lainnya (ketik sendiri)"** yang membuka input teks (maks 100
+karakter, sejajar server). Kategori custom lama tetap tampil di input saat
+diedit, jadi daftar pilihan tidak menumpuk dan tidak ambigu; menambah kategori
+umum cukup satu entri di `OPSI_KATEGORI`.
+
 Catatan khusus tab Hero: memilih file gambar baru mengosongkan `srcSet`
 otomatis (varian lama menunjuk file lain — kalau dibiarkan, slide tetap tampil
 gambar lama), dan tombol Hapus dinonaktifkan saat tersisa 1 slide (hero
@@ -224,6 +231,13 @@ beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak te
     `TODO_BACKEND` di `robots.txt` diganti catatan deploy (penanda hanya untuk
     bagian yang butuh backend), `VITE_SITE_URL` dijelaskan fungsinya, serta
     section **Deployment (produksi)** + checklist sebelum final di README.
+11. Field **Kategori** form dokumentasi di `/admin` → **dropdown opsi umum**
+    (Workshop/Kunjungan/Demo) + "Lainnya (ketik sendiri)" yang membuka input
+    teks (maks 100, sejajar server) — mengganti input bebas yang membuat
+    kategori menumpuk & ambigu; nilai custom lama tetap terbaca saat diedit
+    (dropdown menunjuk "Lainnya"). Gerbang saat ini: frontend **384 test /
+    36 file** (3 test baru di `Admin.test.tsx`), `tsc -b` bersih, build OK;
+    backend 221 test / 14 file.
 
 ### Penanda TODO
 

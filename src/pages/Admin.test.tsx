@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import Admin, { KEY_TOKEN_ADMIN } from './Admin.tsx';
+import Admin, { KATEGORI_LAINNYA, KEY_TOKEN_ADMIN, OPSI_KATEGORI } from './Admin.tsx';
 import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
+import { within } from '@testing-library/react';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { BeritaItem } from '../data/berita.ts';
 import type { Kursus } from '../data/pelatihan.ts';
@@ -104,6 +105,12 @@ async function renderDashboard(): Promise<void> {
   await screen.findByRole('heading', { name: 'Dashboard Admin' });
 }
 
+/** Pilih "Lainnya (ketik sendiri)" di dropdown Kategori lalu ketik nilai custom. */
+function isiKategoriSendiri(nilai: string): void {
+  fireEvent.change(screen.getByLabelText(/^Kategori/), { target: { value: KATEGORI_LAINNYA } });
+  fireEvent.change(screen.getByLabelText('Tulis kategori sendiri'), { target: { value: nilai } });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   localStorage.clear();
@@ -189,7 +196,7 @@ describe('Admin — dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
     fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Karya Baru' } });
     fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-02' } });
-    fireEvent.change(screen.getByLabelText(/^Kategori/), { target: { value: 'Project' } });
+    isiKategoriSendiri('Project');
     fireEvent.change(screen.getByLabelText(/^Deskripsi/), {
       target: { value: 'Deskripsi karya.' },
     });
@@ -221,7 +228,10 @@ describe('Admin — dashboard', () => {
 
     fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
     expect(screen.getByLabelText(/^Judul/)).toHaveValue('Deteksi X-Ray 3D');
-    expect(screen.getByLabelText(/^Kategori/)).toHaveValue('Project');
+    // 'Project' di luar opsi umum → dropdown menunjuk "Lainnya", nilai lama
+    // tetap tampil di input teks (bisa diedit/dipilih ulang).
+    expect(screen.getByLabelText(/^Kategori/)).toHaveValue(KATEGORI_LAINNYA);
+    expect(screen.getByLabelText('Tulis kategori sendiri')).toHaveValue('Project');
 
     fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
     expect(await screen.findByRole('status')).toHaveTextContent('diperbarui');
@@ -288,7 +298,7 @@ describe('Admin — dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
     fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Karya Baru' } });
     fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-02' } });
-    fireEvent.change(screen.getByLabelText(/^Kategori/), { target: { value: 'Project' } });
+    isiKategoriSendiri('Project');
     fireEvent.change(screen.getByLabelText(/^Deskripsi/), { target: { value: 'Deskripsi karya.' } });
     const file = new File([new Uint8Array([1])], 'foto.png', { type: 'image/png' });
     fireEvent.change(screen.getByLabelText(/gambar/i), { target: { files: [file] } });
@@ -309,7 +319,7 @@ describe('Admin — dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
     fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Karya Baru' } });
     fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-02' } });
-    fireEvent.change(screen.getByLabelText(/^Kategori/), { target: { value: 'Project' } });
+    isiKategoriSendiri('Project');
     fireEvent.change(screen.getByLabelText(/^Deskripsi/), { target: { value: 'Deskripsi.' } });
     const file = new File([new Uint8Array([1])], 'foto.png', { type: 'image/png' });
     fireEvent.change(screen.getByLabelText(/gambar/i), { target: { files: [file] } });
@@ -999,12 +1009,68 @@ describe('Admin — bersihkan gambar tidak terpakai (Prioritas 2)', () => {
   });
 });
 
+describe('Admin — dropdown Kategori dokumentasi (opsi umum + bebas)', () => {
+  it('membuka form: dropdown berisi opsi umum + "Lainnya (ketik sendiri)"', async () => {
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    const pilihan = screen.getByLabelText(/^Kategori/);
+    expect(pilihan.tagName).toBe('SELECT');
+    const daftarOpsi = within(pilihan)
+      .getAllByRole('option')
+      .map((opsi) => opsi.textContent);
+    expect(daftarOpsi).toEqual(['— pilih kategori —', ...OPSI_KATEGORI, 'Lainnya (ketik sendiri)']);
+    expect(screen.queryByLabelText('Tulis kategori sendiri')).not.toBeInTheDocument();
+  });
+
+  it('pilih opsi umum → input custom tidak muncul, Simpan memakai nilai opsi', async () => {
+    mockKirim.mockResolvedValue({ ...DOK, kategori: 'Kunjungan' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Kategori/), { target: { value: 'Kunjungan' } });
+    fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Karya Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-02' } });
+    fireEvent.change(screen.getByLabelText(/^Deskripsi/), { target: { value: 'Deskripsi.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(screen.queryByLabelText('Tulis kategori sendiri')).not.toBeInTheDocument();
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/dokumentasi',
+      expect.objectContaining({ body: expect.objectContaining({ kategori: 'Kunjungan' }) }),
+    );
+  });
+
+  it('pilih "Lainnya" → input custom muncul, nilai ketikan yang terkirim', async () => {
+    mockKirim.mockResolvedValue({ ...DOK, kategori: 'Riset Komputasi' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    isiKategoriSendiri('Riset Komputasi');
+    fireEvent.change(screen.getByLabelText(/^Judul/), { target: { value: 'Karya Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Tanggal/), { target: { value: '2026-10-02' } });
+    fireEvent.change(screen.getByLabelText(/^Deskripsi/), { target: { value: 'Deskripsi.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/dokumentasi',
+      expect.objectContaining({ body: expect.objectContaining({ kategori: 'Riset Komputasi' }) }),
+    );
+  });
+});
+
 describe('Admin — batas panjang field (Prioritas 2)', () => {
   it('input teks memakai maxLength yang disejajarkan dengan server', async () => {
     await renderDashboard();
     fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
     expect(screen.getByLabelText('Judul *')).toHaveAttribute('maxlength', '200');
-    expect(screen.getByLabelText('Kategori *')).toHaveAttribute('maxlength', '100');
+    // Kategori kini dropdown — maxLength melekat di input custom saat
+    // "Lainnya (ketik sendiri)" dipilih (server tetap membatasi 100).
+    expect(screen.getByLabelText(/^Kategori/)).toHaveAttribute('required');
+    isiKategoriSendiri('x'.repeat(100));
+    expect(screen.getByLabelText('Tulis kategori sendiri')).toHaveAttribute('maxlength', '100');
   });
 
   it('tab Tim: input nama maks 200 & urutan dibatasi 0-9999', async () => {
