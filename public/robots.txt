@@ -1,3 +1,5 @@
-# TODO_BACKEND: sesuaikan Sitemap/exact rules saat domain produksi sudah fix.
+# Catatan deploy: saat domain produksi sudah fix, daftarkan URL Sitemap di sini
+# (opsional: aturan Disallow untuk rute admin). Sub-folder /coding/Web-AI-Center/
+# sudah aman di-crawl apa adanya.
 User-agent: *
 Allow: /

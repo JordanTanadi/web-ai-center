@@ -31,6 +31,11 @@ mode test, semua halaman otomatis memakai data dummy (lihat `src/lib/api.ts`).
 
 Unit test kecil per unit (input → output + 1–2 edge case). Dijalankan via `npm test`. Bukan integration/e2e test.
 
+Catatan keputusan: 50 file test (36 frontend + 14 backend) **sengaja ikut
+di-commit** walaupun aturan kerja awal menyebut file test lokal saja — supaya bukti
+unit test ikut terlihat di repo untuk laporan KP dan gerbang bisa dijalankan di
+mesin lain.
+
 ## Folder `lighthouse_report/`
 
 Arsip hasil ukur Lighthouse (JSON mentah). File `prod*-*.json` = hasil build produksi (acuan skor). Ukur ulang selalu terhadap build produksi, bukan dev server.
@@ -51,6 +56,62 @@ Menjalankan **dengan data dari database**: salin `.env.example` → `.env`, jala
 backend `server/` (bagian bawah) dulu, baru `npm run dev`. Tanpa `.env`, web tetap
 jalan penuh dengan data dummy.
 
+## Deployment (produksi)
+
+Ringkas: **frontend = file statis `dist/`**, **backend = proses Bun + PostgreSQL**.
+Keduanya boleh beda domain — `src/lib/gambar.ts` otomatis menempelkan path
+`/uploads/…` ke origin backend, jadi gambar unggahan tetap termuat.
+
+### Backend
+
+1. Isi `server/.env` (salin `server/.env.example`) — semua wajib di produksi:
+   `DATABASE_URL` (PostgreSQL asli), `CORS_ORIGIN` (origin frontend produksi,
+   pisah koma), `ADMIN_PASSWORD` (**jangan** sampai fallback `admin-dev`),
+   `PORT`, `UPLOAD_DIR` (folder persistent di luar repo, writable).
+2. ```bash
+   cd server
+   bun install            # lockfile: server/bun.lock
+   bun run db:migrate     # migrasi SQL ke DB produksi
+   bun run db:seed        # sekali saja — konten awal (idempoten)
+   bun run start          # tanpa watch; jalankan di balik systemd/PM2/nginx
+   ```
+3. Verifikasi: `GET <api>/api/health` → `{"status":"ok","db":"ok"}`, lalu uji
+   login `POST /api/admin/login`.
+4. Backup: folder `UPLOAD_DIR` + database secara terpisah. Token admin berlaku
+   6 jam (di memori proses); login di-rate-limit 5 gagal / 10 menit per IP.
+
+### Frontend
+
+1. Isi `.env` root **sebelum build** (nilainya di-bake ke `dist/`):
+   `VITE_API_BASE_URL=https://<api-domain>/api` — kosongkan bila ingin situs
+   berjalan murni dengan data dummy.
+2. ```bash
+   npm install
+   npm test && npx tsc -b --noEmit   # gerbang wajib lulus dulu
+   npm run build                     # hasil ke dist/
+   ```
+3. Salin isi `dist/` ke web server statis. **Path dasar** saat ini
+   `/coding/Web-AI-Center/` (konstanta `BASE` di `vite.config.ts`) — bila deploy
+   di root/subfolder lain, ubah `BASE` **dan** path preload hero di `index.html`
+   (`l.href` + `imagesrcset`), lalu build ulang. Untuk rute SPA di Nginx: tambah
+   fallback `try_files $uri /coding/Web-AI-Center/index.html`.
+4. Setelah domain fix: isi `VITE_SITE_URL`, daftarkan sitemap di
+   `public/robots.txt`, ukur ulang Lighthouse terhadap build hasil deploy.
+
+Catatan: CORS backend **hanya** menerima origin terdaftar di `CORS_ORIGIN` — lupa
+mengisi membuat fetch frontend ditolak (halaman tetap tampil, tapi dengan data
+dummy, jadi gampang tidak ketahuan; cek tab Network saat verifikasi).
+
+### Checklist sebelum final
+
+- [ ] Gerbang: `npm test` → `npx tsc -b --noEmit` → `npm run build`; di `server/`:
+      `bun run typecheck` + `bun test`
+- [ ] Lighthouse terhadap build produksi (`npm run preview`) — semua skor ≥ 90
+- [ ] Backend sehat: `GET :3000/api/health` → `{"status":"ok","db":"ok"}`
+- [ ] Demo: `http://localhost:5173/coding/Web-AI-Center/beranda` + login `/admin`
+      memakai `ADMIN_PASSWORD` dari `server/.env`
+- [ ] Repo bersih: `git status -sb` tidak ada perubahan menggantung
+
 ## Backend `server/` (baru)
 
 API **baca publik + tulis admin** — Bun + Elysia + Drizzle ORM + PostgreSQL. Dev
@@ -69,6 +130,13 @@ bun test                # unit test backend (bun:test)
 bun run typecheck       # tsc --noEmit
 bun run db:generate     # generate migrasi — hanya setelah ubah schema.ts
 ```
+
+Cakupan test backend: 14 dari 15 unit logika punya `*.test.ts` di sebelah file
+yang diuji. Pengecualian sadar: `server/src/repositories/drizzle.ts` (lapisan SQL)
+— mengujinya butuh database, sementara aturan kerja melarang test integration;
+lapisan ini diverifikasi lewat E2E manual tiap putaran (curl + browser), sedangkan
+kontrak di atasnya diuji dengan fake repository (`app.test.ts`) plus
+`schema`/`mappers`/`seed` yang punya test sendiri.
 
 ### Endpoint
 
@@ -149,6 +217,13 @@ beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak te
 7. Integrasi frontend↔backend: tabel + route `GET /api/kursus` (+ migrasi `0001`), lapisan `src/lib/api.ts` + hook `useApiData`, wiring semua halaman konten; seed disinkronkan dengan data frontend (tim 6 anggota, teks layanan, gambar hero).
 8. Prioritas 2 (CRUD profil & tim, batas panjang field, pembersih gambar tidak terpakai) lalu konten halaman **Inference** pindah ke CMS: tabel `inference` (+ migrasi `0003`), `GET`/`PUT /api/inference`, tab Inference di `/admin`, dan `LayananDetail` memakai `useApiObjek('/inference', …)`.
 9. Lengkapi CRUD admin: **testimoni** & **slide hero** (`POST`/`PUT`/`DELETE /api/testimoni[/:id]` dan `/api/hero-slides[/:id]`, tab Testimoni & Hero di `/admin`) — `id` & `urutan` ikut kontrak respons `GET`-nya, lalu `referensiGambar` juga membaca `image`/`srcSet` hero supaya pembersih gambar tidak terpakai tidak menghapus varian slide. Istilah "gambar yatim" diganti jadi **"gambar tidak terpakai"** (UI, kode: `lib/orphanUpload.ts` + `findOrphanUploads`, dan README). Gerbang saat ini: frontend **381 test / 36 file**, backend **221 test / 14 file**, `tsc` bersih di dua sisi + build produksi OK.
+10. Audit backend terhadap 10 aturan kerja (`docs/prompt-persiapan-opencode.md`) — semua
+    terpenuhi kecuali dua keputusan sadar yang dicatat di README ini: file test
+    ikut repo, dan `drizzle.ts` tanpa unit test. Lalu putaran persiapan final:
+    `UPLOAD_DIR` didokumentasikan di `server/.env.example`, penanda
+    `TODO_BACKEND` di `robots.txt` diganti catatan deploy (penanda hanya untuk
+    bagian yang butuh backend), `VITE_SITE_URL` dijelaskan fungsinya, serta
+    section **Deployment (produksi)** + checklist sebelum final di README.
 
 ### Penanda TODO
 
