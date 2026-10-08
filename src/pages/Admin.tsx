@@ -4,6 +4,7 @@
  * (tab Prioritas 2; lihat komponen TimAdmin & ProfilAdmin), konten halaman
  * inference (tab Inference → InferenceAdmin, GET/PUT /api/inference), serta
  * testimoni & slide hero (tab Testimoni/Hero → TestimoniAdmin & HeroAdmin).
+ * Layanan ikut CRUD (tab Layanan → LayananAdmin, POST/PUT/DELETE /api/layanan).
  *
  * - UI sengaja bahasa Indonesia tanpa i18n — alat internal, bukan halaman publik.
  * - Token hasil POST /api/admin/login disimpan di localStorage; semua aksi tulis
@@ -34,6 +35,7 @@ import type { BeritaItem } from '../data/berita.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { HeroSlide } from '../data/hero.ts';
 import type { Kursus, Modul } from '../data/pelatihan.ts';
+import type { Layanan } from '../data/layanan.ts';
 import type { KontenInference } from '../data/inference.ts';
 import type { ProfilApi } from '../data/profil.ts';
 import type { Testimoni } from '../data/testimoni.ts';
@@ -46,6 +48,7 @@ type Jenis =
   | 'dokumentasi'
   | 'berita'
   | 'kursus'
+  | 'layanan'
   | 'tim'
   | 'profil'
   | 'inference'
@@ -359,7 +362,8 @@ export default function Admin() {
       <main className="mx-auto max-w-md px-6 py-16">
         <h1 className="font-display text-3xl font-bold">Masuk Admin</h1>
         <p className="mt-2 text-sm text-muted">
-          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita, kursus, tim, profil, inference, testimoni & slide hero.
+          Dashboard internal AI Center Ubaya — kelola dokumentasi, berita, kursus, layanan, tim,
+          profil, inference, testimoni & slide hero.
         </p>
         <form onSubmit={masuk} className="mt-8 space-y-4">
           <div>
@@ -398,6 +402,7 @@ export default function Admin() {
     dokumentasi: 'Dokumentasi',
     berita: 'Berita',
     kursus: 'Kursus',
+    layanan: 'Layanan',
     tim: 'Tim',
     profil: 'Profil',
     inference: 'Inference',
@@ -416,7 +421,8 @@ export default function Admin() {
         <div>
           <h1 className="font-display text-3xl font-bold">Dashboard Admin</h1>
           <p className="mt-1 text-sm text-muted">
-            Kelola dokumentasi, berita, kursus, tim, profil, inference, testimoni & slide hero.
+            Kelola dokumentasi, berita, kursus, layanan, tim, profil, inference, testimoni & slide
+            hero.
           </p>
         </div>
         <div className="flex gap-2">
@@ -443,6 +449,7 @@ export default function Admin() {
             'dokumentasi',
             'berita',
             'kursus',
+            'layanan',
             'tim',
             'profil',
             'inference',
@@ -477,6 +484,8 @@ export default function Admin() {
 
       {jenis === 'kursus' ? (
         <KursusAdmin token={token} gagal401={sesiBerakhir} />
+      ) : jenis === 'layanan' ? (
+        <LayananAdmin token={token} gagal401={sesiBerakhir} />
       ) : jenis === 'tim' ? (
         <TimAdmin token={token} gagal401={sesiBerakhir} />
       ) : jenis === 'profil' ? (
@@ -1657,6 +1666,289 @@ function TestimoniAdmin({ token, gagal401 }: { token: string; gagal401: () => vo
               value={f.urutan}
               onChange={(event) => setF((prev) => ({ ...prev, urutan: event.target.value }))}
             />
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="submit"
+              className="rounded-lg bg-brand px-5 py-2 font-semibold text-white hover:opacity-90"
+            >
+              Simpan
+            </button>
+            <button
+              type="button"
+              onClick={batalkan}
+              className="rounded-lg border border-line px-5 py-2 font-semibold hover:bg-soft"
+            >
+              Batal
+            </button>
+          </div>
+        </form>
+      )}
+    </section>
+  );
+}
+
+/**
+ * Section CRUD layanan (tab "Layanan"). Kunci baris = `slug` hasil
+ * `slugDariJudul(nama)` buatan server: saat tambah slug dibuat dari nama
+ * (bentrok → 409), saat edit slug dipegang tetap supaya tautan
+ * `/layanan/<slug>` lama tetap hidup walau nama berubah. `fitur` diedit sebagai
+ * daftar teks (baris +/−, difilter saat Simpan) — server menegakkan 1–15 item
+ * dgn maks 300 karakter per item (BATAS.fiturMaks/fiturItem di lib/tulis.ts).
+ */
+function LayananAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
+  const [daftar, setDaftar] = useState<Layanan[]>([]);
+  const [mode, setMode] = useState<'daftar' | 'tambah' | 'ubah'>('daftar');
+  const [slugEdit, setSlugEdit] = useState<string | null>(null);
+  const [f, setF] = useState({ nama: '', tagline: '', deskripsi: '', fitur: [''] });
+  const [pesan, setPesan] = useState<{ teks: string; sukses: boolean } | null>(null);
+
+  async function muat(): Promise<void> {
+    setDaftar(await ambilDaftar<Layanan>('/layanan', []));
+  }
+
+  useEffect(() => {
+    void muat();
+    // muat stabil (closure tanpa state); muat sekali saat mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function tanganiError(error: unknown): void {
+    if ((error as { status?: number } | null)?.status === 401) {
+      gagal401();
+      return;
+    }
+    setPesan({
+      teks: error instanceof Error ? error.message : 'Terjadi kesalahan yang tidak dikenal',
+      sukses: false,
+    });
+  }
+
+  function mulaiTambah(): void {
+    setF({ nama: '', tagline: '', deskripsi: '', fitur: [''] });
+    setMode('tambah');
+    setPesan(null);
+  }
+
+  function mulaiUbah(item: Layanan): void {
+    if (item.slug === '') return;
+    setF({
+      nama: item.nama,
+      tagline: item.tagline,
+      deskripsi: item.deskripsi,
+      fitur: item.fitur.length > 0 ? [...item.fitur] : [''],
+    });
+    setSlugEdit(item.slug);
+    setMode('ubah');
+    setPesan(null);
+  }
+
+  function batalkan(): void {
+    setMode('daftar');
+    setSlugEdit(null);
+    setPesan(null);
+  }
+
+  /** Ganti nilai satu baris fitur (salinan baru → state immutable). */
+  function ubahFitur(index: number, nilai: string): void {
+    setF((prev) => ({ ...prev, fitur: prev.fitur.map((v, i) => (i === index ? nilai : v)) }));
+  }
+
+  async function simpan(event: FormEvent): Promise<void> {
+    event.preventDefault();
+    setPesan(null);
+    try {
+      const body = {
+        nama: f.nama,
+        tagline: f.tagline,
+        deskripsi: f.deskripsi,
+        // Baris kosong dibuang di klien; bila hasilnya [] server menolak 400.
+        fitur: f.fitur.map((v) => v.trim()).filter((v) => v !== ''),
+      };
+      const ubah = mode === 'ubah' && slugEdit !== null;
+      const hasil = await kirimJsonAdmin<Layanan>(ubah ? `/layanan/${slugEdit}` : '/layanan', {
+        method: ubah ? 'PUT' : 'POST',
+        body,
+        token,
+      });
+      setPesan({
+        teks: ubah
+          ? `Layanan "${hasil.nama}" diperbarui.`
+          : `Layanan "${hasil.nama}" tersimpan.`,
+        sukses: true,
+      });
+      setMode('daftar');
+      setSlugEdit(null);
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  async function hapus(item: Layanan): Promise<void> {
+    if (item.slug === '') return;
+    const yakin = window.confirm(
+      `Hapus layanan "${item.nama}"? Tindakan ini tidak bisa dibatalkan.`,
+    );
+    if (!yakin) return;
+    setPesan(null);
+    try {
+      await kirimJsonAdmin(`/layanan/${item.slug}`, { method: 'DELETE', token });
+      setPesan({ teks: `Layanan "${item.nama}" dihapus.`, sukses: true });
+      await muat();
+    } catch (error) {
+      tanganiError(error);
+    }
+  }
+
+  const elemenPesan =
+    pesan === null ? null : (
+      <p
+        role={pesan.sukses ? 'status' : 'alert'}
+        className={`mt-4 rounded-lg px-4 py-3 text-sm ${
+          pesan.sukses ? 'bg-soft text-emerald-800' : 'bg-red-50 text-red-800'
+        }`}
+      >
+        {pesan.teks}
+      </p>
+    );
+
+  const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
+  const labelCls = 'block text-sm font-semibold';
+
+  return (
+    <section className="mt-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-display text-xl font-bold">Layanan</h2>
+        {mode === 'daftar' && (
+          <button
+            type="button"
+            onClick={mulaiTambah}
+            className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+          >
+            + Tambah baru
+          </button>
+        )}
+      </div>
+
+      {elemenPesan}
+
+      {mode === 'daftar' ? (
+        daftar.length === 0 ? (
+          <p className="mt-4 text-sm text-muted">Belum ada layanan.</p>
+        ) : (
+          <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
+            {daftar.map((item) => (
+              <li key={item.slug} className="flex items-start gap-3 px-4 py-3">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-semibold">{item.nama}</p>
+                  <p className="text-xs text-muted">
+                    /{item.slug} · {item.fitur.length} fitur
+                  </p>
+                  <p className="mt-1 text-xs text-muted">{item.tagline}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => mulaiUbah(item)}
+                  className="rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:bg-soft"
+                >
+                  Ubah
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void hapus(item)}
+                  className="rounded-lg border border-red-200 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-50"
+                >
+                  Hapus
+                </button>
+              </li>
+            ))}
+          </ul>
+        )
+      ) : (
+        <form onSubmit={simpan} className="mt-4 space-y-4 rounded-xl border border-line p-5">
+          <h3 className="font-semibold">
+            {mode === 'ubah' ? `Ubah layanan — ${f.nama}` : 'Tambah layanan baru'}
+          </h3>
+          <div>
+            <label htmlFor="layanan-nama" className={labelCls}>
+              Nama *
+            </label>
+            <input
+              id="layanan-nama"
+              type="text"
+              required
+              maxLength={150}
+              className={inputCls}
+              value={f.nama}
+              onChange={(event) => setF((prev) => ({ ...prev, nama: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="layanan-tagline" className={labelCls}>
+              Tagline *
+            </label>
+            <input
+              id="layanan-tagline"
+              type="text"
+              required
+              maxLength={300}
+              className={inputCls}
+              value={f.tagline}
+              onChange={(event) => setF((prev) => ({ ...prev, tagline: event.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="layanan-deskripsi" className={labelCls}>
+              Deskripsi *
+            </label>
+            <textarea
+              id="layanan-deskripsi"
+              required
+              rows={4}
+              maxLength={2000}
+              className={inputCls}
+              value={f.deskripsi}
+              onChange={(event) => setF((prev) => ({ ...prev, deskripsi: event.target.value }))}
+            />
+          </div>
+          <div>
+            <span className="block text-sm font-semibold">
+              Fitur * (daftar poin; 1–15 item, maks 300 karakter per item)
+            </span>
+            <ul className="mt-1 space-y-2">
+              {f.fitur.map((nilai, i) => (
+                <li key={i} className="flex gap-2">
+                  <input
+                    id={`layanan-fitur-${i}`}
+                    type="text"
+                    aria-label={`Fitur ${i + 1}`}
+                    maxLength={300}
+                    className={inputCls}
+                    value={nilai}
+                    onChange={(event) => ubahFitur(i, event.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setF((prev) => ({ ...prev, fitur: prev.fitur.filter((_, j) => j !== i) }))
+                    }
+                    disabled={f.fitur.length <= 1}
+                    className="mt-1 shrink-0 rounded-lg border border-red-200 px-3 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:opacity-40"
+                  >
+                    Hapus baris
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => setF((prev) => ({ ...prev, fitur: [...prev.fitur, ''] }))}
+              disabled={f.fitur.length >= 15}
+              className="mt-2 rounded-lg border border-line px-3 py-1.5 text-sm font-semibold hover:bg-soft disabled:opacity-40"
+            >
+              + Tambah fitur
+            </button>
           </div>
           <div className="flex gap-2">
             <button

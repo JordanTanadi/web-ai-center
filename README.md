@@ -157,6 +157,7 @@ kontrak di atasnya diuji dengan fake repository (`app.test.ts`) plus
 | `POST` · `PUT` · `DELETE /api/dokumentasi[/:slug]` | — | butuh `Authorization: Bearer <token>`; 400/404/409 eksplisit |
 | `POST` · `PUT` · `DELETE /api/berita[/:slug]` | — | idem; slug dibuat server dari judul |
 | `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | idem; `kode` jadi kunci unik |
+| `POST` · `PUT` · `DELETE /api/layanan[/:slug]` | — | idem; slug dibuat server dari nama (tab Layanan di `/admin`); `fitur` 1–15 item |
 | `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan |
 | `PUT /api/inference` | — | konten halaman inference (id = 1); wajib ≥1 item tiap daftar |
 | `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | kunci `id` numerik; `urutan` = posisi tampil |
@@ -197,9 +198,11 @@ file gambar tidak terpakai (`POST /api/admin/uploads/bersihkan` + tombol
 "Bersihkan gambar tidak terpakai" di dashboard admin). Lanjutannya: konten halaman **Inference**
 (`GET`/`PUT /api/inference` + tab Inference di `/admin`) kini ikut dikelola
 lewat database, bukan lagi hardcode; **testimoni** & **slide hero** juga bisa
-diedit dari `/admin` (tab Testimoni & Hero, CRUD `id` + `urutan`) — jadi semua
-konten yang tampil di beranda dikelola lewat CMS. Yang sengaja TIDAK diedit:
-layanan (copy disetujui rapat) dan klien (section Our Client dikomentari).
+diedit dari `/admin` (tab Testimoni & Hero, CRUD `id` + `urutan`), dan
+**layanan** kini ikut CRUD (tab Layanan, kunci `slug` hasil `slugDariJudul(nama)`
+— slug dipegang tetap saat edit, `fitur` diedit sebagai daftar baris) — jadi
+hampir semua konten yang tampil dikelola lewat CMS. Yang sengaja TIDAK diedit:
+**klien** (section Our Client dikomentari, keputusan rapat).
 
 Field **Kategori** (form dokumentasi) kini berupa **dropdown opsi umum** —
 Workshop, Kunjungan, Demo (`OPSI_KATEGORI` di `src/pages/Admin.tsx`) — plus
@@ -259,6 +262,19 @@ beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak te
     punya N target …" untuk kursus multi-target lama. Gerbang saat ini:
     frontend **393 test / 37 file** (5 test lib baru + 4 test admin),
     `tsc -b` bersih, build OK; backend 221 test / 14 file.
+13. **Optimasi Lighthouse** pada build produksi: peta chunk ditaruh di
+    `index.html` sebelum IIFE pemakainya (modulepreload kini jalan ±73 ms),
+    semua rute di-lazy kecuali NotFound, dan CSS di-inline ke `<style>` oleh
+    plugin `inlineCssBuild` → **mobile 93 / desktop 99** (audit Lighthouse CLI
+    headless tanpa ekstensi; dev `:5173` tidak dipakai untuk audit).
+14. **CRUD Layanan**: tab **Layanan** di `/admin` (form nama/tagline/deskripsi +
+    editor daftar `fitur`, slug read-only) → `POST`/`PUT`/`DELETE
+    /api/layanan[/:slug]` dengan guard token; kunci baris = `slug` hasil
+    `slugDariJudul(nama)` (bentrok → 409; slug dipegang tetap saat edit),
+    validasi `validasiLayanan` di `server/src/lib/tulis.ts` (1–15 item fitur,
+    maks 300 karakter per item). Gerbang saat ini: frontend **396 test /
+    37 file** (3 test admin baru), `tsc -b` bersih, build OK; backend **232
+    test / 14 file** (11 test baru: `validasiLayanan` + rute layanan).
 
 ### Penanda TODO
 

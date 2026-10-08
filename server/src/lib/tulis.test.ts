@@ -6,6 +6,7 @@ import {
   validasiHero,
   validasiInference,
   validasiKursus,
+  validasiLayanan,
   validasiProfil,
   validasiTestimoni,
   validasiTim,
@@ -489,6 +490,77 @@ describe('validasiTestimoni', () => {
       error: 'Field "urutan" harus bilangan bulat 0-9999',
     });
     expect(validasiTestimoni('bukan-objek')).toEqual({
+      ok: false,
+      error: 'Body harus objek JSON',
+    });
+  });
+});
+
+const BODY_LAYANAN_VALID = {
+  nama: 'Pelatihan AI',
+  tagline: 'Pelatihan AI yang benar-benar dipakai sehari-hari.',
+  deskripsi: 'Ubaya AI Center mendampingi belajar AI dari dasar sampai penerapan.',
+  fitur: ['Workshop terjadwal', 'Pendampingan'],
+};
+
+describe('validasiLayanan', () => {
+  test('body lengkap → ok, semua field terpetak (fitur utuh)', () => {
+    expect(validasiLayanan(BODY_LAYANAN_VALID)).toEqual({
+      ok: true,
+      data: BODY_LAYANAN_VALID,
+    });
+  });
+
+  test('field wajib kosong → error menyebut field', () => {
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, nama: '  ' })).toEqual({
+      ok: false,
+      error: 'Field "nama" wajib diisi',
+    });
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, tagline: undefined })).toEqual({
+      ok: false,
+      error: 'Field "tagline" wajib diisi',
+    });
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, deskripsi: 123 })).toEqual({
+      ok: false,
+      error: 'Field "deskripsi" wajib diisi',
+    });
+  });
+
+  test('batas panjang: nama >150, tagline >300, deskripsi >2000 → tolak', () => {
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, nama: 'x'.repeat(151) })).toEqual({
+      ok: false,
+      error: 'Field "nama" maksimal 150 karakter',
+    });
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, tagline: 'x'.repeat(301) })).toEqual({
+      ok: false,
+      error: 'Field "tagline" maksimal 300 karakter',
+    });
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, deskripsi: 'x'.repeat(2_001) })).toEqual({
+      ok: false,
+      error: 'Field "deskripsi" maksimal 2000 karakter',
+    });
+  });
+
+  test('fitur: bukan array / kosong / >15 item / item >300 → tolak eksplisit', () => {
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, fitur: 'bukan-array' })).toEqual({
+      ok: false,
+      error: 'Field "fitur" harus array teks',
+    });
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, fitur: [] })).toEqual({
+      ok: false,
+      error: 'Field "fitur" minimal 1 item',
+    });
+    expect(
+      validasiLayanan({ ...BODY_LAYANAN_VALID, fitur: Array.from({ length: 16 }, (_, i) => `f${i}`) }),
+    ).toEqual({ ok: false, error: 'Field "fitur" maksimal 15 item' });
+    expect(validasiLayanan({ ...BODY_LAYANAN_VALID, fitur: ['x'.repeat(301)] })).toEqual({
+      ok: false,
+      error: 'Field "fitur" maksimal 300 karakter per item',
+    });
+  });
+
+  test('body bukan objek → tolak eksplisit', () => {
+    expect(validasiLayanan('bukan-objek')).toEqual({
       ok: false,
       error: 'Body harus objek JSON',
     });

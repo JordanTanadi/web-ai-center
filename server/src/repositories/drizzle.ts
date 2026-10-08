@@ -234,6 +234,39 @@ export function createRepositories(db: Db): Repositories {
       const rows = await db.select().from(layanan).where(eq(layanan.slug, slug)).limit(1);
       return rows[0] !== undefined ? toLayanan(rows[0]) : null;
     },
+    async create(slug, data) {
+      const rows = await db
+        .insert(layanan)
+        .values({
+          slug,
+          nama: data.nama,
+          tagline: data.tagline,
+          deskripsi: data.deskripsi,
+          fitur: data.fitur,
+        })
+        .returning();
+      return toLayanan(rows[0]);
+    },
+    async update(slug, data) {
+      const rows = await db
+        .update(layanan)
+        .set({
+          nama: data.nama,
+          tagline: data.tagline,
+          deskripsi: data.deskripsi,
+          fitur: data.fitur,
+        })
+        .where(eq(layanan.slug, slug))
+        .returning();
+      return rows[0] !== undefined ? toLayanan(rows[0]) : null;
+    },
+    async remove(slug) {
+      const rows = await db
+        .delete(layanan)
+        .where(eq(layanan.slug, slug))
+        .returning({ id: layanan.id });
+      return rows.length > 0;
+    },
   };
 
   const heroRepo: HeroRepository = {

@@ -21,6 +21,7 @@ import {
   validasiHero,
   validasiInference,
   validasiKursus,
+  validasiLayanan,
   validasiProfil,
   validasiTestimoni,
   validasiTim,
@@ -139,6 +140,60 @@ export function registerRoutes(
         return { error: 'Layanan tidak ditemukan' };
       }
       return item;
+    })
+
+    // — Tulis layanan (CRUD admin; kunci = slug hasil slugDariJudul(nama)) ——
+    .post('/api/layanan', async ({ body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiLayanan(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      const slug = slugDariJudul(hasil.data.nama);
+      if (slug === '') {
+        set.status = 400;
+        return { error: 'Nama tidak menghasilkan slug — tambahkan huruf/angka' };
+      }
+      if ((await repos.layanan.findBySlug(slug)) !== null) {
+        set.status = 409;
+        return { error: 'Slug sudah dipakai — nama bentrok dengan layanan lain' };
+      }
+      set.status = 201;
+      return await repos.layanan.create(slug, hasil.data);
+    })
+    .put('/api/layanan/:slug', async ({ params, body, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const hasil = validasiLayanan(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      // Slug TIDAK diubah saat edit — tautan & rujukan lama tetap hidup walau nama berubah.
+      const item = await repos.layanan.update(params.slug, hasil.data);
+      if (item === null) {
+        set.status = 404;
+        return { error: 'Layanan tidak ditemukan' };
+      }
+      return item;
+    })
+    .delete('/api/layanan/:slug', async ({ params, request, set }) => {
+      if (!terautentikasi(request)) {
+        set.status = 401;
+        return { error: PESAN_BELUM_LOGIN };
+      }
+      const terhapus = await repos.layanan.remove(params.slug);
+      if (!terhapus) {
+        set.status = 404;
+        return { error: 'Layanan tidak ditemukan' };
+      }
+      return { ok: true as const };
     })
 
     // — Kursus (Pelatihan) —————————————————————————————————————

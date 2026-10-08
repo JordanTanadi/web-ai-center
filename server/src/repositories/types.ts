@@ -24,6 +24,7 @@ import type {
   InputHero,
   InputInference,
   InputKursus,
+  InputLayanan,
   InputProfil,
   InputTestimoni,
   InputTim,
@@ -33,6 +34,7 @@ import type {
 export type BeritaInput = InputBerita;
 export type DokumentasiInput = InputDokumentasi;
 export type KursusInput = InputKursus;
+export type LayananInput = InputLayanan;
 export type ProfilInput = InputProfil;
 export type TimInput = InputTim;
 export type InferenceInput = InputInference;
@@ -88,6 +90,12 @@ export interface TimRepository {
 export interface LayananRepository {
   list(): Promise<Layanan[]>;
   findBySlug(slug: string): Promise<Layanan | null>;
+  /** Buat layanan baru (slug unik sudah dipastikan route); balikan item tersimpan. */
+  create(slug: string, data: LayananInput): Promise<Layanan>;
+  /** Perbarui layanan berdasarkan slug; `null` bila slug tidak ditemukan. */
+  update(slug: string, data: LayananInput): Promise<Layanan | null>;
+  /** Hapus layanan berdasarkan slug; `true` bila ada baris yang terhapus. */
+  remove(slug: string): Promise<boolean>;
 }
 
 export interface HeroRepository {

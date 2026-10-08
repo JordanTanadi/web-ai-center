@@ -106,6 +106,15 @@ export interface InputTestimoni {
   urutan: number;
 }
 
+/** Input tulis layanan (kunci baris = slug hasil slugDariJudul(nama); tab "Layanan" di /admin). */
+export interface InputLayanan {
+  nama: string;
+  tagline: string;
+  deskripsi: string;
+  /** Poin fitur yang tampil sebagai daftar check di halaman detail layanan. */
+  fitur: string[];
+}
+
 /** Nilai yang diterima kolom `layout` slide hero (kolom lain di bawah opsional). */
 export const LAYOUT_HERO = ['default', 'image-left', 'teks-kanan'] as const;
 export type LayoutHero = (typeof LAYOUT_HERO)[number];
@@ -202,6 +211,12 @@ export const BATAS = {
   heroBadgeSub: 200,
   heroCtaLabel: 150,
   heroSizes: 200,
+  /** Layanan (tab "Layanan" di /admin) — fitur = daftar poin per layanan. */
+  layananNama: 150,
+  layananTagline: 300,
+  layananDeskripsi: 2_000,
+  fiturItem: 300,
+  fiturMaks: 15,
 } as const;
 
 /**
@@ -666,6 +681,31 @@ export function validasiTestimoni(body: unknown): HasilValidasi<InputTestimoni> 
       peran: peran.nilai,
       kutipan: kutipan.nilai,
       urutan: urutan.nilai,
+    },
+  };
+}
+
+/** Validasi body tulis layanan (POST/PUT /api/layanan). */
+export function validasiLayanan(body: unknown): HasilValidasi<InputLayanan> {
+  if (body === null || typeof body !== 'object') {
+    return { ok: false, error: 'Body harus objek JSON' };
+  }
+  const b = body as Record<string, unknown>;
+  const nama = bacaTeks(b, 'nama', BATAS.layananNama);
+  if ('error' in nama) return { ok: false, error: nama.error };
+  const tagline = bacaTeks(b, 'tagline', BATAS.layananTagline);
+  if ('error' in tagline) return { ok: false, error: tagline.error };
+  const deskripsi = bacaTeks(b, 'deskripsi', BATAS.layananDeskripsi);
+  if ('error' in deskripsi) return { ok: false, error: deskripsi.error };
+  const fitur = bacaDaftarTeks(b, 'fitur', 1, BATAS.fiturMaks, BATAS.fiturItem);
+  if ('error' in fitur) return { ok: false, error: fitur.error };
+  return {
+    ok: true,
+    data: {
+      nama: nama.nilai,
+      tagline: tagline.nilai,
+      deskripsi: deskripsi.nilai,
+      fitur: fitur.nilai,
     },
   };
 }

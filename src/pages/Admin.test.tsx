@@ -10,6 +10,7 @@ import type { KontenInference } from '../data/inference.ts';
 import type { ProfilApi } from '../data/profil.ts';
 import type { Testimoni } from '../data/testimoni.ts';
 import type { HeroSlide } from '../data/hero.ts';
+import type { Layanan } from '../data/layanan.ts';
 import type { AnggotaTim } from '../data/tim.ts';
 
 // Mock modul api: test deterministik tanpa backend (Admin memakai ambilDaftar
@@ -1161,5 +1162,97 @@ describe('Admin — batas panjang field (Prioritas 2)', () => {
 
     expect(screen.getByLabelText(/^Nama/)).toHaveAttribute('maxlength', '200');
     expect(screen.getByLabelText(/^Urutan/)).toHaveAttribute('max', '9999');
+  });
+});
+
+describe('Admin — tab Layanan (CRUD layanan)', () => {
+  /** Fixture layanan dari backend (kunci baris = slug hasil slugDariJudul). */
+  const LAYANAN: Layanan = {
+    slug: 'pelatihan',
+    nama: 'Pelatihan',
+    tagline: 'Pelatihan AI yang benar-benar dipakai sehari-hari.',
+    deskripsi: 'Ubaya AI Center mendampingi belajar AI dari dasar.',
+    fitur: ['Workshop terjadwal', 'Sertifikat'],
+  };
+
+  /** Daftar per endpoint: /layanan dibedakan dari jenis lain. */
+  const daftarLayanan = (): void => {
+    mockDaftar.mockImplementation(async (path: string) =>
+      path === '/layanan' ? ([LAYANAN] as never) : ([DOK, DOK2] as never),
+    );
+  };
+
+  it('tab Layanan → GET /layanan dimuat & baris tampil (nama, slug, jumlah fitur)', async () => {
+    daftarLayanan();
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Layanan' }));
+    expect(await screen.findByText('Pelatihan')).toBeInTheDocument();
+    expect(screen.getByText(/\/pelatihan · 2 fitur/)).toBeInTheDocument();
+    expect(mockDaftar).toHaveBeenCalledWith('/layanan', []);
+  });
+
+  it('tambah layanan + baris fitur → Simpan → POST /layanan dengan daftar fitur', async () => {
+    mockDaftar.mockResolvedValue([] as never);
+    mockKirim.mockResolvedValue({ ...LAYANAN, slug: 'layanan-baru', nama: 'Layanan Baru' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Layanan' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Nama/), { target: { value: 'Layanan Baru' } });
+    fireEvent.change(screen.getByLabelText(/^Tagline/), { target: { value: 'Tagline baru.' } });
+    fireEvent.change(screen.getByLabelText(/^Deskripsi/), { target: { value: 'Deskripsi.' } });
+    fireEvent.change(screen.getByLabelText('Fitur 1'), { target: { value: 'Poin satu' } });
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah fitur' }));
+    fireEvent.change(screen.getByLabelText('Fitur 2'), { target: { value: 'Poin dua' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith('/layanan', {
+      method: 'POST',
+      body: {
+        nama: 'Layanan Baru',
+        tagline: 'Tagline baru.',
+        deskripsi: 'Deskripsi.',
+        fitur: ['Poin satu', 'Poin dua'],
+      },
+      token: TOKEN,
+    });
+  });
+
+  it('ubah & hapus layanan → PUT /layanan/:slug (slug tetap) lalu DELETE', async () => {
+    const konfirmasi = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    daftarLayanan();
+    mockKirim.mockResolvedValue(LAYANAN as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Layanan' }));
+    expect(await screen.findByText('Pelatihan')).toBeInTheDocument();
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Ubah' })[0]);
+    expect((screen.getByLabelText(/^Tagline/) as HTMLInputElement).value).toBe(LAYANAN.tagline);
+    expect((screen.getByLabelText('Fitur 1') as HTMLInputElement).value).toBe('Workshop terjadwal');
+    expect((screen.getByLabelText('Fitur 2') as HTMLInputElement).value).toBe('Sertifikat');
+    fireEvent.change(screen.getByLabelText(/^Tagline/), { target: { value: 'Tagline singkat.' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('diperbarui');
+    expect(mockKirim).toHaveBeenCalledWith('/layanan/pelatihan', {
+      method: 'PUT',
+      body: {
+        nama: 'Pelatihan',
+        tagline: 'Tagline singkat.',
+        deskripsi: 'Ubaya AI Center mendampingi belajar AI dari dasar.',
+        fitur: ['Workshop terjadwal', 'Sertifikat'],
+      },
+      token: TOKEN,
+    });
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'Hapus' })[0]);
+    expect(konfirmasi).toHaveBeenCalledWith(expect.stringContaining('Pelatihan'));
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/layanan/pelatihan',
+      expect.objectContaining({ method: 'DELETE', token: TOKEN }),
+    );
+    expect(await screen.findByRole('status')).toHaveTextContent('dihapus');
+    konfirmasi.mockRestore();
   });
 });

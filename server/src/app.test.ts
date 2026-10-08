@@ -18,7 +18,7 @@ import type {
 } from './api/types';
 import type { ListParams, Repositories, DokumentasiListParams } from './repositories/types';
 import type { Pagination } from './lib/query';
-import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputHero as HeroInput, InputInference as InferenceInput, InputKursus as KursusInput, InputProfil as ProfilInput, InputTestimoni as TestimoniInput, InputTim as TimInput } from './lib/tulis';
+import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputHero as HeroInput, InputInference as InferenceInput, InputKursus as KursusInput, InputLayanan as LayananInput, InputProfil as ProfilInput, InputTestimoni as TestimoniInput, InputTim as TimInput } from './lib/tulis';
 import { buatTokenAdmin } from './auth';
 
 const NO_PAGINATION: Pagination = { page: null, limit: null, offset: null };
@@ -192,6 +192,12 @@ function createFakeRepos(): FakeHandle {
       list: rec('layanan.list', async (): Promise<Layanan[]> => [sampleLayanan]),
       findBySlug: rec('layanan.findBySlug', async (slug: string): Promise<Layanan | null> =>
         slug === sampleLayanan.slug ? sampleLayanan : null),
+      create: rec('layanan.create', async (slug: string, data: LayananInput): Promise<Layanan> =>
+        ({ slug, ...data })),
+      update: rec('layanan.update', async (slug: string, data: LayananInput): Promise<Layanan | null> =>
+        slug === sampleLayanan.slug ? { slug, ...data } : null),
+      remove: rec('layanan.remove', async (slug: string): Promise<boolean> =>
+        slug === sampleLayanan.slug),
     },
     hero: {
       list: rec('hero.list', async (): Promise<HeroSlide[]> => [sampleHero]),
@@ -787,6 +793,91 @@ describe('PUT & DELETE /api/berita', () => {
     expect(tidakAda.status).toBe(404);
 
     const tanpaToken = await kirimTulis(app, 'DELETE', `/api/berita/${sampleBerita.slug}`, null, null);
+    expect(tanpaToken.status).toBe(401);
+  });
+});
+
+const BODY_LAYANAN = {
+  nama: 'Layanan Baru',
+  tagline: 'Tagline baru.',
+  deskripsi: 'Deskripsi layanan.',
+  fitur: ['Poin satu', 'Poin dua'],
+};
+
+describe('POST /api/layanan (mirror berita)', () => {
+  test('token valid + body valid → 201 + slug dari nama + repo.create dipanggil', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/layanan', BODY_LAYANAN);
+    expect(status).toBe(201);
+    expect((body as { slug: string }).slug).toBe('layanan-baru');
+
+    const create = calls.find((c) => c.method === 'layanan.create');
+    expect(create).toBeDefined();
+    expect(create?.args[0]).toBe('layanan-baru');
+    expect((create?.args[1] as LayananInput).fitur).toEqual(['Poin satu', 'Poin dua']);
+  });
+
+  test('slug bentrok dengan layanan ada → 409', async () => {
+    const { app } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/layanan', {
+      ...BODY_LAYANAN,
+      nama: 'pelatihan', // slugDariJudul → 'pelatihan' = sampleLayanan.slug
+    });
+    expect(status).toBe(409);
+    expect(body).toEqual({ error: 'Slug sudah dipakai — nama bentrok dengan layanan lain' });
+  });
+
+  test('fitur kosong → 400; tanpa token → 401', async () => {
+    const { app, calls } = createTestApp();
+    const kosong = await kirimTulis(app, 'POST', '/api/layanan', { ...BODY_LAYANAN, fitur: [] });
+    expect(kosong.status).toBe(400);
+    expect(kosong.body).toEqual({ error: 'Field "fitur" minimal 1 item' });
+    expect(calls.some((c) => c.method === 'layanan.create')).toBe(false);
+
+    const tanpaToken = await kirimTulis(app, 'POST', '/api/layanan', BODY_LAYANAN, null);
+    expect(tanpaToken.status).toBe(401);
+  });
+
+  test('nama tidak menghasilkan slug → 400', async () => {
+    const { app } = createTestApp();
+    const { status } = await kirimTulis(app, 'POST', '/api/layanan', { ...BODY_LAYANAN, nama: '!!!' });
+    expect(status).toBe(400);
+  });
+});
+
+describe('PUT & DELETE /api/layanan', () => {
+  test('PUT slug ada → 200 tanpa mengubah slug; tidak ada → 404; body invalid → 400', async () => {
+    const { app, calls } = createTestApp();
+    const ada = await kirimTulis(app, 'PUT', `/api/layanan/${sampleLayanan.slug}`, BODY_LAYANAN);
+    expect(ada.status).toBe(200);
+    expect((ada.body as { slug: string }).slug).toBe(sampleLayanan.slug);
+    expect(calls.find((c) => c.method === 'layanan.update')?.args[0]).toBe(sampleLayanan.slug);
+
+    const tidakAda = await kirimTulis(app, 'PUT', '/api/layanan/tidak-ada', BODY_LAYANAN);
+    expect(tidakAda.status).toBe(404);
+    expect(tidakAda.body).toEqual({ error: 'Layanan tidak ditemukan' });
+
+    const sebelumInvalid = calls.filter((c) => c.method === 'layanan.update').length;
+    const invalid = await kirimTulis(app, 'PUT', `/api/layanan/${sampleLayanan.slug}`, {
+      ...BODY_LAYANAN,
+      tagline: '',
+    });
+    expect(invalid.status).toBe(400);
+    // Body invalid ditolak SEBELUM repository disentuh.
+    expect(calls.filter((c) => c.method === 'layanan.update').length).toBe(sebelumInvalid);
+  });
+
+  test('DELETE ada → 200 { ok: true }; tidak ada → 404; tanpa token → 401', async () => {
+    const { app, calls } = createTestApp();
+    const ada = await kirimTulis(app, 'DELETE', `/api/layanan/${sampleLayanan.slug}`, null);
+    expect(ada.status).toBe(200);
+    expect(ada.body).toEqual({ ok: true });
+    expect(calls.some((c) => c.method === 'layanan.remove')).toBe(true);
+
+    const tidakAda = await kirimTulis(app, 'DELETE', '/api/layanan/hilang', null);
+    expect(tidakAda.status).toBe(404);
+
+    const tanpaToken = await kirimTulis(app, 'DELETE', `/api/layanan/${sampleLayanan.slug}`, null, null);
     expect(tanpaToken.status).toBe(401);
   });
 });
