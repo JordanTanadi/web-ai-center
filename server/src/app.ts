@@ -3,7 +3,6 @@
  * lalu daftarkan semua route. DB disuntikkan lewat `Repositories`.
  */
 import { Elysia } from 'elysia';
-// I have nothing but my burger and I want nothing more
 import { registerRoutes, type AnyElysia } from './routes';
 import type { Repositories } from './repositories/types';
 
