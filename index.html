@@ -9,6 +9,11 @@
          General Sans (isi) + Cabinet Grotesk (judul); dipreload agar tampil cepat. -->
     <link rel="preload" as="font" type="font/woff2" href="/fonts/GeneralSans-Regular.woff2" crossorigin />
     <link rel="preload" as="font" type="font/woff2" href="/fonts/CabinetGrotesk-Bold.woff2" crossorigin />
+    <!-- __PETA_CHUNK: default {} (dev / build tanpa plugin), lalu DIGANTI plugin
+         `peta-chunk-rute` saat build — HARUS berada SEBELUM IIFE di bawah supaya
+         peta sudah terisi saat IIFE membacanya (bila script peta menyusul setelah
+         IIFE, modulepreload tidak pernah jalan dan chunk menunggu dynamic import). -->
+    <script>window.__PETA_CHUNK = {};</script>
     <!-- Preload HANYA hero beranda (elemen LCP): URL gambar baru diketahui setelah
          chunk rute dimuat, tanpa ini unduhan terlambat dan skor Lighthouse turun.
          Kondisional per pathname — halaman lain sengaja tidak di-preload agar

@@ -2,22 +2,23 @@ import { Suspense, lazy } from 'react';
 import { Route, Routes, Navigate } from 'react-router-dom';
 import SiteLayout from './components/SiteLayout.tsx';
 import { PenyediaBahasa, useT } from './lib/i18n.tsx';
-// Rute RINGAN diimpor langsung (bukan lazy): JS awal sudah memuatnya, jadi
-// konten tampil pada render pertama — menutup jeda FCP→LCP saat audit Lighthouse
-// (dengan chunk terpisah, konten menunggu unduhan ekstra ±1 detik di Slow 4G).
-// Rute berat tetap lazy agar JS awal tidak membengkak.
-import LayananDetail from './pages/LayananDetail.tsx';
-import TentangKami from './pages/TentangKami.tsx';
-import Tim from './pages/Tim.tsx';
-import Berita from './pages/Berita.tsx';
-import BeritaDetail from './pages/BeritaDetail.tsx';
-import Dokumentasi from './pages/Dokumentasi.tsx';
-import DokumentasiDetail from './pages/DokumentasiDetail.tsx';
+// Rute 404 diimpor langsung (kecil, tampil seketika tanpa menunggu chunk).
+// SEMUA rute lain code-splitting: JS awal hanya shell + layout, sisanya diunduh
+// per rute lewat `window.__PETA_CHUNK` (modulepreload di index.html) sehingga
+// chunk sudah terunduh saat React merender — konten tetap tampil pada render
+// pertama, sementara JS awal jauh lebih kecil (skor Lighthouse: "reduce unused
+// JavaScript" turun drastis karena halaman lain tidak ikut terunduh).
 import NotFound from './pages/NotFound.tsx';
 
-// Rute berat → code-splitting: JS awal hanya memuat yang dibutuhkan halaman ini.
 const Beranda = lazy(() => import('./pages/Beranda.tsx'));
 const PelatihanDetail = lazy(() => import('./pages/PelatihanDetail.tsx'));
+const LayananDetail = lazy(() => import('./pages/LayananDetail.tsx'));
+const TentangKami = lazy(() => import('./pages/TentangKami.tsx'));
+const Tim = lazy(() => import('./pages/Tim.tsx'));
+const Berita = lazy(() => import('./pages/Berita.tsx'));
+const BeritaDetail = lazy(() => import('./pages/BeritaDetail.tsx'));
+const Dokumentasi = lazy(() => import('./pages/Dokumentasi.tsx'));
+const DokumentasiDetail = lazy(() => import('./pages/DokumentasiDetail.tsx'));
 // Admin DI LUAR SiteLayout: tanpa navbar/footer publik.
 const Admin = lazy(() => import('./pages/Admin.tsx'));
 
