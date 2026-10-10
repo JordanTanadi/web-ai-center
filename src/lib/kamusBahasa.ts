@@ -390,6 +390,7 @@ export const kamusBahasa: Record<string, string> = {
   Level: 'Level',
   Durasi: 'Duration',
   'Format belajar': 'Learning format',
+  'Estimasi belajar': 'Estimated effort',
   'Akses kursus': 'Course access',
   'Preview tersedia': 'Preview available',
   'Sedang belajar': 'Learning in progress',

@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { getLayananBySlug, type Layanan } from '../data/layanan.ts';
 import { useT } from '../lib/i18n.tsx';
 import { useApiDaftar, useApiObjek } from '../lib/useApiData.ts';
+import { labelDurasiTotal } from '../lib/kursus.ts';
 import {
   kontenInferenceDummy,
   waDiskusiInference,
@@ -68,49 +69,54 @@ function KatalogKursus() {
         <p className="mt-6 text-center text-muted">{t(katalogIntro.kosong)}</p>
       ) : (
         <ul className="mt-6 grid gap-5 sm:grid-cols-2">
-          {terlihat.map((k) => (
-            <li key={k.kode} className="flex flex-col rounded-2xl border border-line bg-surface p-6">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded bg-soft px-2 py-0.5 font-body text-xs font-bold text-brand">
-                  {k.kode}
-                </span>
-                <span className="text-xs text-muted">{k.target.map(t).join(' · ')}</span>
-              </div>
-              <h3 className="mt-3 font-display text-lg font-bold">
-                <Link to={`/layanan/pelatihan/${k.kode}`} className="hover:text-brand">
-                  {t(k.judul)}
+          {terlihat.map((k) => {
+            // Estimasi total meniru pola Coursera ("±2 jam 40 menit"), dihitung
+            // dari meta modul; null → baris estimasi tidak ikut tampil.
+            const estimasi = labelDurasiTotal(k.modul);
+            return (
+              <li key={k.kode} className="flex flex-col rounded-2xl border border-line bg-surface p-6">
+                <p className="font-body text-xs font-bold uppercase tracking-[0.16em] text-brand">
+                  {t('Ubaya AI Center')} · {k.kode}
+                </p>
+                <h3 className="mt-2 font-display text-lg font-bold">
+                  <Link to={`/layanan/pelatihan/${k.kode}`} className="hover:text-brand">
+                    {t(k.judul)}
+                  </Link>
+                </h3>
+                {/* Fakta ringkas ala Coursera: level · durasi · modul · estimasi. */}
+                <p className="mt-2 text-sm text-muted">
+                  {t(k.level)} · {t(k.durasi)} · {t(`${k.modul.length} modul`)}
+                  {estimasi === null ? '' : ` · ${t(estimasi)}`}
+                </p>
+                <p className="mt-1 text-xs text-muted">
+                  {t('Instruktur:')} {t(k.instruktur)}
+                </p>
+                <p className="mt-2 text-xs text-muted">{k.target.map(t).join(' · ')}</p>
+                <p className="mt-3 text-sm text-muted">{t(k.deskripsi)}</p>
+                <details className="mt-3 text-sm">
+                  <summary className="cursor-pointer font-medium text-brand">{t('Lihat rincian modul')}</summary>
+                  <ul className="mt-2 space-y-2">
+                    {k.modul.map((m, idx) => (
+                      <li key={m.judul}>
+                        <p className="font-medium">
+                          {idx + 1}. {t(m.judul)}
+                        </p>
+                        <p className="text-xs text-muted">
+                          {t(m.deskripsi)} ({t(m.meta)})
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+                <Link
+                  to={`/layanan/pelatihan/${k.kode}`}
+                  className="btn-primary mt-4 block rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
+                >
+                  {t('Lihat detail kursus')}
                 </Link>
-              </h3>
-              <p className="mt-2 text-sm text-muted">{t(k.deskripsi)}</p>
-              <p className="mt-3 text-xs text-muted">
-                Ubaya AI Center · {t(k.durasi)} · {t(`${k.modul.length} modul`)} · {t('Sertifikat')}
-              </p>
-              <p className="mt-1 text-xs text-muted">
-                {t('Instruktur:')} {t(k.instruktur)} — {t(k.peran)}
-              </p>
-              <details className="mt-3 text-sm">
-                <summary className="cursor-pointer font-medium text-brand">{t('Lihat rincian modul')}</summary>
-                <ul className="mt-2 space-y-2">
-                  {k.modul.map((m, idx) => (
-                    <li key={m.judul}>
-                      <p className="font-medium">
-                        {idx + 1}. {t(m.judul)}
-                      </p>
-                      <p className="text-xs text-muted">
-                        {t(m.deskripsi)} ({t(m.meta)})
-                      </p>
-                    </li>
-                  ))}
-                </ul>
-              </details>
-              <Link
-                to={`/layanan/pelatihan/${k.kode}`}
-                className="btn-primary mt-4 block rounded-lg px-4 py-2 text-center text-sm font-bold text-white"
-              >
-                {t('Lihat detail kursus')}
-              </Link>
-            </li>
-          ))}
+              </li>
+            );
+          })}
         </ul>
       )}
     </section>

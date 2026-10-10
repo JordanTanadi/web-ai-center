@@ -7,6 +7,9 @@
 // PelatihanDetail) — array `kursusDummy` di file ini jadi fallback-nya.
 // Teks statis di file ini (stats, panel, intro katalog, modul unggulan, dst.)
 // tetap hardcoded; kontrak field kursus sama dengan sini.
+// TODO_KONTEN: level/format/instruktur/sertifikat di bawah adalah placeholder
+// migrasi situs lama; video & kuis per modul belum terisi. Isian user →
+// docs/data-kursus.md (diisi manual, lalu saya sinkronkan ke kode + seed).
 import { buildWaLink, kontakDummy } from './kontak.ts';
 
 export interface Modul {

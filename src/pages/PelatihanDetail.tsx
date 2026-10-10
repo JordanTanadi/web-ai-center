@@ -11,6 +11,7 @@ import {
   type Kursus,
 } from '../data/pelatihan.ts';
 import { useApiObjek } from '../lib/useApiData.ts';
+import { labelDurasiTotal } from '../lib/kursus.ts';
 import {
   bacaStateBelajar,
   hitungProgressBelajar,
@@ -64,6 +65,8 @@ export default function PelatihanDetail() {
   const totalModul = kursus.modul.length;
   const progress = hitungProgressBelajar(belajar, totalModul);
   const label = labelAksesKursus(belajar, progress);
+  // Estimasi durasi total ("±2 jam 40 menit") dari meta modul — pola Coursera.
+  const estimasiBelajar = labelDurasiTotal(kursus.modul);
 
   /** Terapkan aksi LMS + simpan ke localStorage dalam satu update. */
   const kirimAksi = (aksi: Aksi) => {
@@ -111,6 +114,14 @@ export default function PelatihanDetail() {
                 <p className="font-bold">{t(kursus.format)}</p>
                 <p className="text-xs uppercase tracking-wide text-muted">{t('Format belajar')}</p>
               </li>
+              {/* Estimasi total ala Coursera — dihitung dari meta modul; disembunyikan
+                  bila tidak ada satupun modul yang mencantumkan menit. */}
+              {estimasiBelajar === null ? null : (
+                <li>
+                  <p className="font-bold">{t(estimasiBelajar)}</p>
+                  <p className="text-xs uppercase tracking-wide text-muted">{t('Estimasi belajar')}</p>
+                </li>
+              )}
             </ul>
           </div>
           {/* Progress/status belajar dari state LMS (localStorage); TODO_BACKEND:
