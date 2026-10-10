@@ -31,7 +31,7 @@ export interface Modul {
 }
 
 export interface Kursus {
-  /** Kode kursus situs lama, mis. 'R01' (dibuat otomatis oleh plugin WordPress). */
+  /** Kode kursus situs lama, mis. 'R01' (penomoran otomatis sistem kursus lama). */
   kode: string;
   /** Kategori untuk filter — subset label dari `kategoriKursus`. */
   target: string[];

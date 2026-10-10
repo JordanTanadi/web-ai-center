@@ -31,7 +31,7 @@ mode test, semua halaman otomatis memakai data dummy (lihat `src/lib/api.ts`).
 
 Unit test kecil per unit (input → output + 1–2 edge case). Dijalankan via `npm test`. Bukan integration/e2e test.
 
-Catatan keputusan: 50 file test (36 frontend + 14 backend) **sengaja ikut
+Catatan keputusan: 53 file test (39 frontend + 14 backend) **sengaja ikut
 di-commit** walaupun aturan kerja awal menyebut file test lokal saja — supaya bukti
 unit test ikut terlihat di repo untuk laporan KP dan gerbang bisa dijalankan di
 mesin lain.
@@ -300,6 +300,19 @@ beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak te
     "video menyusul" + checkpoint dummy). Gerbang saat ini: frontend **416
     test / 39 file**, `tsc -b` bersih, build OK; backend **238 test / 14
     file** (6 test baru: validasi video/kuis + rute kursus).
+17. **Audit pre-final** (10 Okt 2026) terhadap 10 aturan kerja + kesiapan
+    deploy: pindai rahasia (`.env` ter-ignore, `.env.example` dummy semua),
+    penanda TODO tiap butir ber-alasan, nol referensi WordPress (komentar
+    "plugin WordPress" di `pelatihan.ts` diparafrase & typo nomor WA di
+    `kontak.ts` dibetulkan `6289563422240`), semua tautan internal + anchor
+    (`#layanan`/`#kontak`) cocok dengan peta rute `App.tsx` (skrip audit
+    lokal), angka test basi di README diperbarui (53 file). Verifikasi:
+    smoke API **36/36**, smoke halaman **11/11** (h1 benar, konsol 0
+    error/warning), health `{"status":"ok","db":"ok"}`, gerbang ulang FE
+    **416/416** + BE **238/238**, dan **Lighthouse mobile 93 / desktop 100**
+    (a11y, best-practices, SEO 100 di dua mode; TBT mobile 30 ms) terhadap
+    build produksi — arsip `lighthouse_report/prod-2026-10-10-*.json`
+    (lokal/gitignored).
 
 ### Penanda TODO
 

@@ -2,7 +2,7 @@
 // KEPUTUSAN (28 Sep 2026): kontak — khususnya nomor WA & pesan pembawa — diambil
 // dari situs lama dan dipertahankan STATIS; TIDAK di-wire ke GET /api/profil.
 // Sumber: section Kontak di situs lama (index.html) — nomor & greeting persis
-// link wa.me di sana (62895634222240).
+// link wa.me di sana (6289563422240).
 
 export interface Kontak {
   /** Email resmi AI Center. */
