@@ -50,7 +50,15 @@ export interface InputKursus {
   inisial: string;
   target: string[];
   hasil: string[];
-  modul: Array<{ judul: string; deskripsi: string; meta: string }>;
+  modul: Array<{
+    judul: string;
+    deskripsi: string;
+    meta: string;
+    /** URL video (opsional dari user) — dinormalkan jadi null bila kosong. */
+    video: string | null;
+    /** Kuis per modul (opsional) — dinormalkan jadi [] bila kosong. */
+    quiz: Array<{ pertanyaan: string; opsi: string[]; kunci: number }>;
+  }>;
 }
 
 /**
@@ -217,6 +225,12 @@ export const BATAS = {
   layananDeskripsi: 2_000,
   fiturItem: 300,
   fiturMaks: 15,
+  /** Video & kuis per modul kursus (tab "Kursus" di /admin). */
+  modulVideo: 300,
+  kuisMaks: 10,
+  soalPertanyaan: 300,
+  opsiMaks: 6,
+  opsiItem: 200,
 } as const;
 
 /**
@@ -429,6 +443,93 @@ function bacaDaftarTeks(
   return { nilai };
 }
 
+/** Tipe soal kuis di dalam modul kursus (kunci = index opsi benar). */
+type SoalModul = { pertanyaan: string; opsi: string[]; kunci: number };
+
+/**
+ * Baca `video` modul kursus (opsional): `null` bila kosong/absen; error
+ * eksplisit bila bukan URL http(s) atau melebihi batas.
+ */
+function bacaVideoModul(
+  m: Record<string, unknown>,
+  i: number,
+): { nilai: string | null } | { error: string } {
+  const video = m.video;
+  if (video === undefined || video === null) return { nilai: null };
+  if (typeof video !== 'string') {
+    return { error: `Modul ke-${i + 1}: field "video" harus teks URL` };
+  }
+  const teks = video.trim();
+  if (teks === '') return { nilai: null };
+  if (teks.length > BATAS.modulVideo) {
+    return {
+      error: `Modul ke-${i + 1}: field "video" maksimal ${BATAS.modulVideo} karakter`,
+    };
+  }
+  if (!/^https?:\/\/\S+$/i.test(teks)) {
+    return { error: `Modul ke-${i + 1}: field "video" harus URL http(s)` };
+  }
+  return { nilai: teks };
+}
+
+/**
+ * Baca `quiz` modul kursus (opsional): `[]` bila kosong/absen; tiap soal
+ * wajib punya pertanyaan, 2–6 opsi, dan `kunci` index opsi yang valid.
+ */
+function bacaKuisModul(m: Record<string, unknown>, i: number): { nilai: SoalModul[] } | { error: string } {
+  const kuis = m.quiz;
+  if (kuis === undefined || kuis === null) return { nilai: [] };
+  if (!Array.isArray(kuis)) {
+    return { error: `Modul ke-${i + 1}: field "quiz" harus array` };
+  }
+  if (kuis.length > BATAS.kuisMaks) {
+    return { error: `Modul ke-${i + 1}: field "quiz" maksimal ${BATAS.kuisMaks} soal` };
+  }
+  const nilai: SoalModul[] = [];
+  for (let s = 0; s < kuis.length; s++) {
+    const soal = kuis[s] as Record<string, unknown> | null;
+    if (soal === null || typeof soal !== 'object') {
+      return { error: `Modul ke-${i + 1}, soal ke-${s + 1}: tidak valid` };
+    }
+    const pertanyaan = soal.pertanyaan;
+    if (typeof pertanyaan !== 'string' || pertanyaan.trim() === '') {
+      return { error: `Modul ke-${i + 1}, soal ke-${s + 1}: "pertanyaan" wajib diisi` };
+    }
+    const pTeks = pertanyaan.trim();
+    if (pTeks.length > BATAS.soalPertanyaan) {
+      return {
+        error: `Modul ke-${i + 1}, soal ke-${s + 1}: "pertanyaan" maksimal ${BATAS.soalPertanyaan} karakter`,
+      };
+    }
+    const opsiMentah = soal.opsi;
+    if (!Array.isArray(opsiMentah)) {
+      return { error: `Modul ke-${i + 1}, soal ke-${s + 1}: "opsi" harus array` };
+    }
+    const opsi = opsiMentah
+      .filter((o): o is string => typeof o === 'string')
+      .map((o) => o.trim());
+    if (opsi.length < 2) {
+      return { error: `Modul ke-${i + 1}, soal ke-${s + 1}: "opsi" minimal 2` };
+    }
+    if (opsi.length > BATAS.opsiMaks) {
+      return { error: `Modul ke-${i + 1}, soal ke-${s + 1}: "opsi" maksimal ${BATAS.opsiMaks}` };
+    }
+    if (opsi.some((o) => o === '' || o.length > BATAS.opsiItem)) {
+      return {
+        error: `Modul ke-${i + 1}, soal ke-${s + 1}: setiap opsi wajib diisi, maksimal ${BATAS.opsiItem} karakter`,
+      };
+    }
+    const kunci = soal.kunci;
+    if (typeof kunci !== 'number' || !Number.isInteger(kunci) || kunci < 0 || kunci >= opsi.length) {
+      return {
+        error: `Modul ke-${i + 1}, soal ke-${s + 1}: "kunci" harus index opsi yang valid (0-${opsi.length - 1})`,
+      };
+    }
+    nilai.push({ pertanyaan: pTeks, opsi, kunci });
+  }
+  return { nilai };
+}
+
 /** Validasi body tulis kursus (termasuk daftar modul). */
 export function validasiKursus(body: unknown): HasilValidasi<InputKursus> {
   if (body === null || typeof body !== 'object') {
@@ -475,7 +576,7 @@ export function validasiKursus(body: unknown): HasilValidasi<InputKursus> {
     deskripsi: BATAS.modulDeskripsi,
     meta: BATAS.modulMeta,
   } as const;
-  const modul: Array<{ judul: string; deskripsi: string; meta: string }> = [];
+  const modul: InputKursus['modul'] = [];
   for (let i = 0; i < mentahModul.length; i++) {
     const m = mentahModul[i] as Record<string, unknown>;
     if (m === null || typeof m !== 'object') {
@@ -496,7 +597,12 @@ export function validasiKursus(body: unknown): HasilValidasi<InputKursus> {
       }
       modulBersih[kunci] = teks;
     }
-    modul.push(modulBersih);
+    // Video & kuis opsional — dinormalkan (null / []) supaya bentuk baris baru konsisten.
+    const video = bacaVideoModul(m, i);
+    if ('error' in video) return { ok: false, error: video.error };
+    const quiz = bacaKuisModul(m, i);
+    if ('error' in quiz) return { ok: false, error: quiz.error };
+    modul.push({ ...modulBersih, video: video.nilai, quiz: quiz.nilai });
   }
   return { ok: true, data: { kode, ...bersih, target: target.nilai, hasil: hasil.nilai, modul } };
 }

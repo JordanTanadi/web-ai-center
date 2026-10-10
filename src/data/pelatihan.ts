@@ -12,11 +12,22 @@
 // docs/data-kursus.md (diisi manual, lalu saya sinkronkan ke kode + seed).
 import { buildWaLink, kontakDummy } from './kontak.ts';
 
+/** Satu soal kuis per modul (`kunci` = index opsi yang benar). */
+export interface Soal {
+  pertanyaan: string;
+  opsi: string[];
+  kunci: number;
+}
+
 export interface Modul {
   judul: string;
   deskripsi: string;
   /** Meta tampil, mis. '4 video · 35 menit'. */
   meta: string;
+  /** URL video lesson (opsional dari admin); null/absen = video menyusul. */
+  video?: string | null;
+  /** Kuis per modul (opsional dari admin); kosong = checkpoint dummy. */
+  quiz?: Soal[];
 }
 
 export interface Kursus {

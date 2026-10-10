@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import SectionHeading from './SectionHeading.tsx';
-import type { Kursus } from '../data/pelatihan.ts';
+import type { Kursus, Soal } from '../data/pelatihan.ts';
 import { useT } from '../lib/i18n.tsx';
+import { embedVideo } from '../lib/video.ts';
 import {
   hitungProgressBelajar,
   jalankanModelDummy,
@@ -49,6 +50,8 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
 
   const aktif = state.activeModule;
   const modulAktif = aktif !== null ? kursus.modul[aktif] : undefined;
+  // URL embed video modul aktif (YouTube/Vimeo); null = video menyusul/tidak dikenal.
+  const sumberVideo = embedVideo(modulAktif?.video);
 
   return (
     <section
@@ -129,21 +132,71 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                 </p>
                 <h3 className="mt-2 font-display text-xl font-bold">{t(modulAktif.judul)}</h3>
 
-                {/* TODO_BACKEND: video lesson dari backend (module.video_url);
-                    selama belum ada, blok ini hanya penanda durasi + tombol tonton. */}
-                <div className="mt-4 rounded-xl bg-sky p-4">
-                  <p className="font-bold">{t(modulAktif.judul)}</p>
-                  <p className="mt-1 text-sm text-muted">{t('Durasi:')} {t(modulAktif.meta)}</p>
-                  <button
-                    type="button"
-                    onClick={() => onAction({ type: 'tontonLesson' })}
-                    className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
-                  >
-                    {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Mulai lesson')}
-                  </button>
-                </div>
+                {/* Video lesson dari backend (modul.video via tab Kursus /admin):
+                    URL YouTube/Vimeo → iframe; URL lain → tautan; belum ada →
+                    penanda durasi + tombol tandai (perilaku situs lama). */}
+                {sumberVideo !== null ? (
+                  <div className="mt-4">
+                    <iframe
+                      src={sumberVideo}
+                      title={t(`Video modul ${aktif + 1}`)}
+                      loading="lazy"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      className="aspect-video w-full rounded-xl border border-line bg-navy"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => onAction({ type: 'tontonLesson' })}
+                      className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
+                    >
+                      {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Tandai lesson ditonton')}
+                    </button>
+                  </div>
+                ) : modulAktif.video ? (
+                  <div className="mt-4 rounded-xl bg-sky p-4">
+                    <p className="font-bold">{t('Video tersedia di tautan berikut')}</p>
+                    <a
+                      href={modulAktif.video}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="mt-1 inline-block break-all text-sm font-bold text-brand hover:underline"
+                    >
+                      {modulAktif.video}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => onAction({ type: 'tontonLesson' })}
+                      className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
+                    >
+                      {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Tandai lesson ditonton')}
+                    </button>
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-xl bg-sky p-4">
+                    <p className="font-bold">{t(modulAktif.judul)}</p>
+                    <p className="mt-1 text-sm text-muted">{t('Durasi:')} {t(modulAktif.meta)}</p>
+                    <p className="mt-1 text-xs text-muted">{t('Video menyusul — materi teks tetap bisa dipelajari.')}</p>
+                    <button
+                      type="button"
+                      onClick={() => onAction({ type: 'tontonLesson' })}
+                      className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
+                    >
+                      {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Mulai lesson')}
+                    </button>
+                  </div>
+                )}
 
-                <div className="mt-4 rounded-xl border border-line p-4">
+                {/* Checkpoint: kuis nyata dari admin bila tersedia; kosong → kuis dummy. */}
+                {modulAktif.quiz && modulAktif.quiz.length > 0 ? (
+                  <QuizModul
+                    key={aktif}
+                    quiz={modulAktif.quiz}
+                    sudahLulus={state.quizPassed[aktif] === true}
+                    onLulus={() => onAction({ type: 'lulusQuiz' })}
+                  />
+                ) : (
+                  <div className="mt-4 rounded-xl border border-line p-4">
                   <p className="font-bold">{t('Checkpoint: apa tujuan utama lesson ini?')}</p>
                   <button
                     type="button"
@@ -172,6 +225,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                     {t(feedback)}
                   </p>
                 </div>
+                )}
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-sm text-muted">
@@ -226,6 +280,97 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
         </div>
       </div>
     </section>
+  );
+}
+
+/**
+ * Kuis nyata per modul (data admin, field `quiz` modul). Lulus bila SEMUA
+ * soal dijawab benar → memanggil `onLulus` (state `quizPassed` yang membuka
+ * tombol "Selesaikan modul"). Jawaban benar disorot biru setelah dikirim.
+ */
+function QuizModul({
+  quiz,
+  sudahLulus,
+  onLulus,
+}: {
+  quiz: Soal[];
+  sudahLulus: boolean;
+  onLulus: () => void;
+}) {
+  const [jawab, setJawab] = useState<Record<number, number>>({});
+  const [hasil, setHasil] = useState<{ benar: number; total: number } | null>(null);
+  const t = useT();
+  const semuaTerjawab = quiz.every((_, i) => typeof jawab[i] === 'number');
+
+  function kirimJawaban(): void {
+    const benar = quiz.filter((s, i) => jawab[i] === s.kunci).length;
+    setHasil({ benar, total: quiz.length });
+    if (benar === quiz.length) onLulus();
+  }
+
+  return (
+    <div className="mt-4 rounded-xl border border-line p-4">
+      <p className="font-bold">{t('Kuis modul')}</p>
+      <p className="mt-1 text-xs text-muted">{t('Jawab semua soal dengan benar untuk lulus checkpoint.')}</p>
+      <ol className="mt-3 space-y-4">
+        {quiz.map((s, i) => (
+          <li key={s.pertanyaan}>
+            <p className="text-sm font-semibold">
+              {i + 1}. {t(s.pertanyaan)}
+            </p>
+            <div className="mt-1 space-y-1">
+              {s.opsi.map((o, j) => {
+                const dipilih = jawab[i] === j;
+                const setelahSalah = hasil !== null && dipilih && j !== s.kunci;
+                const setelahBenar = hasil !== null && j === s.kunci;
+                return (
+                  <label
+                    key={o}
+                    className={`flex items-start gap-2 rounded-lg border px-3 py-2 text-sm ${
+                      setelahSalah
+                        ? 'border-red-300 bg-red-50'
+                        : setelahBenar
+                          ? 'border-brand bg-sky'
+                          : 'border-line'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`kuis-soal-${i}`}
+                      checked={dipilih}
+                      disabled={sudahLulus || hasil !== null}
+                      onChange={() => setJawab((prev) => ({ ...prev, [i]: j }))}
+                      className="mt-0.5"
+                    />
+                    <span>{t(o)}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </li>
+        ))}
+      </ol>
+      {sudahLulus && hasil === null ? (
+        <p className="mt-3 text-sm font-bold text-brand" role="status">
+          {t('✓ Checkpoint sudah lulus')}
+        </p>
+      ) : hasil === null ? (
+        <button
+          type="button"
+          disabled={!semuaTerjawab}
+          onClick={kirimJawaban}
+          className="btn-primary mt-4 rounded-lg px-4 py-2 text-sm font-bold text-white disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {t('Kirim jawaban')}
+        </button>
+      ) : (
+        <p className="mt-3 text-sm font-bold text-brand" role="status">
+          {hasil.benar === hasil.total
+            ? t(`Benar semua (${hasil.total}/${hasil.total}) — checkpoint lulus!`)
+            : t(`Benar ${hasil.benar} dari ${hasil.total}. Jawaban benar disorot biru — pelajari lagi, lalu buka ulang modul.`)}
+        </p>
+      )}
+    </div>
   );
 }
 

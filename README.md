@@ -156,7 +156,7 @@ kontrak di atasnya diuji dengan fake repository (`app.test.ts`) plus
 | `POST /api/admin/login` | body `{ password }` | rate-limit 5 gagal / 10 menit per IP → 429; balikan `{ token }` |
 | `POST` · `PUT` · `DELETE /api/dokumentasi[/:slug]` | — | butuh `Authorization: Bearer <token>`; 400/404/409 eksplisit |
 | `POST` · `PUT` · `DELETE /api/berita[/:slug]` | — | idem; slug dibuat server dari judul |
-| `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | idem; `kode` jadi kunci unik |
+| `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | idem; `kode` jadi kunci unik; tiap item `modul` boleh bawa `video` (URL http(s) ≤ 300) & `quiz` (≤ 10 soal × 2–6 opsi, `kunci` = index opsi) |
 | `POST` · `PUT` · `DELETE /api/layanan[/:slug]` | — | idem; slug dibuat server dari nama (tab Layanan di `/admin`); `fitur` 1–15 item |
 | `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan |
 | `PUT /api/inference` | — | konten halaman inference (id = 1); wajib ≥1 item tiap daftar |
@@ -188,7 +188,10 @@ Kontak footer/WA **sengaja statis** dari situs lama (nomor + pesan persis link
 
 Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
 
-- video lesson + progress LMS per peserta — butuh konten video & akun peserta
+- konten video & kuis per modul — sistemnya sudah ada (field `modul.video` +
+  `modul.quiz` via tab Kursus, embed + kuis di ruang belajar; isi lewat
+  template `docs/data-kursus.md`); progress LMS per peserta masih butuh akun
+  peserta agar terekam di backend
 - section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
 
 CRUD admin sudah lengkap (Prioritas 2): dokumentasi, berita, kursus — lalu
@@ -275,9 +278,31 @@ beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak te
     maks 300 karakter per item). Gerbang saat ini: frontend **396 test /
     37 file** (3 test admin baru), `tsc -b` bersih, build OK; backend **232
     test / 14 file** (11 test baru: `validasiLayanan` + rute layanan).
+15. **Katalog kursus dirapikan ala Coursera**: kartu katalog
+    (`/layanan/pelatihan`) disusun ulang (eyebrow "Ubaya AI Center · kode",
+    judul, baris fakta "level · durasi · N modul · ±X jam", instruktur, satu
+    CTA — klaim "Sertifikat" dihapus dari kartu); hero detail kursus dapat
+    fakta **Estimasi belajar** dari helper baru `src/lib/kursus.ts`
+    (`menitDariMeta`/`totalMenitKursus`/`labelDurasiTotal`, 10 unit test).
+    Data asli yang perlu dikonfirmasi user dikumpulkan di
+    **`docs/data-kursus.md`** (template isian level/format/instruktur/
+    sertifikat/video/kuis + penanda `TODO_KONTEN` di `src/data/pelatihan.ts`).
+16. **Sistem video & asesmen per modul**: field `modul` kini boleh memuat
+    `video` (URL http(s) ≤ 300, divalidasi `bacaVideoModul`) dan `quiz`
+    (≤ 10 soal × 2–6 opsi × 200 karakter, `kunci` = index opsi —
+    `bacaKuisModul` di `server/src/lib/tulis.ts`; baris lama tanpa field ini
+    tetap valid → dinormalkan `null`/`[]`). Tab **Kursus** di `/admin` punya
+    input URL video + editor soal (radio jawaban benar, +/− opsi, buang soal
+    kosong saat kirim via `kuisSiapKirim`). Ruang belajar (`LearningWorkspace`)
+    meng-embed YouTube/Vimeo mode nocookie (`src/lib/video.ts`, URL lain →
+    tautan luar), dan checkpoint memakai kuis nyata bila tersedia (lulus =
+    semua soal benar → `lulusQuiz`); tanpa data → perilaku lama (blok
+    "video menyusul" + checkpoint dummy). Gerbang saat ini: frontend **416
+    test / 39 file**, `tsc -b` bersih, build OK; backend **238 test / 14
+    file** (6 test baru: validasi video/kuis + rute kursus).
 
 ### Penanda TODO
 
 - `TODO_BACKEND` — bagian yang sengaja belum diintegrasikan + alasannya (lihat "Status integrasi frontend").
 - `TODO_ASSET` — file aset perlu diganti/ditambah di `public/`.
-- `TODO_KONTEN` — teks menyusul dari dokumen resmi (mis. visi/misi dari PDF rapat 16 Sept 2026).
+- `TODO_KONTEN` — teks menyusul dari dokumen resmi (mis. visi/misi dari PDF rapat 16 Sept 2026); untuk kursus: template isian data asli (level, instruktur, sertifikat, URL video + kuis per modul) ada di `docs/data-kursus.md`.

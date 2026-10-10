@@ -112,11 +112,22 @@ export interface Profil {
   statistik?: Array<{ label: string; value: string }>;
 }
 
-/** ↔ src/data/pelatihan.ts Modul (kursus) */
+/** Soal kuis per modul — ↔ src/data/pelatihan.ts Soal (`kunci` = index opsi benar). */
+export interface SoalKursus {
+  pertanyaan: string;
+  opsi: string[];
+  kunci: number;
+}
+
+/** ↔ src/data/pelatihan.ts Modul (kursus) — `video` & `quiz` opsional (baris lama). */
 export interface ModulKursus {
   judul: string;
   deskripsi: string;
   meta: string;
+  /** URL video lesson (opsional); tampilan frontend meng-embed bila didukung. */
+  video?: string | null;
+  /** Kuis per modul (opsional); kosong → checkpoint dummy di frontend. */
+  quiz?: SoalKursus[];
 }
 
 /** ↔ src/data/pelatihan.ts Kursus */

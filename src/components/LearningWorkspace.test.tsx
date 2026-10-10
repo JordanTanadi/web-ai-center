@@ -94,6 +94,86 @@ describe('LearningWorkspace — panel lesson & checkpoint', () => {
   });
 });
 
+describe('LearningWorkspace — video & kuis dari backend', () => {
+  /** Kursus tiruan: modul 0 punya video YouTube + kuis nyata (modul lain tetap dummy). */
+  const KURSUS_VIDEO_QUIZ = {
+    ...R01,
+    modul: R01.modul.map((m, i) =>
+      i === 0
+        ? {
+            ...m,
+            video: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            quiz: [
+              {
+                pertanyaan: 'Apa kata kunci yang baik untuk riset?',
+                opsi: ['Kata kunci spesifik', 'Kata umum sekali'],
+                kunci: 0,
+              },
+            ],
+          }
+        : m,
+    ),
+  };
+
+  function renderKhusus(state: StateBelajar, onAction = vi.fn()) {
+    render(<LearningWorkspace kursus={KURSUS_VIDEO_QUIZ} state={state} onAction={onAction} />);
+    return onAction;
+  }
+
+  it('modul dengan video → iframe embed nocookie + tombol tandai ditonton', () => {
+    renderKhusus(stateProps());
+
+    expect(screen.getByTitle('Video modul 1')).toHaveAttribute(
+      'src',
+      'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+    );
+    expect(screen.getByRole('button', { name: 'Tandai lesson ditonton' })).toBeInTheDocument();
+    // Blok placeholder "Mulai lesson" tidak ikut tampil saat video tersedia.
+    expect(screen.queryByRole('button', { name: 'Mulai lesson' })).not.toBeInTheDocument();
+  });
+
+  it('kuis nyata: belum semua terjawab → tombol kirim mati', () => {
+    renderKhusus(stateProps());
+
+    expect(screen.getByText('Kuis modul')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Kirim jawaban' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('radio', { name: 'Kata kunci spesifik' }));
+    expect(screen.getByRole('button', { name: 'Kirim jawaban' })).toBeEnabled();
+  });
+
+  it('jawaban salah → nilai jujur + opsi benar disorot, tanpa lulusQuiz', () => {
+    const onAction = renderKhusus(stateProps());
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Kata umum sekali' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Kirim jawaban' }));
+
+    expect(screen.getByText(/Benar 0 dari 1/)).toBeInTheDocument();
+    expect(onAction).not.toHaveBeenCalledWith({ type: 'lulusQuiz' });
+    // Opsi benar (kunci) disorot biru meski tidak dipilih.
+    const radioBenar = screen.getByRole('radio', { name: 'Kata kunci spesifik' });
+    expect(radioBenar.closest('label')?.className).toContain('border-brand');
+    // Setelah dikirim, pilihan dikunci (tidak bisa mengubah jawaban).
+    expect(screen.getByRole('radio', { name: 'Kata umum sekali' })).toBeDisabled();
+  });
+
+  it('semua soal benar → dispatch lulusQuiz + pesan lulus', () => {
+    const onAction = renderKhusus(stateProps());
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Kata kunci spesifik' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Kirim jawaban' }));
+
+    expect(onAction).toHaveBeenCalledWith({ type: 'lulusQuiz' });
+    expect(screen.getByText(/Benar semua \(1\/1\)/)).toBeInTheDocument();
+  });
+
+  it('quizPassed=true → checkpoint ditandai lulus tanpa form ulang', () => {
+    renderKhusus(stateProps({ quizPassed: [true, false, false, false] }));
+
+    expect(screen.getByText('✓ Checkpoint sudah lulus')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Kirim jawaban' })).not.toBeInTheDocument();
+  });
+});
+
 describe('LearningWorkspace — prototipe & rating', () => {
   it('semua modul belum selesai → lembar prototipe terkunci dengan pesan jelas', () => {
     renderWorkspace(stateProps());

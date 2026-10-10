@@ -916,6 +916,21 @@ describe('CRUD /api/kursus (admin)', () => {
     expect(tanpaToken.status).toBe(401);
   });
 
+  test('POST dengan video + kuis per modul → 201, data modul terpetak ke repo.create', async () => {
+    const { app, calls } = createTestApp();
+    const soal = { pertanyaan: 'Pertanyaan uji?', opsi: ['Benar', 'Salah'], kunci: 0 };
+    const { status } = await kirimTulis(app, 'POST', '/api/kursus', {
+      ...BODY_KURSUS,
+      modul: [{ judul: 'M1', deskripsi: 'D1', meta: '2 video', video: 'https://youtu.be/abc123', quiz: [soal] }],
+    });
+    expect(status).toBe(201);
+    const create = calls.find((c) => c.method === 'kursus.create');
+    expect(create).toBeDefined();
+    const modul = (create?.args[0] as { modul: Array<Record<string, unknown>> }).modul;
+    expect(modul[0].video).toBe('https://youtu.be/abc123');
+    expect(modul[0].quiz).toEqual([soal]);
+  });
+
   test('PUT cocok → 200; kode beda dengan path → 400; tidak ada → 404', async () => {
     const { app } = createTestApp();
     const { status } = await kirimTulis(app, 'PUT', '/api/kursus/R01', { ...BODY_KURSUS, kode: 'r01' });

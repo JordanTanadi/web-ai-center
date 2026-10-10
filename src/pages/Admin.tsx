@@ -34,7 +34,7 @@ import { LABEL_PESERTA, kodeOtomatis } from '../lib/kodeKursus.ts';
 import type { BeritaItem } from '../data/berita.ts';
 import type { DokumentasiItem } from '../data/dokumentasi.ts';
 import type { HeroSlide } from '../data/hero.ts';
-import type { Kursus, Modul } from '../data/pelatihan.ts';
+import type { Kursus, Modul, Soal } from '../data/pelatihan.ts';
 import type { Layanan } from '../data/layanan.ts';
 import type { KontenInference } from '../data/inference.ts';
 import type { ProfilApi } from '../data/profil.ts';
@@ -710,7 +710,33 @@ function barisDaftar(teks: string): string[] {
     .filter((b) => b !== '');
 }
 
-const MODUL_KOSONG: Modul = { judul: '', deskripsi: '', meta: '' };
+/**
+ * Normalisasi kuis modul sebelum dikirim ke server: soal tanpa pertanyaan
+ * dibuang; opsi kosong dibuang; soal dengan < 2 opsi tersisa — atau opsi
+ * `kunci` (jawaban benar) ikut kosong — dibuang juga (jawabannya sudah tidak
+ * bisa dipastikan). `kunci` dihitung ulang sesuai opsi yang bertahan.
+ */
+function kuisSiapKirim(quiz: Soal[] | undefined): Soal[] {
+  if (!quiz) return [];
+  const siap: Soal[] = [];
+  for (const s of quiz) {
+    const pertanyaan = s.pertanyaan.trim();
+    if (pertanyaan === '') continue;
+    const opsi: string[] = [];
+    let kunciBaru = -1;
+    s.opsi.forEach((o, idx) => {
+      const teks = o.trim();
+      if (teks === '') return;
+      if (idx === s.kunci) kunciBaru = opsi.length;
+      opsi.push(teks);
+    });
+    if (opsi.length < 2 || kunciBaru === -1) continue;
+    siap.push({ pertanyaan, opsi, kunci: kunciBaru });
+  }
+  return siap;
+}
+
+const MODUL_KOSONG: Modul = { judul: '', deskripsi: '', meta: '', video: '', quiz: [] };
 
 /** Section CRUD kursus + editor daftar modul (tab "Kursus" di dashboard). */
 function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
@@ -754,6 +780,85 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
     setModul((prev) => prev.map((m, i) => (i === index ? { ...m, [kunci]: nilai } : m)));
   }
 
+  /** Ubah satu soal kuis modul `index` (field parsial: pertanyaan/kunci/opsi). */
+  function aturSoal(index: number, soal: number, nilai: Partial<Soal>): void {
+    setModul((prev) =>
+      prev.map((m, i) =>
+        i === index
+          ? { ...m, quiz: (m.quiz ?? []).map((s, j) => (j === soal ? { ...s, ...nilai } : s)) }
+          : m,
+      ),
+    );
+  }
+
+  /** Tambah soal kosong (2 opsi, kunci 0) ke modul `index`. */
+  function tambahSoal(index: number): void {
+    setModul((prev) =>
+      prev.map((m, i) =>
+        i === index
+          ? { ...m, quiz: [...(m.quiz ?? []), { pertanyaan: '', opsi: ['', ''], kunci: 0 }] }
+          : m,
+      ),
+    );
+  }
+
+  function hapusSoal(index: number, soal: number): void {
+    setModul((prev) =>
+      prev.map((m, i) =>
+        i === index ? { ...m, quiz: (m.quiz ?? []).filter((_, j) => j !== soal) } : m,
+      ),
+    );
+  }
+
+  function aturOpsi(index: number, soal: number, opsi: number, nilai: string): void {
+    setModul((prev) =>
+      prev.map((m, i) =>
+        i === index
+          ? {
+              ...m,
+              quiz: (m.quiz ?? []).map((s, j) =>
+                j === soal ? { ...s, opsi: s.opsi.map((o, k) => (k === opsi ? nilai : o)) } : s,
+              ),
+            }
+          : m,
+      ),
+    );
+  }
+
+  function tambahOpsi(index: number, soal: number): void {
+    setModul((prev) =>
+      prev.map((m, i) =>
+        i === index
+          ? {
+              ...m,
+              quiz: (m.quiz ?? []).map((s, j) =>
+                j === soal ? { ...s, opsi: [...s.opsi, ''] } : s,
+              ),
+            }
+          : m,
+      ),
+    );
+  }
+
+  /** Hapus opsi; `kunci` ikut menyesuaikan agar tetap menunjuk opsi valid. */
+  function hapusOpsi(index: number, soal: number, opsi: number): void {
+    setModul((prev) =>
+      prev.map((m, i) =>
+        i === index
+          ? {
+              ...m,
+              quiz: (m.quiz ?? []).map((s, j) => {
+                if (j !== soal) return s;
+                const opsiBaru = s.opsi.filter((_, k) => k !== opsi);
+                const kunciBaru = s.kunci > opsi ? s.kunci - 1 : s.kunci;
+                return { ...s, opsi: opsiBaru, kunci: Math.min(kunciBaru, opsiBaru.length - 1) };
+              }),
+            }
+          : m,
+      ),
+    );
+  }
+
   function mulaiTambah(): void {
     setK({ judul: '', deskripsi: '', tentang: '', durasi: '', level: '', format: '', instruktur: '', peran: '', inisial: '' });
     setTargetPilihan('');
@@ -783,7 +888,12 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
     setTargetPilihan(LABEL_PESERTA.includes(pertama) ? pertama : '');
     setTargetLama(item.target);
     setHasilText(item.hasil.join('\n'));
-    setModul(item.modul.length > 0 ? item.modul.map((m) => ({ ...m })) : [{ ...MODUL_KOSONG }]);
+    // Normalisasi field baru: baris lama (seed) bisa tanpa video/quiz.
+    setModul(
+      item.modul.length > 0
+        ? item.modul.map((m) => ({ ...m, video: m.video ?? '', quiz: m.quiz ?? [] }))
+        : [{ ...MODUL_KOSONG }],
+    );
     setKodeEdit(item.kode);
     setMode('ubah');
     setPesan(null);
@@ -834,9 +944,16 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       inisial: k.inisial,
       target: [targetPilihan],
       hasil: barisDaftar(hasilText),
-      // Baris modul yang ketiga kolomnya kosong diabaikan (sisa divalidasi server).
+      // Baris modul yang ketiga kolomnya kosong diabaikan (sisa divalidasi server);
+      // video & kuis ikut dikirim ('' → null, daftar soal kosong → []).
       modul: modul
-        .map((m) => ({ judul: m.judul.trim(), deskripsi: m.deskripsi.trim(), meta: m.meta.trim() }))
+        .map((m) => ({
+          judul: m.judul.trim(),
+          deskripsi: m.deskripsi.trim(),
+          meta: m.meta.trim(),
+          video: (m.video ?? '').trim() === '' ? null : (m.video ?? '').trim(),
+          quiz: kuisSiapKirim(m.quiz),
+        }))
         .filter((m) => m.judul !== '' || m.deskripsi !== '' || m.meta !== ''),
     };
     try {
@@ -1088,6 +1205,104 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                     value={m.deskripsi}
                     onChange={(event) => aturModul(i, 'deskripsi', event.target.value)}
                   />
+                  <input
+                    type="text"
+                    aria-label={`Video modul ${i + 1}`}
+                    placeholder="URL video YouTube/Vimeo (opsional)"
+                    maxLength={300}
+                    className={inputCls}
+                    value={m.video ?? ''}
+                    onChange={(event) => aturModul(i, 'video', event.target.value)}
+                  />
+                  <p className="mt-1 text-xs text-muted">
+                    Kosongkan bila video belum ada — ruang belajar menampilkan "video menyusul".
+                  </p>
+                  {/* Kuis per modul (opsional): kosong = checkpoint dummy. */}
+                  <div className="mt-2 rounded-md bg-soft p-2">
+                    <p className="text-xs font-bold text-muted">Kuis modul (opsional)</p>
+                    <ol className="mt-2 space-y-3">
+                      {(m.quiz ?? []).map((s, si) => (
+                        <li key={si} className="rounded-md border border-line bg-surface p-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="text-xs font-bold text-muted">Soal {si + 1}</p>
+                            <button
+                              type="button"
+                              onClick={() => hapusSoal(i, si)}
+                              className="text-xs font-semibold text-red-700 hover:underline"
+                            >
+                              Hapus soal
+                            </button>
+                          </div>
+                          <input
+                            type="text"
+                            aria-label={`Pertanyaan ${si + 1} modul ${i + 1}`}
+                            placeholder="Pertanyaan"
+                            maxLength={300}
+                            className={inputCls}
+                            value={s.pertanyaan}
+                            onChange={(event) =>
+                              aturSoal(i, si, { pertanyaan: event.target.value })
+                            }
+                          />
+                          <p className="mt-2 text-xs font-semibold text-muted">
+                            Opsi (radio = jawaban benar)
+                          </p>
+                          <ul className="mt-1 space-y-1">
+                            {s.opsi.map((o, oi) => (
+                              <li key={oi} className="flex items-center gap-2">
+                                <input
+                                  type="radio"
+                                  name={`kunci-${i}-${si}`}
+                                  aria-label={`Jawaban benar soal ${si + 1} modul ${i + 1} opsi ${
+                                    oi + 1
+                                  }`}
+                                  checked={s.kunci === oi}
+                                  onChange={() => aturSoal(i, si, { kunci: oi })}
+                                />
+                                <input
+                                  type="text"
+                                  aria-label={`Opsi ${oi + 1} soal ${si + 1} modul ${i + 1}`}
+                                  placeholder={`Opsi ${oi + 1}`}
+                                  maxLength={200}
+                                  className={inputCls}
+                                  value={o}
+                                  onChange={(event) => aturOpsi(i, si, oi, event.target.value)}
+                                />
+                                {s.opsi.length > 2 && (
+                                  <button
+                                    type="button"
+                                    aria-label={`Hapus opsi ${oi + 1} soal ${si + 1}`}
+                                    onClick={() => hapusOpsi(i, si, oi)}
+                                    className="text-xs font-semibold text-red-700 hover:underline"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                          {s.opsi.length < 6 && (
+                            <button
+                              type="button"
+                              onClick={() => tambahOpsi(i, si)}
+                              className="mt-1 text-xs font-semibold text-brand hover:underline"
+                            >
+                              + Tambah opsi
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ol>
+                    {(m.quiz ?? []).length < 10 && (
+                      <button
+                        type="button"
+                        onClick={() => tambahSoal(i)}
+                        className="mt-2 rounded border border-line px-3 py-1 text-xs font-semibold hover:bg-soft"
+                      >
+                        + Tambah soal
+                      </button>
+                    )}
+                  </div>
                   {modul.length > 1 && (
                     <button
                       type="button"

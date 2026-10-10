@@ -171,6 +171,86 @@ describe('validasiKursus', () => {
   });
 });
 
+// — Kursus: video & kuis per modul (sistem video/asesmen) ———————————————————————
+
+const SOAL_VALID = {
+  pertanyaan: 'Apa kata kunci yang baik untuk riset?',
+  opsi: ['Kata kunci spesifik', 'Kata umum satu kata'],
+  kunci: 0,
+};
+/** Body kursus dengan modul yang membawa `video`/`quiz` (untuk kasus per kasus). */
+const kursusDenganModul = (modul: unknown) => ({
+  ...BODY_KURSUS_VALID,
+  modul,
+});
+
+describe('validasiKursus — video & kuis per modul', () => {
+  test('video/quiz absen (body lama) → dinormalkan null / []', () => {
+    const hasil = validasiKursus(BODY_KURSUS_VALID);
+    expect(hasil.ok).toBe(true);
+    if (hasil.ok) {
+      expect(hasil.data.modul[0].video).toBeNull();
+      expect(hasil.data.modul[0].quiz).toEqual([]);
+    }
+  });
+
+  test('video valid http(s) → terpetak; bukan URL → tolak eksplisit', () => {
+    const ok = validasiKursus(
+      kursusDenganModul([
+        { judul: 'M1', deskripsi: 'D1', meta: '4 video', video: 'https://youtu.be/abc123' },
+      ]),
+    );
+    expect(ok.ok).toBe(true);
+    if (ok.ok) expect(ok.data.modul[0].video).toBe('https://youtu.be/abc123');
+
+    expect(
+      validasiKursus(
+        kursusDenganModul([{ judul: 'M1', deskripsi: 'D1', meta: 'x', video: 'bukan-url' }]),
+      ),
+    ).toEqual({ ok: false, error: 'Modul ke-1: field "video" harus URL http(s)' });
+  });
+
+  test('kuis valid → terpetak utuh (kunci = index opsi)', () => {
+    const hasil = validasiKursus(
+      kursusDenganModul([{ judul: 'M1', deskripsi: 'D1', meta: 'x', quiz: [SOAL_VALID] }]),
+    );
+    expect(hasil.ok).toBe(true);
+    if (hasil.ok) expect(hasil.data.modul[0].quiz).toEqual([SOAL_VALID]);
+  });
+
+  test('kuis invalid: bukan array / opsi <2 / kunci di luar rentang / >10 soal → tolak', () => {
+    expect(validasiKursus(kursusDenganModul([{ judul: 'M1', deskripsi: 'D1', meta: 'x', quiz: 'bukan-array' }]))).toEqual({
+      ok: false,
+      error: 'Modul ke-1: field "quiz" harus array',
+    });
+    expect(
+      validasiKursus(
+        kursusDenganModul([{ judul: 'M1', deskripsi: 'D1', meta: 'x', quiz: [{ pertanyaan: 'P?', opsi: ['satu'], kunci: 0 }] }]),
+      ),
+    ).toEqual({ ok: false, error: 'Modul ke-1, soal ke-1: "opsi" minimal 2' });
+    expect(
+      validasiKursus(
+        kursusDenganModul([{ judul: 'M1', deskripsi: 'D1', meta: 'x', quiz: [{ pertanyaan: 'P?', opsi: ['a', 'b'], kunci: 5 }] }]),
+      ),
+    ).toEqual({ ok: false, error: 'Modul ke-1, soal ke-1: "kunci" harus index opsi yang valid (0-1)' });
+    const banyak = Array.from({ length: 11 }, () => SOAL_VALID);
+    expect(validasiKursus(kursusDenganModul([{ judul: 'M1', deskripsi: 'D1', meta: 'x', quiz: banyak }]))).toEqual({
+      ok: false,
+      error: 'Modul ke-1: field "quiz" maksimal 10 soal',
+    });
+  });
+
+  test('soal dengan pertanyaan kosong → tolak menyebut nomor soalnya', () => {
+    expect(
+      validasiKursus(
+        kursusDenganModul([
+          { judul: 'M1', deskripsi: 'D1', meta: 'x', quiz: [{ pertanyaan: '  ', opsi: ['a', 'b'], kunci: 0 }] },
+        ]),
+      ),
+    ).toEqual({ ok: false, error: 'Modul ke-1, soal ke-1: "pertanyaan" wajib diisi' });
+  });
+});
+
 // — Prioritas 2: batas panjang field teks ————————————————————————————————
 
 describe('batas panjang field teks (Prioritas 2)', () => {

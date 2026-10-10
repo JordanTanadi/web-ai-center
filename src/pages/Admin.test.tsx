@@ -413,7 +413,68 @@ describe('Admin — tab Kursus', () => {
         body: expect.objectContaining({
           kode: 'M01',
           target: ['Mahasiswa'],
-          modul: [{ judul: 'M1', deskripsi: 'D1', meta: '2 video' }],
+          modul: [
+            { judul: 'M1', deskripsi: 'D1', meta: '2 video', video: null, quiz: [] },
+          ],
+        }),
+      }),
+    );
+  });
+
+  it('isi video + kuis → body membawa video & quiz; soal kosong dibuang', async () => {
+    mockDaftar.mockResolvedValue([]);
+    mockKirim.mockResolvedValue({ ...KURSUS, kode: 'M01' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Target peserta/), { target: { value: 'Mahasiswa' } });
+    fireEvent.change(screen.getByLabelText('Judul *'), { target: { value: 'Kursus Video' } });
+    fireEvent.change(screen.getByLabelText(/deskripsi singkat/i), { target: { value: 'D.' } });
+    fireEvent.change(screen.getByLabelText(/tentang kursus/i), { target: { value: 'T.' } });
+    fireEvent.change(screen.getByLabelText(/durasi/i), { target: { value: '2 sesi' } });
+    fireEvent.change(screen.getByLabelText(/level/i), { target: { value: 'Pemula' } });
+    fireEvent.change(screen.getByLabelText(/format/i), { target: { value: 'Online' } });
+    fireEvent.change(screen.getByLabelText('Instruktur *'), { target: { value: 'Tim' } });
+    fireEvent.change(screen.getByLabelText(/peran instruktur/i), { target: { value: 'Pengajar' } });
+    fireEvent.change(screen.getByLabelText(/inisial/i), { target: { value: 'T' } });
+    fireEvent.change(screen.getByLabelText(/hasil belajar/i), { target: { value: 'Hasil 1' } });
+    fireEvent.change(screen.getByLabelText('Judul modul 1'), { target: { value: 'M1' } });
+    fireEvent.change(screen.getByLabelText('Meta modul 1'), { target: { value: '2 video' } });
+    fireEvent.change(screen.getByLabelText('Deskripsi modul 1'), { target: { value: 'D1' } });
+    fireEvent.change(screen.getByLabelText('Video modul 1'), {
+      target: { value: 'https://youtu.be/abc12345' },
+    });
+
+    // Soal 1 diisi lengkap; soal 2 sengaja dibiarkan kosong (harus dibuang).
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah soal' }));
+    fireEvent.change(screen.getByLabelText('Pertanyaan 1 modul 1'), {
+      target: { value: 'Apa kata kunci yang baik?' },
+    });
+    fireEvent.change(screen.getByLabelText('Opsi 1 soal 1 modul 1'), {
+      target: { value: 'Spesifik' },
+    });
+    fireEvent.change(screen.getByLabelText('Opsi 2 soal 1 modul 1'), {
+      target: { value: 'Umum' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah soal' }));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/kursus',
+      expect.objectContaining({
+        body: expect.objectContaining({
+          modul: [
+            {
+              judul: 'M1',
+              deskripsi: 'D1',
+              meta: '2 video',
+              video: 'https://youtu.be/abc12345',
+              quiz: [{ pertanyaan: 'Apa kata kunci yang baik?', opsi: ['Spesifik', 'Umum'], kunci: 0 }],
+            },
+          ],
         }),
       }),
     );

@@ -423,6 +423,15 @@ export const kamusBahasa: Record<string, string> = {
   'Mulai modul': 'Start module',
   'Lesson sudah ditonton': 'Lesson watched',
   'Mulai lesson': 'Start lesson',
+  'Tandai lesson ditonton': 'Mark lesson as watched',
+  'Video tersedia di tautan berikut': 'Video available at the following link',
+  'Video menyusul — materi teks tetap bisa dipelajari.':
+    'Video coming soon — the text materials can still be studied.',
+  'Kuis modul': 'Module quiz',
+  'Jawab semua soal dengan benar untuk lulus checkpoint.':
+    'Answer all questions correctly to pass the checkpoint.',
+  'Kirim jawaban': 'Submit answers',
+  '✓ Checkpoint sudah lulus': '✓ Checkpoint already passed',
   'Checkpoint: apa tujuan utama lesson ini?': 'Checkpoint: what is the main goal of this lesson?',
   '✓ Jawaban benar: terapkan konsep pada masalah nyata':
     '✓ Correct answer: apply the concept to a real problem',

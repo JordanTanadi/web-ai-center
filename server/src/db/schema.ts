@@ -10,11 +10,26 @@ export interface HeroCta {
   to: string;
 }
 
-/** Elemen modul kursus (jsonb) — ↔ src/data/pelatihan.ts Modul. */
+/** Soal kuis per modul — ↔ src/data/pelatihan.ts Soal (`kunci` = index opsi benar). */
+export interface SoalKursus {
+  pertanyaan: string;
+  opsi: string[];
+  kunci: number;
+}
+
+/**
+ * Elemen modul kursus (jsonb) — ↔ src/data/pelatihan.ts Modul.
+ * `video` & `quiz` opsional (baris lama dari seed tidak memilikinya);
+ * tulis via admin selalu menyimpan keduanya (null / [] bila kosong).
+ */
 export interface ModulKursus {
   judul: string;
   deskripsi: string;
   meta: string;
+  /** URL video lesson (opsional); tampilan frontend meng-embed bila didukung. */
+  video?: string | null;
+  /** Kuis per modul (opsional); kosong → frontend memakai checkpoint dummy. */
+  quiz?: SoalKursus[];
 }
 
 /** Item statistik "Tentang Kami": { label, value }. */
