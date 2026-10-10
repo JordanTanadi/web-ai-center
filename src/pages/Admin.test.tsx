@@ -480,6 +480,92 @@ describe('Admin — tab Kursus', () => {
     );
   });
 
+  it('inisial dikosongkan → otomatis 2 huruf pertama nama instruktur', async () => {
+    mockDaftar.mockResolvedValue([]);
+    mockKirim.mockResolvedValue({ ...KURSUS, kode: 'M01' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Target peserta/), { target: { value: 'Mahasiswa' } });
+    fireEvent.change(screen.getByLabelText('Judul *'), { target: { value: 'Kursus Inisial' } });
+    fireEvent.change(screen.getByLabelText(/deskripsi singkat/i), { target: { value: 'D.' } });
+    fireEvent.change(screen.getByLabelText(/tentang kursus/i), { target: { value: 'T.' } });
+    fireEvent.change(screen.getByLabelText(/durasi/i), { target: { value: '2 sesi' } });
+    fireEvent.change(screen.getByLabelText(/level/i), { target: { value: 'Pemula' } });
+    fireEvent.change(screen.getByLabelText(/format/i), { target: { value: 'Online' } });
+    fireEvent.change(screen.getByLabelText('Instruktur *'), { target: { value: 'Budi Santoso' } });
+    fireEvent.change(screen.getByLabelText(/peran instruktur/i), { target: { value: 'Pengajar' } });
+    // Inisial sengaja dibiarkan kosong.
+    fireEvent.change(screen.getByLabelText(/hasil belajar/i), { target: { value: 'Hasil 1' } });
+    fireEvent.change(screen.getByLabelText('Judul modul 1'), { target: { value: 'M1' } });
+    fireEvent.change(screen.getByLabelText('Meta modul 1'), { target: { value: '2 video' } });
+    fireEvent.change(screen.getByLabelText('Deskripsi modul 1'), { target: { value: 'D1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/kursus',
+      expect.objectContaining({
+        body: expect.objectContaining({ inisial: 'BS', instruktur: 'Budi Santoso' }),
+      }),
+    );
+  });
+
+  it('inisial diisi manual → nilai user dipakai (tanpa dioverride)', async () => {
+    mockDaftar.mockResolvedValue([]);
+    mockKirim.mockResolvedValue({ ...KURSUS, kode: 'M01' } as never);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    fireEvent.change(screen.getByLabelText(/^Target peserta/), { target: { value: 'Mahasiswa' } });
+    fireEvent.change(screen.getByLabelText('Judul *'), { target: { value: 'Kursus Inisial' } });
+    fireEvent.change(screen.getByLabelText(/deskripsi singkat/i), { target: { value: 'D.' } });
+    fireEvent.change(screen.getByLabelText(/tentang kursus/i), { target: { value: 'T.' } });
+    fireEvent.change(screen.getByLabelText(/durasi/i), { target: { value: '2 sesi' } });
+    fireEvent.change(screen.getByLabelText(/level/i), { target: { value: 'Pemula' } });
+    fireEvent.change(screen.getByLabelText(/format/i), { target: { value: 'Online' } });
+    fireEvent.change(screen.getByLabelText('Instruktur *'), { target: { value: 'Budi Santoso' } });
+    fireEvent.change(screen.getByLabelText(/peran instruktur/i), { target: { value: 'Pengajar' } });
+    fireEvent.change(screen.getByLabelText(/inisial/i), { target: { value: 'BSant' } });
+    fireEvent.change(screen.getByLabelText(/hasil belajar/i), { target: { value: 'Hasil 1' } });
+    fireEvent.change(screen.getByLabelText('Judul modul 1'), { target: { value: 'M1' } });
+    fireEvent.change(screen.getByLabelText('Meta modul 1'), { target: { value: '2 video' } });
+    fireEvent.change(screen.getByLabelText('Deskripsi modul 1'), { target: { value: 'D1' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Simpan' }));
+
+    expect(await screen.findByRole('status')).toHaveTextContent('tersimpan');
+    expect(mockKirim).toHaveBeenCalledWith(
+      '/kursus',
+      expect.objectContaining({ body: expect.objectContaining({ inisial: 'BSant' }) }),
+    );
+  });
+
+  it('form kursus terbagi 5 bagian bernomor + video/kuis di balik disclosure', async () => {
+    mockDaftar.mockResolvedValue([]);
+    await renderDashboard();
+    fireEvent.click(screen.getByRole('tab', { name: 'Kursus' }));
+    fireEvent.click(screen.getByRole('button', { name: '+ Tambah baru' }));
+
+    for (const judul of [
+      '1. Audiens & kode',
+      '2. Isi kursus',
+      '3. Detail tampilan',
+      '4. Instruktur',
+      '5. Modul & materi',
+    ]) {
+      expect(screen.getByRole('heading', { name: judul })).toBeInTheDocument();
+    }
+
+    // Video & kuis dibalik <details> — default tertutup, ringkasan status tampil.
+    const details = document.querySelector('form details');
+    expect(details).not.toBeNull();
+    expect(details).not.toHaveAttribute('open');
+    expect(details?.querySelector('summary')?.textContent).toContain('Video & kuis modul');
+    expect(screen.getByText('tanpa video · tanpa kuis')).toBeInTheDocument();
+  });
+
   it('tambah modul → baris modul 2 muncul', async () => {
     mockDaftar.mockResolvedValue([]);
     await renderDashboard();

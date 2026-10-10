@@ -28,7 +28,7 @@
  *   berikutnya, lihat lib/kodeKursus) dan tidak bisa diketik; target peserta
  *   kini dropdown 1 pilihan dari 4 label filter katalog (bukan teks bebas).
  */
-import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { ambilDaftar, ambilJson, kirimFileAdmin, kirimJsonAdmin } from '../lib/api.ts';
 import { LABEL_PESERTA, kodeOtomatis } from '../lib/kodeKursus.ts';
 import type { BeritaItem } from '../data/berita.ts';
@@ -738,6 +738,51 @@ function kuisSiapKirim(quiz: Soal[] | undefined): Soal[] {
 
 const MODUL_KOSONG: Modul = { judul: '', deskripsi: '', meta: '', video: '', quiz: [] };
 
+/** Saran level & format pada form kursus (datalist — teks bebas tetap boleh). */
+const OPSI_LEVEL = ['Pemula', 'Menengah', 'Lanjutan'];
+const OPSI_FORMAT = ['Online mandiri', 'Tatap muka', 'Hybrid'];
+
+/** Tebak inisial avatar dari nama instruktur (2 huruf pertama 2 kata pertama). */
+function autoInisial(nama: string): string {
+  const kata = nama.trim().split(/\s+/).filter(Boolean);
+  if (kata.length === 0) return 'AI';
+  return kata
+    .slice(0, 2)
+    .map((k) => k[0])
+    .join('')
+    .toUpperCase();
+}
+
+/** Ringkasan singkat video & kuis satu modul — badge di baris modul. */
+function ringkasanVideoKuis(m: Modul): string {
+  const video = (m.video ?? '').trim() === '' ? 'tanpa video' : 'video terisi';
+  const jmlSoal = (m.quiz ?? []).length;
+  return `${video} · ${jmlSoal === 0 ? 'tanpa kuis' : `${jmlSoal} soal kuis`}`;
+}
+
+/** Bagian berjudul dalam form admin — pengelompok visual + petunjuk singkat. */
+function BagianForm({
+  nomor,
+  judul,
+  petunjuk,
+  children,
+}: {
+  nomor: number;
+  judul: string;
+  petunjuk?: string;
+  children: ReactNode;
+}) {
+  return (
+    <section className="rounded-xl border border-line bg-soft/50 p-3">
+      <h4 className="text-sm font-bold uppercase tracking-[0.12em] text-brand">
+        {nomor}. {judul}
+      </h4>
+      {petunjuk && <p className="mt-0.5 text-xs text-muted">{petunjuk}</p>}
+      <div className="mt-3 space-y-3">{children}</div>
+    </section>
+  );
+}
+
 /** Section CRUD kursus + editor daftar modul (tab "Kursus" di dashboard). */
 function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void }) {
   const [daftar, setDaftar] = useState<Kursus[]>([]);
@@ -941,7 +986,8 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       format: k.format,
       instruktur: k.instruktur,
       peran: k.peran,
-      inisial: k.inisial,
+      // Inisial opsional di form — kosong → 2 huruf pertama dari nama instruktur.
+      inisial: k.inisial.trim() === '' ? autoInisial(k.instruktur) : k.inisial.trim(),
       target: [targetPilihan],
       hasil: barisDaftar(hasilText),
       // Baris modul yang ketiga kolomnya kosong diabaikan (sisa divalidasi server);
@@ -999,18 +1045,9 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
       </p>
     );
 
+  // Batas panjang tiap input = BATAS server (lib/tulis) → atribut maxLength.
   const inputCls = 'mt-1 w-full rounded-lg border border-line px-3 py-2';
   const labelCls = 'block text-sm font-semibold';
-  // maks = batas panjang server (lib/tulis BATAS) → atribut maxLength.
-  const teksSingkat: Array<{ kunci: keyof typeof k; label: string; maks: number }> = [
-    { kunci: 'judul', label: 'Judul', maks: 200 },
-    { kunci: 'durasi', label: 'Durasi (mis. 4 sesi)', maks: 100 },
-    { kunci: 'level', label: 'Level (mis. Pemula)', maks: 100 },
-    { kunci: 'format', label: 'Format (mis. Online)', maks: 100 },
-    { kunci: 'instruktur', label: 'Instruktur', maks: 200 },
-    { kunci: 'peran', label: 'Peran instruktur', maks: 200 },
-    { kunci: 'inisial', label: 'Inisial avatar', maks: 10 },
-  ];
 
   return (
     <section className="mt-6">
@@ -1065,116 +1102,272 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
           <h3 className="font-semibold">
             {mode === 'ubah' ? `Ubah kursus — ${kodeEdit ?? ''}` : 'Tambah kursus baru'}
           </h3>
-          <div>
-            <label htmlFor="kursus-kode" className={labelCls}>
-              {mode === 'ubah' ? 'Kode (kunci) *' : 'Kode (otomatis dari target peserta) *'}
-            </label>
-            <input
-              id="kursus-kode"
-              type="text"
-              readOnly={mode === 'tambah'}
-              disabled={mode === 'ubah'}
-              placeholder={mode === 'ubah' ? '' : 'Pilih target peserta dulu'}
-              className={`${inputCls} bg-soft`}
-              value={mode === 'ubah' ? (kodeEdit ?? '') : kodeBaru}
-            />
-            {mode === 'ubah' ? (
-              <p className="mt-1 text-xs text-muted">Kode kunci tidak bisa diganti saat edit.</p>
-            ) : (
-              <p className="mt-1 text-xs text-muted">
-                Dibuat otomatis dari target peserta: prefiks M (Mahasiswa) · D (Dosen) · G (Guru) ·
-                U (masyarakat umum) + nomor berikutnya, mis. M01, G01.
-              </p>
-            )}
-          </div>
-          {teksSingkat.map((f) => (
-            <div key={f.kunci}>
-              <label htmlFor={`kursus-${f.kunci}`} className={labelCls}>
-                {f.label} *
+          <p className="text-xs text-muted">
+            Isi dari atas ke bawah — yang bertanda * wajib diisi. Bagian "Video & kuis" boleh
+            dibiarkan tertutup dan kosong.
+          </p>
+          {/* 1) Audiens dulu — target menentukan kode otomatis. */}
+          <BagianForm
+            nomor={1}
+            judul="Audiens & kode"
+            petunjuk="Pilih siapa pesertanya; kode kursus dibuat otomatis dari pilihan ini."
+          >
+            <div>
+              <label htmlFor="kursus-target" className={labelCls}>
+                Target peserta *{' '}
+                <span className="font-normal text-muted">(menentukan kode otomatis)</span>
+              </label>
+              <select
+                id="kursus-target"
+                className={inputCls}
+                value={targetPilihan}
+                onChange={(event) => setTargetPilihan(event.target.value)}
+              >
+                <option value="">— pilih peserta —</option>
+                {LABEL_PESERTA.map((label) => (
+                  <option key={label} value={label}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+              {targetLama.length > 1 && (
+                <p className="mt-1 text-xs text-muted">
+                  Data lama punya {targetLama.length} target ({targetLama.join(', ')}) — simpan
+                  akan menyimpan pilihan ini saja.
+                </p>
+              )}
+            </div>
+            <div>
+              <label htmlFor="kursus-kode" className={labelCls}>
+                {mode === 'ubah' ? 'Kode (kunci) *' : 'Kode (otomatis dari target peserta) *'}
               </label>
               <input
-                id={`kursus-${f.kunci}`}
+                id="kursus-kode"
+                type="text"
+                readOnly={mode === 'tambah'}
+                disabled={mode === 'ubah'}
+                placeholder={mode === 'ubah' ? '' : 'Pilih target peserta dulu'}
+                className={`${inputCls} bg-soft`}
+                value={mode === 'ubah' ? (kodeEdit ?? '') : kodeBaru}
+              />
+              {mode === 'ubah' ? (
+                <p className="mt-1 text-xs text-muted">
+                  Kode kunci tidak bisa diganti saat edit.
+                </p>
+              ) : (
+                <p className="mt-1 text-xs text-muted">
+                  Prefiks M (Mahasiswa) · D (Dosen) · G (Guru) · U (masyarakat umum) + nomor
+                  berikutnya, mis. M01.
+                </p>
+              )}
+            </div>
+          </BagianForm>
+          {/* 2) Teks inti kursus. */}
+          <BagianForm
+            nomor={2}
+            judul="Isi kursus"
+            petunjuk="Teks utama yang tampil di katalog dan halaman detail."
+          >
+            <div>
+              <label htmlFor="kursus-judul" className={labelCls}>
+                Judul *
+              </label>
+              <input
+                id="kursus-judul"
                 type="text"
                 required
-                maxLength={f.maks}
+                maxLength={200}
                 className={inputCls}
-                value={k[f.kunci]}
-                onChange={(event) => atur(f.kunci, event.target.value)}
+                value={k.judul}
+                onChange={(event) => atur('judul', event.target.value)}
               />
             </div>
-          ))}
-          <div>
-            <label htmlFor="kursus-deskripsi" className={labelCls}>
-              Deskripsi singkat *
-            </label>
-            <textarea
-              id="kursus-deskripsi"
-              required
-              rows={3}
-              maxLength={1000}
-              className={inputCls}
-              value={k.deskripsi}
-              onChange={(event) => atur('deskripsi', event.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="kursus-tentang" className={labelCls}>
-              Tentang kursus (panjang) *
-            </label>
-            <textarea
-              id="kursus-tentang"
-              required
-              rows={4}
-              maxLength={20000}
-              className={inputCls}
-              value={k.tentang}
-              onChange={(event) => atur('tentang', event.target.value)}
-            />
-          </div>
-          <div>
-            <label htmlFor="kursus-target" className={labelCls}>
-              Target peserta *{' '}
-              <span className="font-normal text-muted">(menentukan kode otomatis)</span>
-            </label>
-            <select
-              id="kursus-target"
-              className={inputCls}
-              value={targetPilihan}
-              onChange={(event) => setTargetPilihan(event.target.value)}
-            >
-              <option value="">— pilih peserta —</option>
-              {LABEL_PESERTA.map((label) => (
-                <option key={label} value={label}>
-                  {label}
-                </option>
+            <div>
+              <label htmlFor="kursus-deskripsi" className={labelCls}>
+                Deskripsi singkat *
+              </label>
+              <textarea
+                id="kursus-deskripsi"
+                required
+                rows={3}
+                maxLength={1000}
+                placeholder="1–2 kalimat — tampil di kartu katalog."
+                className={inputCls}
+                value={k.deskripsi}
+                onChange={(event) => atur('deskripsi', event.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="kursus-tentang" className={labelCls}>
+                Tentang kursus (panjang) *
+              </label>
+              <textarea
+                id="kursus-tentang"
+                required
+                rows={4}
+                maxLength={20000}
+                placeholder="Penjelasan lengkap kursus — tampil di halaman detail."
+                className={inputCls}
+                value={k.tentang}
+                onChange={(event) => atur('tentang', event.target.value)}
+              />
+            </div>
+          </BagianForm>
+          {/* 3) Ikhtisar singkat yang tampil di kartu & hero detail. */}
+          <BagianForm
+            nomor={3}
+            judul="Detail tampilan"
+            petunjuk="Ikhtisar singkat di kartu katalog & baris fakta halaman detail."
+          >
+            <div>
+              <label htmlFor="kursus-durasi" className={labelCls}>
+                Durasi *
+              </label>
+              <input
+                id="kursus-durasi"
+                type="text"
+                required
+                maxLength={100}
+                placeholder="mis. 4 sesi"
+                className={inputCls}
+                value={k.durasi}
+                onChange={(event) => atur('durasi', event.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="kursus-level" className={labelCls}>
+                Level *
+              </label>
+              <input
+                id="kursus-level"
+                type="text"
+                required
+                maxLength={100}
+                list="kursus-level-opsi"
+                placeholder="mis. Pemula — pilih dari saran atau ketik sendiri"
+                className={inputCls}
+                value={k.level}
+                onChange={(event) => atur('level', event.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="kursus-format" className={labelCls}>
+                Format *
+              </label>
+              <input
+                id="kursus-format"
+                type="text"
+                required
+                maxLength={100}
+                list="kursus-format-opsi"
+                placeholder="mis. Online mandiri — pilih dari saran atau ketik sendiri"
+                className={inputCls}
+                value={k.format}
+                onChange={(event) => atur('format', event.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="kursus-hasil" className={labelCls}>
+                Hasil belajar (satu per baris) *
+              </label>
+              <textarea
+                id="kursus-hasil"
+                required
+                rows={3}
+                placeholder={'Satu kemampuan peserta per baris, mis.:\nMerumuskan kata kunci riset'}
+                className={inputCls}
+                value={hasilText}
+                onChange={(event) => setHasilText(event.target.value)}
+              />
+            </div>
+            {/* Saran pilihan cepat (datalist) — teks bebas tetap diperbolehkan. */}
+            <datalist id="kursus-level-opsi">
+              {OPSI_LEVEL.map((o) => (
+                <option key={o} value={o} />
               ))}
-            </select>
-            {targetLama.length > 1 && (
-              <p className="mt-1 text-xs text-muted">
-                Data lama punya {targetLama.length} target ({targetLama.join(', ')}) — simpan akan
-                menyimpan pilihan ini saja.
-              </p>
-            )}
-          </div>
-          <div>
-            <label htmlFor="kursus-hasil" className={labelCls}>
-              Hasil belajar (satu per baris) *
-            </label>
-            <textarea
-              id="kursus-hasil"
-              required
-              rows={3}
-              className={inputCls}
-              value={hasilText}
-              onChange={(event) => setHasilText(event.target.value)}
-            />
-          </div>
-          <div>
+            </datalist>
+            <datalist id="kursus-format-opsi">
+              {OPSI_FORMAT.map((o) => (
+                <option key={o} value={o} />
+              ))}
+            </datalist>
+          </BagianForm>
+          {/* 4) Instruktur. */}
+          <BagianForm
+            nomor={4}
+            judul="Instruktur"
+            petunjuk="Tampil di kartu katalog (nama) & halaman detail (kartu instruktur)."
+          >
+            <div>
+              <label htmlFor="kursus-instruktur" className={labelCls}>
+                Instruktur *
+              </label>
+              <input
+                id="kursus-instruktur"
+                type="text"
+                required
+                maxLength={200}
+                placeholder="mis. Budi Santoso atau Tim Riset Ubaya AI Center"
+                className={inputCls}
+                value={k.instruktur}
+                onChange={(event) => atur('instruktur', event.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="kursus-peran" className={labelCls}>
+                Peran instruktur *
+              </label>
+              <input
+                id="kursus-peran"
+                type="text"
+                required
+                maxLength={200}
+                placeholder="mis. Dosen dan praktisi riset AI"
+                className={inputCls}
+                value={k.peran}
+                onChange={(event) => atur('peran', event.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="kursus-inisial" className={labelCls}>
+                Inisial avatar (opsional){' '}
+                <span className="font-normal text-muted">
+                  — otomatis dari nama bila dikosongkan
+                </span>
+              </label>
+              <input
+                id="kursus-inisial"
+                type="text"
+                maxLength={10}
+                placeholder="mis. BS"
+                className={inputCls}
+                value={k.inisial}
+                onChange={(event) => atur('inisial', event.target.value)}
+              />
+            </div>
+          </BagianForm>
+          {/* 5) Modul — video & kuis disembunyikan di balik disclosure per modul. */}
+          <BagianForm
+            nomor={5}
+            judul="Modul & materi"
+            petunjuk="Urut tampil sebagai daftar materi. Video & kuis opsional — buka bila sudah siap."
+          >
             <p className={labelCls}>Daftar modul *</p>
-            <ol className="mt-2 space-y-3">
+            <ol className="space-y-3">
               {modul.map((m, i) => (
                 <li key={i} className="rounded-lg border border-line p-3">
-                  <p className="text-xs font-bold text-muted">Modul {i + 1}</p>
+                  <p className="flex items-center gap-2 text-xs font-bold text-muted">
+                    Modul {i + 1}
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${
+                        (m.video ?? '').trim() !== '' || (m.quiz ?? []).length > 0
+                          ? 'bg-brand/10 text-brand'
+                          : 'bg-soft text-muted'
+                      }`}
+                    >
+                      {ringkasanVideoKuis(m)}
+                    </span>
+                  </p>
                   <input
                     type="text"
                     required
@@ -1205,15 +1398,20 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                     value={m.deskripsi}
                     onChange={(event) => aturModul(i, 'deskripsi', event.target.value)}
                   />
-                  <input
-                    type="text"
-                    aria-label={`Video modul ${i + 1}`}
-                    placeholder="URL video YouTube/Vimeo (opsional)"
-                    maxLength={300}
-                    className={inputCls}
-                    value={m.video ?? ''}
-                    onChange={(event) => aturModul(i, 'video', event.target.value)}
-                  />
+                  {/* Video & kuis opsional — tertutup default supaya form ringkas. */}
+                  <details className="mt-2 rounded-md border border-line bg-soft/40 p-2">
+                    <summary className="cursor-pointer text-sm font-semibold select-none">
+                      Video &amp; kuis modul (opsional)
+                    </summary>
+                    <input
+                      type="text"
+                      aria-label={`Video modul ${i + 1}`}
+                      placeholder="URL video YouTube/Vimeo (opsional)"
+                      maxLength={300}
+                      className={inputCls}
+                      value={m.video ?? ''}
+                      onChange={(event) => aturModul(i, 'video', event.target.value)}
+                    />
                   <p className="mt-1 text-xs text-muted">
                     Kosongkan bila video belum ada — ruang belajar menampilkan "video menyusul".
                   </p>
@@ -1303,6 +1501,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
                       </button>
                     )}
                   </div>
+                  </details>
                   {modul.length > 1 && (
                     <button
                       type="button"
@@ -1322,7 +1521,7 @@ function KursusAdmin({ token, gagal401 }: { token: string; gagal401: () => void 
             >
               + Tambah modul
             </button>
-          </div>
+          </BagianForm>
           <div className="flex gap-2">
             <button
               type="submit"
