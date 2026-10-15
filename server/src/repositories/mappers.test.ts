@@ -3,7 +3,7 @@
  * frontend, dan kolom NULL tidak boleh bocor sebagai `null` di JSON.
  */
 import { describe, expect, test } from 'bun:test';
-import { heroSlides, inference, kursus, layanan, profil, tim, berita, dokumentasi } from '../db/schema';
+import { heroSlides, inference, kursus, layanan, profil, progressPembelajaran, tim, berita, dokumentasi } from '../db/schema';
 import {
   toAnggotaTim,
   toBeritaItem,
@@ -14,6 +14,7 @@ import {
   toKursus,
   toLayanan,
   toProfil,
+  toProgresPeserta,
   toTestimoni,
 } from './mappers';
 
@@ -302,5 +303,25 @@ describe('toKursus', () => {
     const item = toKursus({ ...baseKursus, hasil: [], modul: [] });
     expect(item.hasil).toEqual([]);
     expect(item.modul).toEqual([]);
+  });
+});
+
+describe('toProgresPeserta', () => {
+  const baseProgress: typeof progressPembelajaran.$inferSelect = {
+    pesertaId: 'abc12345-uuid',
+    kode: 'R01',
+    state: { enrolled: true, completed: [true, false] },
+    diperbaruiPada: new Date('2026-10-15T08:00:00Z'),
+  };
+
+  test('state blob apa adanya; stempel waktu Date → ISO string kontrak API', () => {
+    const item = toProgresPeserta(baseProgress);
+    expect(item).toEqual({
+      kode: 'R01',
+      state: { enrolled: true, completed: [true, false] },
+      diperbaruiPada: '2026-10-15T08:00:00.000Z',
+    });
+    // Tidak ada kolom internal yang bocor ke respons.
+    expect('pesertaId' in item).toBe(false);
   });
 });

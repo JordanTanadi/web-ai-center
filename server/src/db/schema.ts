@@ -2,7 +2,7 @@
  * Skema database (Drizzle ORM) — target PostgreSQL.
  * Nama kolom snake_case; nama properti TS camelCase mengikuti interface frontend.
  */
-import { date, integer, jsonb, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
+import { date, integer, jsonb, pgTable, primaryKey, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 /** CTA hero: { label, to } — mengikuti interface HeroSlide di frontend. */
 export interface HeroCta {
@@ -187,3 +187,23 @@ export const kursus = pgTable('kursus', {
   modul: jsonb('modul').$type<ModulKursus[]>().notNull(),
   urutan: integer('urutan').notNull().default(0),
 });
+
+/**
+ * Progres belajar peserta (LMS) TANPA akun — identitas = `pesertaId`
+ * (UUID acak yang disimpan browser di localStorage). Satu baris per
+ * (peserta, kursus) → PRIMARY KEY gabungan. `state` berisi JSON mentah
+ * StateBelajar dari frontend (dinormalisasi ulang saat dibaca — karena itu
+ * tidak divalidasi field-per-field, cukup objek + batas ukuran di lib/tulis).
+ */
+export const progressPembelajaran = pgTable(
+  'progress_pembelajaran',
+  {
+    pesertaId: text('peserta_id').notNull(),
+    kode: text('kode').notNull(),
+    state: jsonb('state').$type<Record<string, unknown>>().notNull(),
+    diperbaruiPada: timestamp('diperbarui_pada', { mode: 'date' }).notNull().defaultNow(),
+  },
+  // PRIMARY KEY gabungan: progres tersimpan sekali per (peserta, kursus) —
+  // upsert route POST /api/progress memakai konflik dua kolom ini.
+  (table) => ({ pk: primaryKey({ columns: [table.pesertaId, table.kode] }) }),
+);

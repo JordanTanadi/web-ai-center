@@ -14,9 +14,10 @@ import type {
   KontenInference,
   Layanan,
   Profil,
+  ProgresPeserta,
   Testimoni,
 } from '../api/types';
-import type { heroSlides, inference, klien, kursus, layanan, profil, tim, testimoni, berita, dokumentasi } from '../db/schema';
+import type { heroSlides, inference, klien, kursus, layanan, profil, progressPembelajaran, tim, testimoni, berita, dokumentasi } from '../db/schema';
 
 type BeritaRow = typeof berita.$inferSelect;
 type DokumentasiRow = typeof dokumentasi.$inferSelect;
@@ -28,6 +29,7 @@ type TestimoniRow = typeof testimoni.$inferSelect;
 type ProfilRow = typeof profil.$inferSelect;
 type InferenceRow = typeof inference.$inferSelect;
 type KursusRow = typeof kursus.$inferSelect;
+type ProgressRow = typeof progressPembelajaran.$inferSelect;
 
 export function toBeritaItem(row: BeritaRow): BeritaItem {
   return {
@@ -141,5 +143,14 @@ export function toKursus(row: KursusRow): Kursus {
     inisial: row.inisial,
     hasil: row.hasil,
     modul: row.modul,
+  };
+}
+
+/** Progres peserta: `state` blob JSON apa adanya; stempel waktu → ISO string. */
+export function toProgresPeserta(row: ProgressRow): ProgresPeserta {
+  return {
+    kode: row.kode,
+    state: row.state,
+    diperbaruiPada: row.diperbaruiPada.toISOString(),
   };
 }

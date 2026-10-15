@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import {
+  kodeFilterQuery,
+  pesertaIdSah,
   slugDariJudul,
   validasiBerita,
   validasiDokumentasi,
@@ -8,6 +10,7 @@ import {
   validasiKursus,
   validasiLayanan,
   validasiProfil,
+  validasiProgress,
   validasiTestimoni,
   validasiTim,
 } from './tulis';
@@ -740,5 +743,112 @@ describe('validasiHero', () => {
       error: 'Field "urutan" harus bilangan bulat 0-9999',
     });
     expect(validasiHero(null)).toEqual({ ok: false, error: 'Body harus objek JSON' });
+  });
+});
+
+// — Progres belajar peserta (GET/POST /api/progress, tanpa akun) ——————————
+
+describe('pesertaIdSah & kodeFilterQuery (query progres)', () => {
+  test('pesertaId: pola 8-64 [A-Za-z0-9-] → nilai bersih; selain itu → null', () => {
+    expect(pesertaIdSah('abc12345-uuid')).toBe('abc12345-uuid');
+    expect(pesertaIdSah('0123456789abcdef')).toBe('0123456789abcdef');
+    expect(pesertaIdSah('abc')).toBeNull(); // terlalu pendek
+    expect(pesertaIdSah('a'.repeat(65))).toBeNull(); // terlalu panjang
+    expect(pesertaIdSah('id dengan spasi')).toBeNull();
+    expect(pesertaIdSah('id!spesial')).toBeNull();
+    expect(pesertaIdSah(undefined)).toBeNull();
+    expect(pesertaIdSah(12345)).toBeNull();
+  });
+
+  test('kodeFilterQuery: kosong → null (tanpa filter); sah → uppercase; salah → error', () => {
+    expect(kodeFilterQuery(undefined)).toEqual({ kode: null });
+    expect(kodeFilterQuery('')).toEqual({ kode: null });
+    expect(kodeFilterQuery('r01')).toEqual({ kode: 'R01' });
+    expect(kodeFilterQuery('FTB-01')).toEqual({ kode: 'FTB-01' });
+    expect(kodeFilterQuery('R01;DROP')).toEqual({
+      error: 'Query "kode" hanya huruf/angka/- (maks 12)',
+    });
+    expect(kodeFilterQuery('x'.repeat(13))).toEqual({
+      error: 'Query "kode" hanya huruf/angka/- (maks 12)',
+    });
+    expect(kodeFilterQuery(42)).toEqual({
+      error: 'Query "kode" hanya huruf/angka/- (maks 12)',
+    });
+  });
+});
+
+describe('validasiProgress', () => {
+  const BODY_PROGRESS_VALID = {
+    pesertaId: 'abc12345-uuid',
+    kode: 'r01',
+    state: { enrolled: true, completed: [true, false], activeModule: 1 },
+  };
+
+  test('valid → kode ternormalisasi UPPERCASE, state lolos apa adanya', () => {
+    const hasil = validasiProgress(BODY_PROGRESS_VALID);
+    expect(hasil).toEqual({
+      ok: true,
+      data: {
+        pesertaId: 'abc12345-uuid',
+        kode: 'R01',
+        state: BODY_PROGRESS_VALID.state,
+      },
+    });
+  });
+
+  test('body bukan objek / pesertaId tidak sah → tolak eksplisit', () => {
+    expect(validasiProgress(null)).toEqual({ ok: false, error: 'Body harus objek JSON' });
+    expect(validasiProgress('string')).toEqual({ ok: false, error: 'Body harus objek JSON' });
+    expect(validasiProgress({ ...BODY_PROGRESS_VALID, pesertaId: 'abc' })).toEqual({
+      ok: false,
+      error: 'Field "pesertaId" harus 8-64 karakter (huruf/angka/-)',
+    });
+    expect(validasiProgress({ ...BODY_PROGRESS_VALID, pesertaId: undefined })).toEqual({
+      ok: false,
+      error: 'Field "pesertaId" harus 8-64 karakter (huruf/angka/-)',
+    });
+  });
+
+  test('kode salah pola → tolak', () => {
+    expect(validasiProgress({ ...BODY_PROGRESS_VALID, kode: 'R01;DROP' })).toEqual({
+      ok: false,
+      error: 'Field "kode" hanya huruf/angka/- (maks 12)',
+    });
+    expect(validasiProgress({ ...BODY_PROGRESS_VALID, kode: 42 })).toEqual({
+      ok: false,
+      error: 'Field "kode" hanya huruf/angka/- (maks 12)',
+    });
+  });
+
+  test('state bukan objek (null/array/primitif) → tolak', () => {
+    expect(validasiProgress({ ...BODY_PROGRESS_VALID, state: null })).toEqual({
+      ok: false,
+      error: 'Field "state" harus objek JSON',
+    });
+    expect(validasiProgress({ ...BODY_PROGRESS_VALID, state: [true] })).toEqual({
+      ok: false,
+      error: 'Field "state" harus objek JSON',
+    });
+    expect(validasiProgress({ ...BODY_PROGRESS_VALID, state: 'kacau' })).toEqual({
+      ok: false,
+      error: 'Field "state" harus objek JSON',
+    });
+  });
+
+  test('state > 32KB → tolak (batas byte mencegah body raksasa masuk DB)', () => {
+    const hasil = validasiProgress({
+      ...BODY_PROGRESS_VALID,
+      state: { review: 'x'.repeat(40_000) },
+    });
+    expect(hasil).toEqual({
+      ok: false,
+      error: 'Field "state" maksimal 32768 byte',
+    });
+    // Persis di batas masih lolos.
+    const pasBatas = validasiProgress({
+      ...BODY_PROGRESS_VALID,
+      state: { review: 'x'.repeat(32_000) },
+    });
+    expect(pasBatas.ok).toBe(true);
   });
 });

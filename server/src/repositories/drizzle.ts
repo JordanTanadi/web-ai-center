@@ -5,7 +5,7 @@
  */
 import { and, asc, desc, eq, ilike, isNotNull, or, sql } from 'drizzle-orm';
 import type { Db } from '../db/client';
-import { berita, dokumentasi, heroSlides, inference, klien, kursus, layanan, profil, tim, testimoni } from '../db/schema';
+import { berita, dokumentasi, heroSlides, inference, klien, kursus, layanan, profil, progressPembelajaran, tim, testimoni } from '../db/schema';
 import { toLikePattern } from '../lib/query';
 import {
   toAnggotaTim,
@@ -17,6 +17,7 @@ import {
   toKursus,
   toLayanan,
   toProfil,
+  toProgresPeserta,
   toTestimoni,
 } from './mappers';
 import type {
@@ -27,6 +28,7 @@ import type {
   KursusRepository,
   LayananRepository,
   ProfilRepository,
+  ProgressRepository,
   Repositories,
   TestimoniRepository,
   TimRepository,
@@ -494,6 +496,36 @@ export function createRepositories(db: Db): Repositories {
     },
   };
 
+  const progressRepo: ProgressRepository = {
+    async list(pesertaId, kode) {
+      const kondisi =
+        kode === null
+          ? eq(progressPembelajaran.pesertaId, pesertaId)
+          : and(
+              eq(progressPembelajaran.pesertaId, pesertaId),
+              eq(progressPembelajaran.kode, kode),
+            );
+      const rows = await db
+        .select()
+        .from(progressPembelajaran)
+        .where(kondisi)
+        .orderBy(asc(progressPembelajaran.kode));
+      return rows.map(toProgresPeserta);
+    },
+    async simpan(data) {
+      // UPSERT per (peserta, kode): state lama diganti total + stempel waktu baru.
+      const rows = await db
+        .insert(progressPembelajaran)
+        .values({ pesertaId: data.pesertaId, kode: data.kode, state: data.state })
+        .onConflictDoUpdate({
+          target: [progressPembelajaran.pesertaId, progressPembelajaran.kode],
+          set: { state: data.state, diperbaruiPada: new Date() },
+        })
+        .returning();
+      return toProgresPeserta(rows[0]);
+    },
+  };
+
   return {
     ping: async () => {
       await db.execute(sql`select 1`);
@@ -532,5 +564,6 @@ export function createRepositories(db: Db): Repositories {
     profil: profilRepo,
     inference: inferenceRepo,
     kursus: kursusRepo,
+    progress: progressRepo,
   };
 }

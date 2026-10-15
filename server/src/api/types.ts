@@ -179,3 +179,13 @@ export interface KontenInference {
 export interface ListResponse<T> {
   items: T[];
 }
+
+/**
+ * Progres belajar satu kursus milik satu peserta (GET/POST /api/progress).
+ * `state` = JSON mentah StateBelajar frontend; `diperbaruiPada` ISO string.
+ */
+export interface ProgresPeserta {
+  kode: string;
+  state: Record<string, unknown>;
+  diperbaruiPada: string;
+}

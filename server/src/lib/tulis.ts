@@ -14,6 +14,19 @@
 /** Bentuk hasil validasi: sukses membawa data bersih, atau alasan gagal. */
 export type HasilValidasi<T> = { ok: true; data: T } | { ok: false; error: string };
 
+/**
+ * Input simpan progres belajar (POST /api/progress — PUBLIK tanpa akun;
+ * identitas hanya `pesertaId` acak dari browser, lihat routes.ts).
+ */
+export interface InputProgress {
+  /** ID peserta anonim, 8-64 karakter [A-Za-z0-9-]. */
+  pesertaId: string;
+  /** Kode kursus ternormalisasi UPPERCASE, mis. 'R01'. */
+  kode: string;
+  /** JSON mentah state LMS (StateBelajar) — objek; dibatasi ukuran byte. */
+  state: Record<string, unknown>;
+}
+
 /** Input tulis dokumentasi (tanpa slug — slug dibuat dari judul). */
 export interface InputDokumentasi {
   judul: string;
@@ -150,6 +163,8 @@ export interface InputHero {
 
 const POLA_TANGGAL = /^\d{4}-\d{2}-\d{2}$/;
 const POLA_KODE = /^[A-Za-z0-9-]{1,12}$/;
+/** ID peserta anonim (UUID browser) — pola sama dengan validasi klien. */
+const POLA_PESERTA_ID = /^[A-Za-z0-9-]{8,64}$/;
 
 /**
  * Batas panjang karakter per field teks (Prioritas 2). Nilai batas disejajarkan
@@ -231,6 +246,9 @@ export const BATAS = {
   soalPertanyaan: 300,
   opsiMaks: 6,
   opsiItem: 200,
+  /** Progres belajar peserta (POST /api/progress, tanpa akun):
+      ukuran maksimum JSON `state` dalam byte (jauh di atas form LMS normal). */
+  progressStateBytes: 32_768,
 } as const;
 
 /**
@@ -878,5 +896,62 @@ export function validasiHero(body: unknown): HasilValidasi<InputHero> {
       sizes: sizes.nilai,
       layout,
     },
+  };
+}
+
+/**
+ * Cocokkan `pesertaId` anonim dari query/body — balik nilai bersih, atau
+ * `null` bila bukan string / di luar pola 8-64 karakter [A-Za-z0-9-].
+ */
+export function pesertaIdSah(nilai: unknown): string | null {
+  return typeof nilai === 'string' && POLA_PESERTA_ID.test(nilai) ? nilai : null;
+}
+
+/**
+ * Filter `kode` kursus dari query: `undefined`/`''` → `{ kode: null }`
+ * (tanpa filter); string tidak sah → `{ error }` (route membalas 400).
+ */
+export function kodeFilterQuery(
+  nilai: unknown,
+): { kode: string | null } | { error: string } {
+  if (nilai === undefined || nilai === null || nilai === '') return { kode: null };
+  if (typeof nilai !== 'string' || !POLA_KODE.test(nilai)) {
+    return { error: 'Query "kode" hanya huruf/angka/- (maks 12)' };
+  }
+  return { kode: nilai.toUpperCase() };
+}
+
+/**
+ * Validasi body simpan progres belajar (publik — tanpa token).
+ *
+ * `state` adalah blob JSON mentah milik frontend (StateBelajar) yang memang
+ * dinormalisasi ulang oleh `bacaStateBelajar` saat dibaca, jadi yang dijaga
+ * di sini hanya: objek JSON (bukan array/null) + batas ukuran byte — bukan
+ * field-per-field. `kode` dipakai konflik UPSERT bersama `pesertaId`.
+ */
+export function validasiProgress(body: unknown): HasilValidasi<InputProgress> {
+  if (body === null || typeof body !== 'object') {
+    return { ok: false, error: 'Body harus objek JSON' };
+  }
+  const b = body as Record<string, unknown>;
+  const pesertaId = pesertaIdSah(b.pesertaId);
+  if (pesertaId === null) {
+    return { ok: false, error: 'Field "pesertaId" harus 8-64 karakter (huruf/angka/-)' };
+  }
+  const kode = b.kode;
+  if (typeof kode !== 'string' || !POLA_KODE.test(kode)) {
+    return { ok: false, error: 'Field "kode" hanya huruf/angka/- (maks 12)' };
+  }
+  const state = b.state;
+  if (state === null || typeof state !== 'object' || Array.isArray(state)) {
+    return { ok: false, error: 'Field "state" harus objek JSON' };
+  }
+  const ukuran = JSON.stringify(state)?.length ?? 0;
+  if (ukuran > BATAS.progressStateBytes) {
+    return { ok: false, error: `Field "state" maksimal ${BATAS.progressStateBytes} byte` };
+  }
+  return {
+    ok: true,
+    data: { pesertaId, kode: kode.toUpperCase(), state: state as Record<string, unknown> },
   };
 }

@@ -29,6 +29,13 @@
       "when": 1791299569925,
       "tag": "0003_great_zeigeist",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792075747765,
+      "tag": "0004_pretty_salo",
+      "breakpoints": true
     }
   ]
 }

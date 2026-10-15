@@ -5,7 +5,7 @@
 import { describe, expect, test } from 'bun:test';
 import { getTableColumns } from 'drizzle-orm';
 import type { PgTable } from 'drizzle-orm/pg-core';
-import { berita, dokumentasi, heroSlides, inference, klien, kursus, layanan, profil, tim, testimoni } from './schema';
+import { berita, dokumentasi, heroSlides, inference, klien, kursus, layanan, profil, progressPembelajaran, tim, testimoni } from './schema';
 
 const columnNames = (table: PgTable): string[] => Object.keys(getTableColumns(table)).sort();
 
@@ -146,5 +146,22 @@ describe('kontrak kolom vs interface frontend', () => {
     expect(cols.kebutuhan.dataType).toBe('json');
     expect(cols.alur.dataType).toBe('json');
     expect(cols.contoh.dataType).toBe('json');
+  });
+
+  test('progressPembelajaran — PK gabungan (pesertaId, kode), state jsonb + waktu', () => {
+    expect(columnNames(progressPembelajaran)).toEqual([
+      'diperbaruiPada',
+      'kode',
+      'pesertaId',
+      'state',
+    ]);
+    const cols = getTableColumns(progressPembelajaran);
+    expect(cols.pesertaId.name).toBe('peserta_id');
+    expect(cols.diperbaruiPada.name).toBe('diperbarui_pada');
+    expect(cols.state.dataType).toBe('json');
+    // mode 'date' → nilai TS Date (di-mapper ke ISO di toProgresPeserta).
+    expect(cols.diperbaruiPada.dataType).toBe('date');
+    // Kunci baris = (peserta, kursus): tanpa serial id tunggal.
+    expect('id' in cols).toBe(false);
   });
 });

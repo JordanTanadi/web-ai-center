@@ -72,6 +72,16 @@ describe('buatRateLimitLogin', () => {
     expect(limiter.periksa('b').diizinkan).toBe(true);
   });
 
+  test('catat (alias pemakaian diterima) menghitung jendela sama seperti catatGagal', () => {
+    const { limiter } = buatLimiter(2);
+    limiter.catat('ip');
+    expect(limiter.periksa('ip')).toEqual({ diizinkan: true, sisaPercobaan: 1 });
+    limiter.catat('ip');
+    expect(limiter.periksa('ip').diizinkan).toBe(false);
+    // Kunci terpisah — dipakai route POST /api/progress (60 tulis/menit/IP).
+    expect(limiter.periksa('ip-lain').diizinkan).toBe(true);
+  });
+
   test('entri kadaluwarsa dibersihkan saat peta melebihi 256 kunci', () => {
     const { limiter, maju } = buatLimiter(3);
     for (let i = 0; i < 300; i++) limiter.catatGagal(`ip-${i}`);

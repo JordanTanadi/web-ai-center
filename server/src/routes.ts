@@ -15,6 +15,8 @@ import { buatTokenAdmin, passwordCocok, tokenAdminValid, tokenDariHeader } from 
 import { buatRateLimitLogin, kunciIpDariRequest } from './lib/rateLimit';
 import { normalizeSearch, parseOrder, parsePagination, trimOrNull } from './lib/query';
 import {
+  kodeFilterQuery,
+  pesertaIdSah,
   slugDariJudul,
   validasiBerita,
   validasiDokumentasi,
@@ -23,6 +25,7 @@ import {
   validasiKursus,
   validasiLayanan,
   validasiProfil,
+  validasiProgress,
   validasiTestimoni,
   validasiTim,
 } from './lib/tulis';
@@ -74,6 +77,13 @@ export function registerRoutes(
 
   /** Batas brute-force login admin: 5 gagal / 10 menit per IP (fixed-window). */
   const limiterLogin = buatRateLimitLogin({ batasPercobaan: 5, jendelaMs: 10 * 60_000 });
+  /**
+   * Rate-limit tulis progres publik (POST /api/progress): 60 percobaan/menit
+   * per IP. Pabriknya sama dengan limiter login (fixed-window in-memory) —
+   * `catat` menghitung SETIAP percobaan yang diterima, jadi pertumbuhan baris
+   * DB dari satu IP tetap terbatas meski endpoint ini tanpa token.
+   */
+  const limiterProgress = buatRateLimitLogin({ batasPercobaan: 60, jendelaMs: 60_000 });
 
   return app
     .get('/api/health', async ({ set }) => {
@@ -210,6 +220,45 @@ export function registerRoutes(
         return { error: 'Kursus tidak ditemukan' };
       }
       return item;
+    })
+
+    // — Progres belajar peserta (LMS; PUBLIK tanpa akun) ————————————
+    // Baca & simpan progres per (pesertaId browser, kode kursus). Tanpa token
+    // karena peserta tidak punya akun — keamanan = pola ID ketat + batas ukuran
+    // state (lib/tulis) + rate-limit tulis per IP.
+    .get('/api/progress', async ({ query, set }) => {
+      const pesertaId = pesertaIdSah(query.pesertaId);
+      if (pesertaId === null) {
+        set.status = 400;
+        return { error: 'Query "pesertaId" wajib: 8-64 karakter (huruf/angka/-)' };
+      }
+      const kode = kodeFilterQuery(query.kode);
+      if ('error' in kode) {
+        set.status = 400;
+        return { error: kode.error };
+      }
+      return { items: await repos.progress.list(pesertaId, kode.kode) };
+    })
+    .post('/api/progress', async ({ body, request, set }) => {
+      // Rate-limit dulu: endpoint publik, jadi tiap percobaan dihitung per IP.
+      const kunciIp = kunciIpDariRequest(request);
+      const keputusan = limiterProgress.periksa(kunciIp);
+      if (!keputusan.diizinkan) {
+        set.status = 429;
+        set.headers['Retry-After'] = String(keputusan.detikTersisa);
+        return {
+          error: `Terlalu banyak permintaan simpan progres — coba lagi dalam ${keputusan.detikTersisa} detik`,
+        };
+      }
+      limiterProgress.catat(kunciIp);
+      const hasil = validasiProgress(body);
+      if (!hasil.ok) {
+        set.status = 400;
+        return { error: hasil.error };
+      }
+      // UPSERT per (peserta, kode) — entri tersimpan dikirim balik sebagai
+      // konfirmasi (stempel waktu dari DB).
+      return await repos.progress.simpan(hasil.data);
     })
 
     // — Konten beranda ——————————————————————————————————————————

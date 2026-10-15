@@ -23,6 +23,12 @@ export type KeputusanRateLimit =
 export interface PenghitungRateLimit {
   periksa: (kunci: string) => KeputusanRateLimit;
   catatGagal: (kunci: string) => void;
+  /**
+   * Catat satu percobaan yang diterima — alias internal `catatGagal`
+   * (namanya sama karena keduanya menaikkan hitungan jendela). Dipakai
+   * rate-limit tulis progres: tiap POST /api/progress dihitung 1.
+   */
+  catat: (kunci: string) => void;
   reset: (kunci: string) => void;
   /** Jumlah kunci tersimpan (untuk test & observasi memori). */
   jumlahKunci: () => number;
@@ -68,6 +74,18 @@ export function buatRateLimitLogin(opsi: OpsiRateLimitLogin): PenghitungRateLimi
     }
   };
 
+  /** Inti pencatat hitungan jendela (dipakai `catatGagal` & alias `catat`). */
+  const catatHitung = (kunci: string): void => {
+    const now = sekarang();
+    bersihkan(now);
+    const rec = jendela.get(kunci);
+    if (rec === undefined || kadaluwarsa(rec, now)) {
+      jendela.set(kunci, { mulai: now, gagal: 1 });
+      return;
+    }
+    rec.gagal += 1;
+  };
+
   return {
     periksa(kunci) {
       const now = sekarang();
@@ -82,16 +100,8 @@ export function buatRateLimitLogin(opsi: OpsiRateLimitLogin): PenghitungRateLimi
       }
       return { diizinkan: true, sisaPercobaan: batasPercobaan - rec.gagal };
     },
-    catatGagal(kunci) {
-      const now = sekarang();
-      bersihkan(now);
-      const rec = jendela.get(kunci);
-      if (rec === undefined || kadaluwarsa(rec, now)) {
-        jendela.set(kunci, { mulai: now, gagal: 1 });
-        return;
-      }
-      rec.gagal += 1;
-    },
+    catatGagal: catatHitung,
+    catat: catatHitung,
     reset(kunci) {
       jendela.delete(kunci);
     },

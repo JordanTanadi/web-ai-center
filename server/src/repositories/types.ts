@@ -13,6 +13,7 @@ import type {
   KontenInference,
   Layanan,
   Profil,
+  ProgresPeserta,
   Testimoni,
 } from '../api/types';
 import type { Pagination } from '../lib/query';
@@ -26,6 +27,7 @@ import type {
   InputKursus,
   InputLayanan,
   InputProfil,
+  InputProgress,
   InputTestimoni,
   InputTim,
 } from '../lib/tulis';
@@ -40,6 +42,7 @@ export type TimInput = InputTim;
 export type InferenceInput = InputInference;
 export type TestimoniInput = InputTestimoni;
 export type HeroInput = InputHero;
+export type ProgressInput = InputProgress;
 
 export interface ListParams {
   /** Kata kunci pencarian; `null` = tanpa filter. */
@@ -162,6 +165,18 @@ export interface KursusRepository {
   remove(kode: string): Promise<boolean>;
 }
 
+/**
+ * Progres belajar peserta (LMS tanpa akun): satu baris per (peserta, kursus).
+ * `state` disimpan apa adanya (blob JSON frontend) — normalisasi saat baca
+ * terjadi di `bacaStateBelajar` (src/lib/pembelajaran.ts).
+ */
+export interface ProgressRepository {
+  /** Daftar progres milik satu peserta; `kode` null = semua kursusnya. */
+  list(pesertaId: string, kode: string | null): Promise<ProgresPeserta[]>;
+  /** Simpan (UPSERT per peserta+kode); balik entri tersimpan + stempel waktu. */
+  simpan(data: ProgressInput): Promise<ProgresPeserta>;
+}
+
 /** Kumpulan semua repository yang disuntikkan ke route. */
 export interface Repositories {
   berita: BeritaRepository;
@@ -174,6 +189,7 @@ export interface Repositories {
   profil: ProfilRepository;
   inference: InferenceRepository;
   kursus: KursusRepository;
+  progress: ProgressRepository;
   /** Cek koneksi DB untuk `/api/health`; lempar bila DB tidak terjangkau. */
   ping: () => Promise<void>;
   /**

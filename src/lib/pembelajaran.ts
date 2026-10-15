@@ -3,7 +3,10 @@
  *
  * State disimpan di localStorage dengan key `ubaya-learning-{kode}` (situs lama
  * memakai `ubaya-learning-{courseParam}`); progres = (modul selesai + prototipe)
- * dibagi (jumlah modul + 1). Semua fungsi murni dan mudah diuji per unit.
+ * dibagi (jumlah modul + 1). Selain localStorage, state juga disinkronkan ke
+ * backend tanpa akun lewat src/lib/progresPeserta.ts — localStorage tetap
+ * sumber utama (jalan offline), backend = salinan cadangan.
+ * Semua fungsi murni dan mudah diuji per unit.
  */
 
 /** Data lembar kerja prototipe (form akhir kursus). */
@@ -63,42 +66,104 @@ export function storageKeyBelajar(kode: string): string {
 }
 
 /**
- * Baca state dari localStorage. Data korup/di luar pola di-normalisasi ke
- * state awal (gagal eksplisit, bukan crash) persis perilaku situs lama.
+ * Normalisasi objek state mentah (dari localStorage ATAU respons backend)
+ * ke bentuk StateBelajar. Data korup/di luar pola di-normalisasi ke state
+ * awal per field (gagal eksplisit, bukan crash) persis perilaku situs lama.
+ */
+export function normalisasiStateBelajar(raw: unknown, jumlahModul: number): StateBelajar {
+  const mentah: Record<string, unknown> =
+    raw !== null && typeof raw === 'object' && !Array.isArray(raw)
+      ? (raw as Record<string, unknown>)
+      : {};
+  const daftarBool = (kunci: string): boolean[] =>
+    Array.from(
+      { length: jumlahModul },
+      (_, i) => Boolean(Array.isArray(mentah[kunci]) && mentah[kunci][i]),
+    );
+  const aktif = mentah.activeModule;
+  const proto = (mentah.prototype ?? {}) as PrototypeState;
+  const rating = Number(mentah.rating);
+  return {
+    enrolled: Boolean(mentah.enrolled),
+    completed: daftarBool('completed'),
+    watched: daftarBool('watched'),
+    quizPassed: daftarBool('quizPassed'),
+    activeModule: Number.isInteger(aktif) ? (aktif as number) : null,
+    prototype: proto,
+    prototypeComplete: Boolean(mentah.prototypeComplete),
+    rating: Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : 0,
+    review: typeof mentah.review === 'string' ? mentah.review : '',
+    ratingSubmitted: Boolean(mentah.ratingSubmitted),
+  };
+}
+
+/**
+ * Baca state dari localStorage. JSON rusak → state awal penuh (bukan crash).
  */
 export function bacaStateBelajar(kode: string, jumlahModul: number): StateBelajar {
-  const awal = stateAwalBelajar(jumlahModul);
   try {
-    const mentah: Record<string, unknown> = JSON.parse(
+    const mentah: unknown = JSON.parse(
       localStorage.getItem(storageKeyBelajar(kode)) || '{}',
     );
-    const daftarBool = (kunci: string): boolean[] =>
-      Array.from(
-        { length: jumlahModul },
-        (_, i) => Boolean(Array.isArray(mentah[kunci]) && mentah[kunci][i]),
-      );
-    const aktif = mentah.activeModule;
-    const proto = (mentah.prototype ?? {}) as PrototypeState;
-    const rating = Number(mentah.rating);
-    return {
-      enrolled: Boolean(mentah.enrolled),
-      completed: daftarBool('completed'),
-      watched: daftarBool('watched'),
-      quizPassed: daftarBool('quizPassed'),
-      activeModule: Number.isInteger(aktif) ? (aktif as number) : null,
-      prototype: proto,
-      prototypeComplete: Boolean(mentah.prototypeComplete),
-      rating: Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : 0,
-      review: typeof mentah.review === 'string' ? mentah.review : '',
-      ratingSubmitted: Boolean(mentah.ratingSubmitted),
-    };
+    return normalisasiStateBelajar(mentah, jumlahModul);
   } catch {
-    return awal;
+    return stateAwalBelajar(jumlahModul);
   }
 }
 
 export function simpanStateBelajar(kode: string, state: StateBelajar): void {
   localStorage.setItem(storageKeyBelajar(kode), JSON.stringify(state));
+}
+
+/**
+ * Hitung "jejak belajar" sebuah state: berapa banyak bukti aktivitas
+ * (enroll, modul ditonton/lulus/selesai, isi prototipe, rating, review).
+ * Dipakai sebagai penentu seri saat menggabungkan lokal vs backend.
+ */
+export function jejakStateBelajar(state: StateBelajar): number {
+  const aktif = [...state.completed, ...state.watched, ...state.quizPassed].filter(Boolean).length;
+  const isiPrototipe = Object.values(state.prototype).filter(
+    (v) => v !== undefined && v !== '',
+  ).length;
+  return (
+    (state.enrolled ? 1 : 0) +
+    aktif +
+    (state.prototypeComplete ? 1 : 0) +
+    (state.rating > 0 ? 1 : 0) +
+    (state.review.trim() !== '' ? 1 : 0) +
+    isiPrototipe
+  );
+}
+
+/**
+ * Gabungkan state lokal dengan salinan backend (GET /api/progress):
+ * - progres LEBIH TINGGI menang (lokal lebih maju saat sempat offline;
+ *   server lebih maju saat localStorage pernah terhapus);
+ * - SERI progres → yang JEJAK BELAJARNYA lebih banyak menang (mis. server
+ *   masih menyimpan enroll/walau localStorage kehilangan baris progres);
+ * - seri penuh → state lokal (aksi terakhir selalu di browser ini; bila
+ *   backend tertinggal, kemungkinan POST terakhir gagal dan lokal terbaru).
+ * Tidak ada penggabungan field-per-field: satu sumber menang utuh.
+ */
+export function gabungStateBelajar(
+  lokal: StateBelajar,
+  server: StateBelajar,
+  jumlahModul: number,
+): StateBelajar {
+  const pLokal = hitungProgressBelajar(lokal, jumlahModul);
+  const pServer = hitungProgressBelajar(server, jumlahModul);
+  if (pServer > pLokal) return server;
+  if (pServer < pLokal) return lokal;
+  return jejakStateBelajar(server) > jejakStateBelajar(lokal) ? server : lokal;
+}
+
+/**
+ * Apakah state ini layak dikirim ke backend (ada jejak belajar sungguhan)?
+ * State awal kosong TIDAK dikirim — jangan membuat baris progres untuk
+ * pengunjung yang sekadar membuka halaman kursus.
+ */
+export function stateBelajarTerisi(state: StateBelajar): boolean {
+  return jejakStateBelajar(state) > 0;
 }
 
 /** Progres persen: (modul selesai + prototipe selesai) / (jumlah modul + 1). */
@@ -194,7 +259,9 @@ export type TugasModel = 'summarize' | 'classify' | 'ideate';
 /**
  * Simulasi inference dummy di browser (detail-kursus.html, `runDummyModel`) —
  * output berbasis aturan, tanpa model AI eksternal.
- * TODO_BACKEND: ganti dengan POST /api/inference ketika backend tersedia.
+ * TODO_BACKEND: output inferensi NYATA butuh model/endpoint prediksi. Endpoint
+ * /api/inference yang ada kini adalah CMS konten halaman (GET/PUT teks), bukan
+ * prediktor — jadi simulasi ini tetap dipertahankan sampai keputusan model.
  */
 export function jalankanModelDummy(tugas: TugasModel, input: string): string {
   const bersih = input.trim();

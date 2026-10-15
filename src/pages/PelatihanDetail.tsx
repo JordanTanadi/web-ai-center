@@ -14,14 +14,17 @@ import { useApiObjek } from '../lib/useApiData.ts';
 import { labelDurasiTotal } from '../lib/kursus.ts';
 import {
   bacaStateBelajar,
+  gabungStateBelajar,
   hitungProgressBelajar,
   kurangiStateBelajar,
   labelAksesKursus,
   simpanStateBelajar,
   stateAwalBelajar,
+  stateBelajarTerisi,
   type Aksi,
   type StateBelajar,
 } from '../lib/pembelajaran.ts';
+import { ambilProgresBelajar, sinkronProgresBelajar } from '../lib/progresPeserta.ts';
 
 /**
  * Halaman detail kursus — struktur mengikuti detail-kursus.html situs lama:
@@ -38,14 +41,41 @@ export default function PelatihanDetail() {
     kursusDariKode(kode),
   );
 
-  // State belajar per kursus (localStorage, persis situs lama);
-  // TODO_BACKEND: progress per user tersimpan di backend + akun peserta.
+  // State belajar per kursus: localStorage sebagai sumber utama (offline-safe);
+  // salinan backend (GET /api/progress, tanpa akun) hanya dipakai bila progresnya
+  // lebih tinggi — lihat gabungStateBelajar (progres menang; seri → jejak
+  // belajar lebih banyak; seri penuh → lokal).
   const [belajar, setBelajar] = useState<StateBelajar>(() =>
     kursus ? bacaStateBelajar(kursus.kode, kursus.modul.length) : stateAwalBelajar(0),
   );
+  // Kunci efek memakai kode + jumlah modul (bukan objek kursus) supaya
+  // pergantian objek dari hook API (fallback → data server) tidak memicu
+  // baca/GET ulang yang ganda.
+  const kodeKursus = kursus?.kode ?? '';
+  const jumlahModul = kursus?.modul.length ?? 0;
   useEffect(() => {
-    if (kursus) setBelajar(bacaStateBelajar(kursus.kode, kursus.modul.length));
-  }, [kursus]);
+    if (kodeKursus === '') return;
+    setBelajar(bacaStateBelajar(kodeKursus, jumlahModul));
+    // Ambil salinan backend lalu gabungkan (fire-and-forget; gagal → diam,
+    // localStorage tetap berlaku). Efek dibatalkan bila ganti kursus.
+    let batal = false;
+    void ambilProgresBelajar(kodeKursus, jumlahModul).then((server) => {
+      if (batal || server === null) return;
+      setBelajar((lokal) => gabungStateBelajar(lokal, server, jumlahModul));
+    });
+    return () => {
+      batal = true;
+    };
+  }, [kodeKursus, jumlahModul]);
+
+  // Sinkron tiap perubahan state — tulis localStorage (cache terakhir, termasuk
+  // hasil gabungan server) lalu POST /api/progress fire-and-forget; state awal
+  // kosong tidak dikirim (lihat stateBelajarTerisi).
+  useEffect(() => {
+    if (kodeKursus === '' || !stateBelajarTerisi(belajar)) return;
+    simpanStateBelajar(kodeKursus, belajar);
+    void sinkronProgresBelajar(kodeKursus, belajar);
+  }, [kodeKursus, belajar]);
 
   if (!kursus) {
     return (
@@ -124,8 +154,8 @@ export default function PelatihanDetail() {
               )}
             </ul>
           </div>
-          {/* Progress/status belajar dari state LMS (localStorage); TODO_BACKEND:
-              progress per user + rating dari backend ketika akun peserta ada. */}
+          {/* Progress/status belajar dari state LMS (localStorage + salinan backend
+              GET/POST /api/progress tanpa akun — lihat lib/progresPeserta). */}
           <aside className="h-fit rounded-2xl border border-line bg-surface p-6 shadow-sm">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">{t(aksesKursus.label)}</p>
             <h2 className="mt-2 font-display text-xl font-bold">{t(label.judul)}</h2>

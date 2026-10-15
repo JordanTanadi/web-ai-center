@@ -150,6 +150,8 @@ kontrak di atasnya diuji dengan fake repository (`app.test.ts`) plus
 | `GET /api/tim` | `q`, `page`, `limit` | `{ items }` |
 | `GET /api/layanan` · `/:slug` | — | `{ items }` / 404 — tak dipakai FE (konten statis `src/data/layanan.ts`) |
 | `GET /api/kursus` · `/api/kursus/:kode` | `q`, `page`, `limit` | `{ items }` / 404; kode case-insensitive (`r01`) |
+| `GET /api/progress` | `pesertaId` (wajib), `kode` | **publik tanpa akun** — `{ items }` progres milik 1 peserta; `pesertaId` (8–64 `[A-Za-z0-9-]`) / `kode` tidak sah → 400 |
+| `POST /api/progress` | body `{ pesertaId, kode, state }` | **publik tanpa akun** — UPSERT per (peserta, kode); `state` objek JSON ≤ 32 KB; rate-limit 60 tulis/menit/IP → 429 + `Retry-After` |
 | `GET /api/hero-slides` · `/api/klien` · `/api/testimoni` | — | `{ items }` (hero-slides tak dipakai FE — statis `src/data/hero.ts`) |
 | `GET /api/profil` | — | tak dipakai FE (visi/misi statis `src/data/profil.ts`); 404 bila belum di-seed |
 | `GET /api/inference` | — | tak dipakai FE (statis `src/data/inference.ts`); 404 bila belum di-seed |
@@ -180,6 +182,11 @@ kosong, backend mati, respons gagal, atau saat unit test:
 - Beranda: testimoni (tepat 3 teratas), highlight berita & dokumentasi
 - `/berita` + `/berita/:slug`, `/dokumentasi` + `/:slug`, `/tim`
 - katalog kursus + detail (`/api/kursus`, `/api/kursus/:kode`)
+- **progres belajar** halaman detail kursus: localStorage tetap sumber utama,
+  disinkronkan ke backend **tanpa akun** (`GET`/`POST /api/progress`, identitas =
+  `pesertaId` acak di browser) — lihat `src/lib/progresPeserta.ts`; saat keduanya
+  punya data: **progres lebih tinggi menang**, seri → jejak belajar lebih banyak,
+  seri penuh → lokal (`gabungStateBelajar`)
 
 Konten berikut **sudah bukan bagian dari backend** — sumber satu-satunya ada di
 file frontend (diedit via editor kode, bukan lewat `/admin`):
@@ -194,8 +201,9 @@ Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
 
 - konten video & kuis per modul — sistemnya sudah ada (field `modul.video` +
   `modul.quiz` via tab Kursus, embed + kuis di ruang belajar; isi lewat
-  template `docs/data-kursus.md`); progress LMS per peserta masih butuh akun
-  peserta agar terekam di backend
+  template `docs/data-kursus.md`); progres LMS **kini sudah terekam di
+  backend** tanpa akun (`/api/progress`, identitas = `pesertaId` per-browser) —
+  akun peserta baru dibutuhkan bila ingin sinkron **lintas perangkat**
 - section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
 
 CRUD admin kini **5 tab**: **dokumentasi**, **berita**, **kursus**, **tim** &
@@ -349,6 +357,28 @@ gambar lama), dan slide tidak boleh dikosongkan (hero beranda jadi kosong).
     ulang** terhadap build hasil refactor: **mobile 92 / desktop 99**
     (a11y, best-practices, SEO 100/100 di dua mode; TBT mobile 30 ms) —
     arsip `lighthouse_report/prod-2026-10-15-*.json` (lokal/gitignored).
+20. **Progres LMS tersimpan di backend tanpa akun** (15 Okt 2026): menutup
+    `TODO_BACKEND` progress per peserta tanpa menunggu keputusan akun —
+    tabel `progress_pembelajaran` (PK gabungan `peserta_id` + `kode`, migrasi
+    `0004`), repository + mapper `toProgresPeserta`, dua endpoint **publik**:
+    `GET /api/progress?pesertaId=&kode=` (filter ketat 8–64 `[A-Za-z0-9-]`,
+    kode uppercase) dan `POST /api/progress` (UPSERT per peserta+kursus,
+    `state` objek ≤ 32 KB, rate-limit **60 tulis/menit/IP** → 429 +
+    `Retry-After`). Identitas peserta = `pesertaId` acak per-browser
+    (`src/lib/progresPeserta.ts`); localStorage tetap sumber utama (offline),
+    backend = salinan cadangan; saat keduanya ada → **progres lebih tinggi
+    menang, seri → jejak belajar lebih banyak, seri penuh → lokal**
+    (`gabungStateBelajar` + `jejakStateBelajar`), dan state kosong tidak
+    dikirim (`stateBelajarTerisi`) supaya tak ada baris percuma. Semua
+    kegagalan sinkron disenyapkan (konsol tetap bersih). TODO inference
+    diklarifikasi: `/api/inference` = CMS konten halaman, bukan prediktor —
+    output nyata tetap menunggu keputusan model. Gerbang: **FE 424 test /
+    40 file**, **BE 255 test**, `tsc` bersih dua sisi, build OK; uji langsung
+    API (create → get → upsert 1 baris → 400 untuk input invalid) & migrasi
+    `0004` terpasang di DB dev. E2E browser: enroll → POST 200 (kode
+    uppercase), hapus state lokal → reload → ruang belajar **pulih dari
+    server**, aksi lesson → POST 200, konsol 0 error/warning. Lighthouse
+    ulang: **mobile 91 / desktop 99** (a11y/BP/SEO 100/100, CLS 0).
 
 ### Penanda TODO
 

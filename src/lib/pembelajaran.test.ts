@@ -1,14 +1,18 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import {
   bacaStateBelajar,
+  gabungStateBelajar,
   hitungProgressBelajar,
   jalankanModelDummy,
+  jejakStateBelajar,
   labelAksesKursus,
   kurangiStateBelajar,
   modulBisaSelesai,
   modulTerkunci,
+  normalisasiStateBelajar,
   simpanStateBelajar,
   stateAwalBelajar,
+  stateBelajarTerisi,
 } from './pembelajaran.ts';
 
 // Kursus R01 punya 4 modul — dipakai sebagai fixture umum.
@@ -191,5 +195,120 @@ describe('jalankanModelDummy', () => {
     const hasil = jalankanModelDummy('ideate', 'mahasiswa kesulitan merangkum jurnal');
     expect(hasil).toContain('IDE SOLUSI UNTUK:');
     expect(hasil).toContain('simulasi ideasi lokal');
+  });
+});
+
+describe('normalisasiStateBelajar (mentah dari localStorage/backend)', () => {
+  it('objek tak dikenal / bukan objek → jatuh ke state awal, tidak crash', () => {
+    expect(normalisasiStateBelajar(null, N)).toEqual(stateAwalBelajar(N));
+    expect(normalisasiStateBelajar([1, 2], N)).toEqual(stateAwalBelajar(N));
+    expect(normalisasiStateBelajar('kacau', N)).toEqual(stateAwalBelajar(N));
+    expect(normalisasiStateBelajar({ completed: 'bukan-array', rating: 'banyak' }, N)).toEqual(
+      stateAwalBelajar(N),
+    );
+  });
+
+  it('field sah dipertahankan; rating di luar 1-5 di-reset ke 0', () => {
+    const hasil = normalisasiStateBelajar(
+      {
+        enrolled: true,
+        completed: [true, false],
+        watched: [true, true],
+        quizPassed: [true, false],
+        activeModule: 1,
+        prototype: { problem: 'Masalah' },
+        prototypeComplete: false,
+        rating: 9,
+        review: '  Bagus  ',
+        ratingSubmitted: true,
+      },
+      N,
+    );
+    expect(hasil.enrolled).toBe(true);
+    expect(hasil.completed).toEqual([true, false, false, false]);
+    expect(hasil.watched).toEqual([true, true, false, false]);
+    expect(hasil.activeModule).toBe(1);
+    expect(hasil.prototype.problem).toBe('Masalah');
+    expect(hasil.rating).toBe(0); // 9 di luar rentang 1-5
+    expect(hasil.review).toBe('  Bagus  '); // dinormalisasi membaca, trim urusan reducer
+  });
+});
+
+describe('gabungStateBelajar (lokal vs salinan backend)', () => {
+  it('progres server lebih tinggi (localStorage terhapus) → server menang', () => {
+    const lokal = stateAwalBelajar(N);
+    const server: typeof lokal = { ...stateAwalBelajar(N), enrolled: true, completed: [true, true, false, false] };
+    expect(gabungStateBelajar(lokal, server, N)).toBe(server);
+  });
+
+  it('progres lokal lebih tinggi (sempat offline, POST gagal) → lokal menang', () => {
+    const server = { ...stateAwalBelajar(N), enrolled: true, completed: [true, false, false, false] };
+    const lokal = { ...stateAwalBelajar(N), enrolled: true, completed: [true, true, true, false] };
+    expect(gabungStateBelajar(lokal, server, N)).toBe(lokal);
+  });
+
+  it('seri progres → yang jejak belajarnya lebih banyak menang; seri penuh → lokal', () => {
+    // Server masih menyimpan enroll + lesson ditonton; lokal hanya enroll.
+    const lokal = { ...stateAwalBelajar(N), enrolled: true };
+    const server = {
+      ...stateAwalBelajar(N),
+      enrolled: true,
+      watched: [true, false, false, false],
+    };
+    expect(gabungStateBelajar(lokal, server, N)).toBe(server);
+
+    // Jejak sama → lokal dipakai (aksi terakhir di browser ini).
+    const lokalSeri = { ...stateAwalBelajar(N), enrolled: true, watched: [true, false, false, false] };
+    expect(gabungStateBelajar(lokalSeri, server, N)).toBe(lokalSeri);
+    expect(gabungStateBelajar(lokal, { ...stateAwalBelajar(N), enrolled: true }, N)).toBe(lokal);
+  });
+});
+
+describe('jejakStateBelajar (penentu seri + gerbang sinkron)', () => {
+  it('state awal = 0; tiap bukti aktivitas menambah jejak', () => {
+    expect(jejakStateBelajar(stateAwalBelajar(N))).toBe(0);
+    expect(jejakStateBelajar({ ...stateAwalBelajar(N), activeModule: 0 })).toBe(0);
+    expect(jejakStateBelajar({ ...stateAwalBelajar(N), enrolled: true })).toBe(1);
+    expect(
+      jejakStateBelajar({
+        ...stateAwalBelajar(N),
+        completed: [true, false, false, false],
+        watched: [true, true, false, false],
+        quizPassed: [true, false, false, false],
+      }),
+    ).toBe(4);
+    expect(
+      jejakStateBelajar({
+        ...stateAwalBelajar(N),
+        prototype: { problem: 'Masalah' },
+        prototypeComplete: true,
+        rating: 4,
+        review: 'Keren',
+      }),
+    ).toBe(4);
+    // Review hanya-spasi & nilai prototipe kosong tidak dihitung.
+    expect(
+      jejakStateBelajar({ ...stateAwalBelajar(N), review: '   ', prototype: { problem: '' } }),
+    ).toBe(0);
+  });
+});
+
+describe('stateBelajarTerisi (gerbang sinkron backend)', () => {
+  it('state awal kosong → TIDAK layak dikirim (tak membuat baris percuma)', () => {
+    expect(stateBelajarTerisi(stateAwalBelajar(N))).toBe(false);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), activeModule: 0 })).toBe(false);
+  });
+
+  it('jejak belajar apa pun → layak dikirim', () => {
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), enrolled: true })).toBe(true);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), completed: [false, true, false, false] })).toBe(true);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), watched: [true, false, false, false] })).toBe(true);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), quizPassed: [true, false, false, false] })).toBe(true);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), prototypeComplete: true })).toBe(true);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), prototype: { problem: 'X' } })).toBe(true);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), rating: 5, ratingSubmitted: true })).toBe(true);
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), review: 'Keren' })).toBe(true);
+    // Review hanya-spasi tidak dianggap jejak.
+    expect(stateBelajarTerisi({ ...stateAwalBelajar(N), review: '   ' })).toBe(false);
   });
 });

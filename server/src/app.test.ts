@@ -14,11 +14,12 @@ import type {
   KontenInference,
   Layanan,
   Profil,
+  ProgresPeserta,
   Testimoni,
 } from './api/types';
 import type { ListParams, Repositories, DokumentasiListParams } from './repositories/types';
 import type { Pagination } from './lib/query';
-import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputHero as HeroInput, InputInference as InferenceInput, InputKursus as KursusInput, InputLayanan as LayananInput, InputProfil as ProfilInput, InputTestimoni as TestimoniInput, InputTim as TimInput } from './lib/tulis';
+import type { InputBerita as BeritaInput, InputDokumentasi as DokumentasiInput, InputHero as HeroInput, InputInference as InferenceInput, InputKursus as KursusInput, InputLayanan as LayananInput, InputProfil as ProfilInput, InputProgress as ProgressInput, InputTestimoni as TestimoniInput, InputTim as TimInput } from './lib/tulis';
 import { buatTokenAdmin } from './auth';
 
 const NO_PAGINATION: Pagination = { page: null, limit: null, offset: null };
@@ -124,6 +125,13 @@ const sampleKursus: Kursus = {
   inisial: 'RA',
   hasil: ['Hasil'],
   modul: [{ judul: 'Modul', deskripsi: 'Desc', meta: '4 video · 35 menit' }],
+};
+
+/** Fixture progres belajar (GET/POST /api/progress). */
+const sampleProgres: ProgresPeserta = {
+  kode: 'R01',
+  state: { enrolled: true, completed: [true, false] },
+  diperbaruiPada: '2026-10-15T08:00:00.000Z',
 };
 
 /** Fake repository: mencatat argumen tiap panggilan, balikan di-hardcode. */
@@ -251,6 +259,16 @@ function createFakeRepos(): FakeHandle {
         kode.toUpperCase() === sampleKursus.kode ? { ...sampleKursus, ...data } : null),
       remove: rec('kursus.remove', async (kode: string): Promise<boolean> =>
         kode.toUpperCase() === sampleKursus.kode),
+    },
+    progress: {
+      list: rec('progress.list', async (_pesertaId: string, kode: string | null): Promise<ProgresPeserta[]> =>
+        // Fake: hanya punya entri R01 — filter kode lain → kosong.
+        kode === null || kode === 'R01' ? [sampleProgres] : []),
+      simpan: rec('progress.simpan', async (data: ProgressInput): Promise<ProgresPeserta> => ({
+        kode: data.kode,
+        state: data.state,
+        diperbaruiPada: sampleProgres.diperbaruiPada,
+      })),
     },
   };
   return { repos, calls };
@@ -416,6 +434,120 @@ describe('GET /api/kursus/:kode', () => {
     const { status, body } = await getJson(app, '/api/kursus/Z99');
     expect(status).toBe(404);
     expect(body).toEqual({ error: 'Kursus tidak ditemukan' });
+  });
+});
+
+describe('GET /api/progress (publik tanpa akun)', () => {
+  test('pesertaId sah → 200 { items } tanpa token; kode difilter & uppercase', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await getJson(
+      app,
+      '/api/progress?pesertaId=abc12345-uuid&kode=r01',
+    );
+    expect(status).toBe(200);
+    expect(body).toEqual({ items: [sampleProgres] });
+    expect(calls).toEqual([
+      { method: 'progress.list', args: ['abc12345-uuid', 'R01'] },
+    ]);
+  });
+
+  test('tanpa kode → filter null (semua progres peserta)', async () => {
+    const { app, calls } = createTestApp();
+    await getJson(app, '/api/progress?pesertaId=abc12345-uuid');
+    expect(calls[0].args).toEqual(['abc12345-uuid', null]);
+  });
+
+  test('pesertaId kosong/salah pola → 400 { error } tanpa memanggil repo', async () => {
+    const { app, calls } = createTestApp();
+    const kosong = await getJson(app, '/api/progress');
+    expect(kosong.status).toBe(400);
+    expect(kosong.body).toEqual({
+      error: 'Query "pesertaId" wajib: 8-64 karakter (huruf/angka/-)',
+    });
+
+    const pendek = await getJson(app, '/api/progress?pesertaId=abc');
+    expect(pendek.status).toBe(400);
+
+    const liar = await getJson(app, '/api/progress?pesertaId=' + encodeURIComponent('id dengan spasi!'));
+    expect(liar.status).toBe(400);
+    expect(calls).toEqual([]);
+  });
+
+  test('kode query tidak sah → 400 { error }', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await getJson(
+      app,
+      '/api/progress?pesertaId=abc12345-uuid&kode=' + encodeURIComponent('R01;DROP'),
+    );
+    expect(status).toBe(400);
+    expect(body).toEqual({ error: 'Query "kode" hanya huruf/angka/- (maks 12)' });
+    expect(calls).toEqual([]);
+  });
+});
+
+describe('POST /api/progress (publik tanpa akun)', () => {
+  const BODY_PROGRESS = {
+    pesertaId: 'abc12345-uuid',
+    kode: 'r01',
+    state: { enrolled: true, completed: [true, false], activeModule: 1 },
+  };
+
+  test('body valid → 200 entri tersimpan (kode uppercase) + repo dipanggil', async () => {
+    const { app, calls } = createTestApp();
+    const { status, body } = await kirimTulis(app, 'POST', '/api/progress', BODY_PROGRESS, null);
+    expect(status).toBe(200);
+    expect(body).toEqual({
+      kode: 'R01',
+      state: BODY_PROGRESS.state,
+      diperbaruiPada: sampleProgres.diperbaruiPada,
+    });
+    expect(calls).toEqual([
+      {
+        method: 'progress.simpan',
+        args: [{ pesertaId: 'abc12345-uuid', kode: 'R01', state: BODY_PROGRESS.state }],
+      },
+    ]);
+  });
+
+  test('state terlalu besar (>32KB) / bukan objek / pesertaId pendek → 400 tanpa repo', async () => {
+    const { app, calls } = createTestApp();
+    const raksasa = await kirimTulis(app, 'POST', '/api/progress', {
+      ...BODY_PROGRESS,
+      state: { review: 'x'.repeat(40_000) },
+    }, null);
+    expect(raksasa.status).toBe(400);
+    expect((raksasa.body as { error: string }).error).toContain('state');
+
+    const array = await kirimTulis(app, 'POST', '/api/progress', { ...BODY_PROGRESS, state: [] }, null);
+    expect(array.status).toBe(400);
+
+    const idPendek = await kirimTulis(app, 'POST', '/api/progress', { ...BODY_PROGRESS, pesertaId: 'abc' }, null);
+    expect(idPendek.status).toBe(400);
+    expect(calls).toEqual([]);
+  });
+
+  test('61 percobaan berturut dari 1 IP → 429 + Retry-After (batas 60/menit)', async () => {
+    const { app } = createTestApp();
+    const kirim = (ip: string) =>
+      app.handle(
+        new Request('http://localhost/api/progress', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'x-forwarded-for': ip },
+          body: JSON.stringify(BODY_PROGRESS),
+        }),
+      );
+    // 60 percobaan pertama diterima (200), percobaan ke-61 diblokir.
+    for (let i = 0; i < 60; i++) {
+      expect((await kirim('203.0.113.7')).status).toBe(200);
+    }
+    const terkunci = await kirim('203.0.113.7');
+    expect(terkunci.status).toBe(429);
+    expect(terkunci.headers.get('Retry-After')).not.toBeNull();
+    const pesan = (await terkunci.json()) as { error: string };
+    expect(pesan.error).toContain('simpan progres');
+
+    // IP lain tidak terdampak.
+    expect((await kirim('203.0.113.8')).status).toBe(200);
   });
 });
 
