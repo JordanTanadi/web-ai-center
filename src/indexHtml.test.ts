@@ -14,7 +14,7 @@ describe('index.html (SEO & performa)', () => {
     expect(html).toContain('href="/fonts/CabinetGrotesk-Bold.woff2"');
     // API Fontshare dulu membalas Satoshi → General Sans gagal & jatuh ke Helvetica
     expect(html).not.toContain('fontshare.com');
-    // Geist Mono sudah tidak dipakai (label ganti font isi)
+    // Geist Mono di-self-host lewat index.css (public/fonts) — HTML tanpa CDN font
     expect(html).not.toContain('fonts.googleapis.com');
     expect(html).not.toContain('Geist+Mono');
     // Font lama sudah tidak dipakai

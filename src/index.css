@@ -52,8 +52,11 @@
 }
 @font-face {
   font-family: 'Geist Mono';
-  src: url('/fonts/GeistMono-Regular.woff2') format('woff2');
-  font-weight: 400;
+  /* File variabel (Google Fonts, OFL, subset latin) — satu file untuk seluruh
+     sumbu bobot, jadi `font-mono font-bold` (kicker/tag) memakai BOLD SUNGGUHAN
+     (instance 700), bukan hasil sintesis browser. */
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2');
+  font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
@@ -80,8 +83,8 @@
   --font-display: 'Cabinet Grotesk', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   --font-body: 'General Sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
   /* Font pelengkap teknis (kicker/tag/snippet): Geist Mono — sudah di-self-host
-     di public/fonts (Google Fonts, subset latin, lisensi OFL); fallback ke
-     monospace sistem bila file gagal dimuat. */
+     di public/fonts (Google Fonts, subset latin, lisensi OFL); file variabel
+     menutup bobot 400–900, fallback ke monospace sistem bila file gagal dimuat. */
   --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 

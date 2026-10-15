@@ -334,6 +334,21 @@ gambar lama), dan slide tidak boleh dikosongkan (hero beranda jadi kosong).
     bergaris merah + `window.confirm("Yakin keluar dari dashboard admin?")`.
     Gerbang saat ini: frontend **406 test / 39 file** (`tsc -b` bersih, build
     OK), backend **238 test / 14 file**.
+19. **Geist Mono bobot nyata + Lighthouse ulang** (15 Okt 2026): screenshot
+    spesifikasi Figma dicek ulang — palet Nuansa Biru (6 primer + 4
+    pelengkap) & font (Cabinet Grotesk judul / General Sans isi /
+    Geist Mono teknis + fallback Helvetica) sudah cocok 100% dengan token
+    `src/index.css`. Satu celah ditemukan: `public/fonts/GeistMono-Regular.woff2`
+    statis bobot 400, padahal kicker/tag memakai `font-mono font-bold` (5
+    tempat) → bold sintesis browser. Diganti **file variabel resmi Google
+    Fonts** (OFL, subset latin, `GeistMono-Variable.woff2`, sumbu 100–900,
+    `font-weight: 100 900`) → bold sungguhan (diverifikasi: cetak 400 ≠ 700
+    via canvas, `document.fonts.check('700 …')` true). Test baru: rentang
+    bobot mono + seluruh `url('/fonts/*.woff2')` di CSS wajib ada di disk.
+    Gerbang: FE **408/408**, BE **238/238**, `tsc` bersih; **Lighthouse
+    ulang** terhadap build hasil refactor: **mobile 92 / desktop 99**
+    (a11y, best-practices, SEO 100/100 di dua mode; TBT mobile 30 ms) —
+    arsip `lighthouse_report/prod-2026-10-15-*.json` (lokal/gitignored).
 
 ### Penanda TODO
 

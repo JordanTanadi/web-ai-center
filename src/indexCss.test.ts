@@ -64,6 +64,26 @@ describe('Token identitas visual (src/index.css @theme)', () => {
     expect(css).not.toContain('fontshare.com'); // self-host, bukan CDN
   });
 
+  it('Geist Mono: file variabel menutup bobot 400–900 (bold sungguhan, bukan sintesis)', () => {
+    expect(css).toContain("url('/fonts/GeistMono-Variable.woff2')");
+    // Deklarasi rentang → `font-mono font-bold` di-instance 700 oleh browser;
+    // kalau hanya 400, kicker/tag jadi bold palsu (sintesis browser).
+    expect(css).toMatch(
+      /font-family: 'Geist Mono'[\s\S]{0,400}?font-weight:\s*100 900\s*;/,
+    );
+    expect(css).not.toContain('GeistMono-Regular.woff2'); // file lama (statis 400) diganti
+  });
+
+  it('semua file font yang dirujuk index.css benar-benar ada di public/fonts', () => {
+    const rujukan = [...css.matchAll(/url\('\/fonts\/([^']+\.woff2)'\)/g)].map((m) => m[1]);
+    expect(rujukan.length).toBeGreaterThanOrEqual(7);
+    for (const nama of rujukan) {
+      expect(() =>
+        readFileSync(join(process.cwd(), 'public', 'fonts', nama)),
+      ).not.toThrow();
+    }
+  });
+
   it('footer gelap dipertahankan font lamanya (Helvetica) sementara', () => {
     expect(css).toMatch(/\.footer-legacy-font\s*\{[^}]*Helvetica/);
   });
