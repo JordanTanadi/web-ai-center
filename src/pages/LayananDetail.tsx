@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { getLayananBySlug, type Layanan } from '../data/layanan.ts';
+import { getLayananBySlug } from '../data/layanan.ts';
 import { useT } from '../lib/i18n.tsx';
-import { useApiDaftar, useApiObjek } from '../lib/useApiData.ts';
+import { useApiDaftar } from '../lib/useApiData.ts';
 import { labelDurasiTotal } from '../lib/kursus.ts';
 import {
   kontenInferenceDummy,
@@ -278,19 +278,12 @@ function UntukInstitusi() {
 export default function LayananDetail() {
   const t = useT();
   const { slug = '' } = useParams();
-  // Detail dari GET /api/layanan/:slug; slug kosong → path 404 (lihat BeritaDetail).
-  const item = useApiObjek<Layanan>(
-    `/layanan/${encodeURIComponent(slug || 'tidak-ada')}`,
-    getLayananBySlug(slug),
-  );
-  // Konten inference dari GET /api/inference (baris tunggal, tab "Inference"
-  // di /admin) — dimuat sekali di sini lalu diserahkan ke ketiga section, bukan
-  // per-section (hemat 2 request). Path sengaja konstan (hook tidak boleh
-  // kondisional), jadi slug pelatihan ikut meminta endpoint ini sekali;
-  // payload kecil dan hasilnya tidak dipakai di luar section inference.
-  // Fallback = kontenInferenceDummy (tak ada request saat backend mati/test).
-  const kontenInference =
-    useApiObjek<KontenInference>('/inference', kontenInferenceDummy) ?? kontenInferenceDummy;
+  // Detail layanan: konten STATIS src/data/layanan.ts (diedit langsung di
+  // frontend, tanpa backend); slug kosong/tak dikenal → tampilan 404.
+  const item = getLayananBySlug(slug);
+  // Konten inference: konten STATIS src/data/inference.ts (diedit via frontend),
+  // dimuat sekali di sini lalu diserahkan ke ketiga section inference.
+  const kontenInference: KontenInference = kontenInferenceDummy;
 
   if (!item) {
     return (

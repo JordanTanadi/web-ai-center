@@ -148,21 +148,21 @@ kontrak di atasnya diuji dengan fake repository (`app.test.ts`) plus
 | `GET /api/dokumentasi` | `q`, `kategori`, `page`, `limit`, `order` | `{ items }` |
 | `GET /api/dokumentasi/:slug` | — | 404 `{ error }` |
 | `GET /api/tim` | `q`, `page`, `limit` | `{ items }` |
-| `GET /api/layanan` · `/:slug` | — | `{ items }` / 404 |
+| `GET /api/layanan` · `/:slug` | — | `{ items }` / 404 — tak dipakai FE (konten statis `src/data/layanan.ts`) |
 | `GET /api/kursus` · `/api/kursus/:kode` | `q`, `page`, `limit` | `{ items }` / 404; kode case-insensitive (`r01`) |
-| `GET /api/hero-slides` · `/api/klien` · `/api/testimoni` | — | `{ items }` |
-| `GET /api/profil` | — | Tentang Kami + kontak footer; 404 bila belum di-seed |
-| `GET /api/inference` | — | konten halaman Inference; 404 bila belum di-seed |
+| `GET /api/hero-slides` · `/api/klien` · `/api/testimoni` | — | `{ items }` (hero-slides tak dipakai FE — statis `src/data/hero.ts`) |
+| `GET /api/profil` | — | tak dipakai FE (visi/misi statis `src/data/profil.ts`); 404 bila belum di-seed |
+| `GET /api/inference` | — | tak dipakai FE (statis `src/data/inference.ts`); 404 bila belum di-seed |
 | `POST /api/admin/login` | body `{ password }` | rate-limit 5 gagal / 10 menit per IP → 429; balikan `{ token }` |
 | `POST` · `PUT` · `DELETE /api/dokumentasi[/:slug]` | — | butuh `Authorization: Bearer <token>`; 400/404/409 eksplisit |
 | `POST` · `PUT` · `DELETE /api/berita[/:slug]` | — | idem; slug dibuat server dari judul |
 | `POST` · `PUT` · `DELETE /api/kursus[/:kode]` | — | idem; `kode` jadi kunci unik; tiap item `modul` boleh bawa `video` (URL http(s) ≤ 300) & `quiz` (≤ 10 soal × 2–6 opsi, `kunci` = index opsi) |
-| `POST` · `PUT` · `DELETE /api/layanan[/:slug]` | — | idem; slug dibuat server dari nama (tab Layanan di `/admin`); `fitur` 1–15 item |
-| `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan |
-| `PUT /api/inference` | — | konten halaman inference (id = 1); wajib ≥1 item tiap daftar |
-| `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | kunci `id` numerik; `urutan` = posisi tampil |
-| `POST` · `PUT` · `DELETE /api/testimoni[/:id]` | — | idem (tab Testimoni di `/admin`); `kutipan` ≤ 1000 |
-| `POST` · `PUT` · `DELETE /api/hero-slides[/:id]` | — | idem (tab Hero); `layout` hanya `default`/`image-left`/`teks-kanan` |
+| `POST` · `PUT` · `DELETE /api/layanan[/:slug]` | — | idem; slug dibuat server dari nama; `fitur` 1–15 item — tak dipakai FE (tab Layanan dihapus) |
+| `PUT /api/profil` | — | profil baris tunggal (id = 1); kolom `statistik` dipertahankan — tak dipakai FE (tab Profil dihapus) |
+| `PUT /api/inference` | — | konten halaman inference (id = 1); wajib ≥1 item tiap daftar — tak dipakai FE (tab Inference dihapus) |
+| `POST` · `PUT` · `DELETE /api/tim[/:id]` | — | kunci `id` numerik; **POST**: `urutan` diabaikan → semua baris lama digeser +1 lalu item baru disimpan `urutan: 0` (selalu paling atas; tak ada yang dihapus); PUT tetap menerima `urutan` manual |
+| `POST` · `PUT` · `DELETE /api/testimoni[/:id]` | — | idem (tab Testimoni di `/admin`); `kutipan` ≤ 1000; **POST** idem: testimoni baru selalu jadi #1 (`urutan: 0`), yang lama turun |
+| `POST` · `PUT` · `DELETE /api/hero-slides[/:id]` | — | idem; `layout` hanya `default`/`image-left`/`teks-kanan` — tak dipakai FE (tab Hero dihapus) |
 | `POST /api/admin/upload` | multipart `gambar` | file ≤ 2 MB (jpg/png/webp) → `{ url }` `/uploads/<nama>` |
 | `POST /api/admin/uploads/bersihkan` | `{ kering? }` | hapus file unggahan yang tidak dirujuk kolom manapun (gambar tidak terpakai); `kering: true` = mode uji |
 
@@ -173,18 +173,22 @@ CORS: whitelist origin lewat `CORS_ORIGIN` (default `http://localhost:5173`).
 
 ### Status integrasi frontend
 
-Sudah terintegrasi lewat `src/lib/useApiData.ts` (`useApiDaftar`/`useApiObjek`) —
-setiap halaman selalu punya fallback data dummy bila `VITE_API_BASE_URL` kosong,
-backend mati, respons gagal, atau saat unit test:
+Terintegrasi lewat `src/lib/useApiData.ts` (`useApiDaftar`/`useApiObjek`) —
+setiap halaman selalu punya fallback data di `src/data/` bila `VITE_API_BASE_URL`
+kosong, backend mati, respons gagal, atau saat unit test:
 
-- Beranda: hero, layanan, testimoni, highlight berita & dokumentasi
+- Beranda: testimoni (tepat 3 teratas), highlight berita & dokumentasi
 - `/berita` + `/berita/:slug`, `/dokumentasi` + `/:slug`, `/tim`
-- `/layanan/:slug`, katalog kursus + detail (`/api/kursus`, `/api/kursus/:kode`);
-  konten inference (panel "Apa itu", kebutuhan, alur, contoh) dari `GET /api/inference`
-- `/tentang-kami` visi/misi (`GET /api/profil` → pemetaan `petakanProfilApi`)
+- katalog kursus + detail (`/api/kursus`, `/api/kursus/:kode`)
+
+Konten berikut **sudah bukan bagian dari backend** — sumber satu-satunya ada di
+file frontend (diedit via editor kode, bukan lewat `/admin`):
+
+- hero slide → `src/data/hero.ts`, layanan → `src/data/layanan.ts`
+- visi/misi profil → `src/data/profil.ts`, konten inference → `src/data/inference.ts`
 
 Kontak footer/WA **sengaja statis** dari situs lama (nomor + pesan persis link
-`wa.me` di sana) — bukan bagian dari integrasi backend, lihat `src/data/kontak.ts`.
+`wa.me` di sana) — lihat `src/data/kontak.ts`.
 
 Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
 
@@ -194,18 +198,24 @@ Masih `TODO_BACKEND` (sadar — menunggu keputusan, bukan lupa):
   peserta agar terekam di backend
 - section Our Client — endpoint `/api/klien` sudah siap, section dikomentari (rapat)
 
-CRUD admin sudah lengkap (Prioritas 2): dokumentasi, berita, kursus — lalu
-**profil** (`PUT /api/profil` + tab Profil di `/admin`) dan **tim**
-(CRUD `/api/tim` + tab Tim), batas panjang semua field teks, serta pembersih
-file gambar tidak terpakai (`POST /api/admin/uploads/bersihkan` + tombol
-"Bersihkan gambar tidak terpakai" di dashboard admin). Lanjutannya: konten halaman **Inference**
-(`GET`/`PUT /api/inference` + tab Inference di `/admin`) kini ikut dikelola
-lewat database, bukan lagi hardcode; **testimoni** & **slide hero** juga bisa
-diedit dari `/admin` (tab Testimoni & Hero, CRUD `id` + `urutan`), dan
-**layanan** kini ikut CRUD (tab Layanan, kunci `slug` hasil `slugDariJudul(nama)`
-— slug dipegang tetap saat edit, `fitur` diedit sebagai daftar baris) — jadi
-hampir semua konten yang tampil dikelola lewat CMS. Yang sengaja TIDAK diedit:
-**klien** (section Our Client dikomentari, keputusan rapat).
+CRUD admin kini **5 tab**: **dokumentasi**, **berita**, **kursus**, **tim** &
+**testimoni** — plus batas panjang semua field teks dan pembersih file gambar
+tidak terpakai (`POST /api/admin/uploads/bersihkan` + tombol "Bersihkan gambar
+tidak terpakai" di dashboard). Tab **Layanan/Profil/Inference/Hero dihapus**
+(Okt 2026): halaman publiknya tetap ada, tapi kontennya jadi **statis frontend**
+(`src/data/{hero,layanan,profil,inference}.ts`); endpoint lama di server
+dibiarkan utuh agar tidak merusak apa pun, hanya tidak dipakai lagi.
+
+Duanya khusus form **Tim** & **Testimoni**: saat **Tambah baru** field urutan
+**tidak ditampilkan** — item baru otomatis paling atas (server menggeser semua
+baris lama +1, tidak ada yang dihapus). Testimoni baru langsung jadi **#1** di
+slider beranda (beranda selalu tampil tepat 3; yang lama turun urutan dan tetap
+tersimpan, bisa diubah lewat admin). Urutan manual tetap bisa diatur saat
+**Ubah**. Tombol **Keluar** kini bergaris merah mencolok dan menampilkan
+konfirmasi "Yakin keluar dari dashboard admin?".
+
+Yang sengaja TIDAK dikelola CMS: **klien** (section Our Client dikomentari,
+keputusan rapat) & konten statis di atas.
 
 Field **Kategori** (form dokumentasi) kini berupa **dropdown opsi umum** —
 Workshop, Kunjungan, Demo (`OPSI_KATEGORI` di `src/pages/Admin.tsx`) — plus
@@ -226,10 +236,9 @@ nomor. Kursus lama yang targetnya lebih dari satu tinggal pilih salah satunya
 menyimpan pilihan itu) — Simpan tanpa target peserta ditolak dengan pesan
 eksplisit.
 
-Catatan khusus tab Hero: memilih file gambar baru mengosongkan `srcSet`
-otomatis (varian lama menunjuk file lain — kalau dibiarkan, slide tetap tampil
-gambar lama), dan tombol Hapus dinonaktifkan saat tersisa 1 slide (hero
-beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak terpakai.
+Catatan hero (kini statis di `src/data/hero.ts`, tanpa tab admin): varian `srcSet`
+harus menunjuk file yang benar-benar ada (kalau tidak, slide tetap menampilkan
+gambar lama), dan slide tidak boleh dikosongkan (hero beranda jadi kosong).
 
 ## Ringkasan pengerjaan
 
@@ -313,6 +322,18 @@ beranda jadi kosong). `srcSet` juga ikut dihitung oleh pembersih gambar tidak te
     (a11y, best-practices, SEO 100 di dua mode; TBT mobile 30 ms) terhadap
     build produksi — arsip `lighthouse_report/prod-2026-10-10-*.json`
     (lokal/gitignored).
+18. **Refactor admin + urutan otomatis** (15 Okt 2026): 4 tab **Layanan/
+    Profil/Inference/Hero dihapus** — halaman publiknya tetap, kontennya jadi
+    statis frontend (`src/data/{hero,layanan,profil,inference}.ts`); endpoint
+    lama di server dibiarkan utuh (tak dipakai FE). Backend: `naikkanSemuaUrutan()`
+    (`server/src/repositories/`) dipanggil sebelum `POST /api/tim` &
+    `/api/testimoni` → semua baris lama digeser +1 lalu item baru disimpan
+    `urutan: 0` (testimoni baru = #1 beranda, lama turun; tidak ada yang
+    dihapus). Form admin: field urutan disembunyikan saat **Tambah** (tetap ada
+    saat **Ubah**); beranda membatasi `slice(0, 3)` testimoni; tombol **Keluar**
+    bergaris merah + `window.confirm("Yakin keluar dari dashboard admin?")`.
+    Gerbang saat ini: frontend **406 test / 39 file** (`tsc -b` bersih, build
+    OK), backend **238 test / 14 file**.
 
 ### Penanda TODO
 

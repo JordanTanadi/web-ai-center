@@ -1,5 +1,6 @@
-// Data dummy = FALLBACK untuk backend (GET /api/layanan & /api/layanan/:slug via
-// useApiDaftar/useApiObjek): dipakai bila VITE_API_BASE_URL kosong atau request gagal.
+// Daftar layanan — KONTEN STATIS frontend (sumber satu-satunya).
+// Diedit langsung di file ini (tidak lewat backend/admin); Beranda & LayananDetail
+// memakai data di sini langsung tanpa request API.
 // Teks "pelatihan" disalin dari situs lama (pelatihan.html + pillar "Pelatihan & Talenta" di index.html).
 export interface Layanan {
   slug: string;

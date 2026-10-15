@@ -1,10 +1,10 @@
 import { kontakDummy, waLinkKontak } from './kontak.ts';
 
-// Data dummy = FALLBACK untuk backend (GET /api/hero-slides via useApiDaftar di Beranda):
-// dipakai bila VITE_API_BASE_URL kosong atau request gagal.
+// Slide hero beranda — KONTEN STATIS frontend (sumber satu-satunya).
+// Diedit langsung di file ini (tidak lewat backend/admin); Beranda memakai
+// heroSlidesDummy langsung tanpa request API.
 // CTA primer berorientasi nilai (konversi); `to` boleh URL eksternal (konsultasi WA)
 // — HeroCarousel me-render-nya sebagai <a> tab baru.
-// Slide hero beranda — struktur mengikuti slider hero di beranda/index.html.
 export interface HeroSlide {
   /** Id baris DB — hanya ada pada data backend (kunci CRUD tab "Hero" di
    *  admin); data dummy tidak memilikinya. */

@@ -167,6 +167,7 @@ function createFakeRepos(): FakeHandle {
     },
     tim: {
       list: rec('tim.list', async (_params: ListParams): Promise<AnggotaTim[]> => [sampleTim]),
+      naikkanSemuaUrutan: rec('tim.naikkanSemuaUrutan', async (): Promise<void> => undefined),
       create: rec('tim.create', async (data: TimInput): Promise<AnggotaTim> => ({
         id: 9,
         nama: data.nama,
@@ -210,6 +211,7 @@ function createFakeRepos(): FakeHandle {
     klien: { list: rec('klien.list', async (): Promise<Klien[]> => [sampleKlien]) },
     testimoni: {
       list: rec('testimoni.list', async (): Promise<Testimoni[]> => [sampleTestimoni]),
+      naikkanSemuaUrutan: rec('testimoni.naikkanSemuaUrutan', async (): Promise<void> => undefined),
       create: rec('testimoni.create', async (data: TestimoniInput): Promise<Testimoni> => ({
         ...sampleTestimoni,
         id: 99,
@@ -1138,12 +1140,20 @@ const BODY_TIM = {
 };
 
 describe('CRUD /api/tim (Prioritas 2)', () => {
-  test('POST valid → 201 + repo.create dipanggil; tanpa token → 401', async () => {
+  test('POST valid → 201; urutan lama digeser +1 lalu item baru disimpan di urutan 0 (paling atas)', async () => {
     const { app, calls } = createTestApp();
     const { status, body } = await kirimTulis(app, 'POST', '/api/tim', BODY_TIM);
     expect(status).toBe(201);
     expect((body as AnggotaTim).id).toBe(9);
-    expect(calls.find((c) => c.method === 'tim.create')?.args[0]).toEqual(BODY_TIM);
+    expect((body as AnggotaTim).urutan).toBe(0);
+    expect(calls.find((c) => c.method === 'tim.naikkanSemuaUrutan')).toBeDefined();
+    // Urutan dari body diabaikan saat tambah — selalu 0.
+    expect(calls.find((c) => c.method === 'tim.create')?.args[0]).toEqual({ ...BODY_TIM, urutan: 0 });
+    // Geser terjadi sebelum insert supaya baris lama tidak menimpa posisi baru.
+    const idxGeser = calls.findIndex((c) => c.method === 'tim.naikkanSemuaUrutan');
+    const idxBuat = calls.findIndex((c) => c.method === 'tim.create');
+    expect(idxGeser).toBeGreaterThanOrEqual(0);
+    expect(idxGeser).toBeLessThan(idxBuat);
     expect((await kirimTulis(app, 'POST', '/api/tim', BODY_TIM, null)).status).toBe(401);
   });
 
@@ -1203,12 +1213,15 @@ const BODY_HERO = {
 };
 
 describe('CRUD /api/testimoni (lengkapi CRUD admin)', () => {
-  test('POST valid → 201 + repo.create; tanpa token → 401', async () => {
+  test('POST valid → 201; urutan lama digeser +1 lalu testimoni baru jadi #1 (urutan 0)', async () => {
     const { app, calls } = createTestApp();
     const { status, body } = await kirimTulis(app, 'POST', '/api/testimoni', BODY_TESTIMONI);
     expect(status).toBe(201);
     expect((body as Testimoni).id).toBe(99);
-    expect(calls.find((c) => c.method === 'testimoni.create')?.args[0]).toEqual(BODY_TESTIMONI);
+    expect((body as Testimoni).urutan).toBe(0);
+    expect(calls.find((c) => c.method === 'testimoni.naikkanSemuaUrutan')).toBeDefined();
+    // Urutan dari body diabaikan saat tambah — selalu 0 (paling atas).
+    expect(calls.find((c) => c.method === 'testimoni.create')?.args[0]).toEqual({ ...BODY_TESTIMONI, urutan: 0 });
     expect((await kirimTulis(app, 'POST', '/api/testimoni', BODY_TESTIMONI, null)).status).toBe(401);
   });
 

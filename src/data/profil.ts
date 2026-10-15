@@ -1,7 +1,7 @@
 // Visi & Misi resmi AI Center — mengikuti dokumen "Visi & Misi" (Arah Kami).
-// Sudah di-wire: TentangKami memanggil GET /api/profil lalu memakai
-// petakanProfilApi() — profilDummy tetap fallback + sumber introVisiMisi
-// (kolom backend tidak punya field intro).
+// KONTEN STATIS frontend (sumber satu-satunya) — diedit langsung di file ini
+// (tidak lewat backend/admin); TentangKami memakai profilDummy langsung.
+// petakanProfilApi() masih dipakai test pemetaan (bila suatu saat dihidupkan lagi).
 export interface Profil {
   /** Kalimat pengantar section Visi & Misi. */
   introVisiMisi: string;

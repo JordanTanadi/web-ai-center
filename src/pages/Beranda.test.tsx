@@ -1,9 +1,32 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import Beranda from './Beranda.tsx';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
+
+// Stub GET /testimoni: kirim 5 testimoni (urutan menurun) untuk membuktikan
+// beranda hanya memakai 3 teratas — item lama turun, tidak ada yang dihapus.
+const { testimoniBanyak } = vi.hoisted(() => ({
+  testimoniBanyak: [
+    { id: 5, nama: 'Testimoni Paling Baru', peran: 'Mitra', kutipan: 'Kutipan 1.', urutan: 0 },
+    { id: 4, nama: 'Testimoni Kedua', peran: 'Dosen', kutipan: 'Kutipan 2.', urutan: 1 },
+    { id: 3, nama: 'Testimoni Ketiga', peran: 'Mahasiswa', kutipan: 'Kutipan 3.', urutan: 2 },
+    { id: 2, nama: 'Testimoni Keempat', peran: 'Alumni', kutipan: 'Kutipan 4.', urutan: 3 },
+    { id: 1, nama: 'Testimoni Kelima', peran: 'Umum', kutipan: 'Kutipan 5.', urutan: 4 },
+  ],
+}));
+
+vi.mock('../lib/useApiData.ts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../lib/useApiData.ts')>();
+  return {
+    ...actual,
+    useApiDaftar: <T,>(path: string, fallback: T[]): T[] =>
+      path === '/testimoni'
+        ? (testimoniBanyak as unknown as T[])
+        : actual.useApiDaftar(path, fallback),
+  };
+});
 
 function renderBeranda() {
   return render(
@@ -90,6 +113,18 @@ describe('Beranda — keputusan rapat', () => {
     expect(section).not.toBeNull();
     expect(section?.className).toContain('bg-soft');
     expect(section?.className).not.toContain('bg-brand');
+  });
+
+  it('testimoni tampil tepat 3: yang baru jadi #1, lama turun (tak ada yang dihapus)', () => {
+    renderBeranda();
+
+    const testi = screen.getByRole('heading', { name: 'Apa Kata Mereka?' }).closest('section');
+    // Slider menampilkan 3 teratas (counter "1 / 3" — bukan 5): indeks 4 & 3
+    // tetap tersimpan di backend, hanya tidak tampil di beranda.
+    expect(testi?.textContent).toContain('1 / 3');
+    expect(testi?.textContent).not.toContain('1 / 5');
+    // Slide pertama = testimoni berurutan 0 (paling baru masuk via admin).
+    expect(testi?.textContent).toContain('Testimoni Paling Baru');
   });
 
   it('highlight dokumentasi & berita membatasi 3 card per section (article: 2 layanan + min(3,dok) + min(3,berita); carousel klien ikut dikomentari)', () => {

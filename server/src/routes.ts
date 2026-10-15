@@ -470,8 +470,11 @@ export function registerRoutes(
         set.status = 400;
         return { error: hasil.error };
       }
+      // Item baru SELALU tampil paling atas: urutan klien diabaikan, semua baris
+      // lama digeser +1 (tidak ada yang dihapus), baris baru disimpan di urutan 0.
+      await repos.tim.naikkanSemuaUrutan();
       set.status = 201;
-      return await repos.tim.create(hasil.data);
+      return await repos.tim.create({ ...hasil.data, urutan: 0 });
     })
     .put('/api/tim/:id', async ({ params, body, request, set }) => {
       if (!terautentikasi(request)) {
@@ -524,8 +527,11 @@ export function registerRoutes(
         set.status = 400;
         return { error: hasil.error };
       }
+      // Testimoni baru SELALU jadi #1: urutan klien diabaikan, semua baris lama
+      // digeser +1 (lama turun urutan, tidak ada yang dihapus), baris baru di 0.
+      await repos.testimoni.naikkanSemuaUrutan();
       set.status = 201;
-      return await repos.testimoni.create(hasil.data);
+      return await repos.testimoni.create({ ...hasil.data, urutan: 0 });
     })
     .put('/api/testimoni/:id', async ({ params, body, request, set }) => {
       if (!terautentikasi(request)) {

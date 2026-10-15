@@ -1,5 +1,7 @@
 // Data dummy = FALLBACK untuk backend (GET /api/testimoni via useApiDaftar di Beranda):
 // dipakai bila VITE_API_BASE_URL kosong atau request gagal.
+// Beranda selalu menampilkan tepat 3 testimoni teratas (urutan dari backend);
+// testimoni baru via admin otomatis jadi #1, yang lama turun — tidak ada yang dihapus.
 export interface Testimoni {
   /** Id baris DB — hanya ada pada data backend (kunci CRUD tab "Testimoni"
    *  di admin); data dummy tidak memilikinya. */

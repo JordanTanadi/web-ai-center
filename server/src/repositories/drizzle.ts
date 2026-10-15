@@ -191,6 +191,9 @@ export function createRepositories(db: Db): Repositories {
       const rows = await applyPagination(base, pagination);
       return rows.map(toAnggotaTim);
     },
+    async naikkanSemuaUrutan() {
+      await db.update(tim).set({ urutan: sql`${tim.urutan} + 1` });
+    },
     async create(data) {
       const rows = await db
         .insert(tim)
@@ -337,6 +340,9 @@ export function createRepositories(db: Db): Repositories {
         .from(testimoni)
         .orderBy(asc(testimoni.urutan), asc(testimoni.id));
       return rows.map(toTestimoni);
+    },
+    async naikkanSemuaUrutan() {
+      await db.update(testimoni).set({ urutan: sql`${testimoni.urutan} + 1` });
     },
     async create(data) {
       const rows = await db

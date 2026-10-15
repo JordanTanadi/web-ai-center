@@ -59,10 +59,7 @@ export const kamusBahasa: Record<string, string> = {
   'Dokumentasi tidak ditemukan': 'Documentation not found',
   '← Kembali ke daftar dokumentasi': '← Back to documentation list',
 
-  // — Beranda: hero ————————————————————————————————————————————
-  // (slide hero — teks slide dari backend via GET /api/hero-slides di Beranda)
-
-  // — Beranda: hero (data hero.ts) ————————————————————————————————
+  // — Beranda: hero (data hero.ts — konten statis frontend) ————————————
   'Jadwalkan Konsultasi AI': 'Schedule an AI Consultation',
   'Mulai Transformasi Bisnis Anda': 'Start Your Business Transformation',
   'Pusat Riset & Layanan': 'Research & Services Center',

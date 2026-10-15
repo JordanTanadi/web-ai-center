@@ -3,9 +3,8 @@
 // (API) untuk mitra, dari integrasi sampai purna implementasi — konsisten dengan hero slide 2
 // (hero.ts) dan deskripsi layanan di layanan.ts. Situs lama tidak punya section ini sendiri
 // (pillar lama: Kolaborasi Penelitian, Pelatihan & Talenta, Komputasi Performa Tinggi).
-// Terintegrasi GET/PUT /api/inference (baris tunggal di DB, dikelola tab "Inference" di
-// /admin) — konstanta di bawah jadi FALLBACK saat backend mati; guard sinkronisasi
-// dengan seed ada di server/src/db/sinkron.test.ts.
+// KONTEN STATIS frontend (sumber satu-satunya) — diedit langsung di file ini
+// (tidak lewat backend/admin); LayananDetail memakai kontenInferenceDummy langsung.
 import { buildWaLink, kontakDummy } from './kontak.ts';
 import { portofolioDummy } from './portofolio.ts';
 

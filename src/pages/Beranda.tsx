@@ -66,10 +66,11 @@ function SectionBar({
 export default function Beranda() {
   const t = useT();
 
-  // Data section diambil dari backend bila VITE_API_BASE_URL diset;
-  // kalau tidak (atau gagal) tetap memakai data dummy di src/data/.
-  const slidesHero = useApiDaftar('/hero-slides', heroSlidesDummy);
-  const daftarLayanan = useApiDaftar('/layanan', layananDummy);
+  // Hero & layanan: konten STATIS dari src/data/ (diedit langsung di frontend,
+  // tanpa backend). Dokumentasi/testimoni/berita tetap dari backend bila
+  // VITE_API_BASE_URL diset; kalau tidak (atau gagal) memakai data di src/data/.
+  const slidesHero = heroSlidesDummy;
+  const daftarLayanan = layananDummy;
   // Urut tanggal terbaru dulu supaya slice(0, 3) benar-benar "3 terbaru"
   // (konsul PROGRESS 2; karya portofolio ikut sebagai entri dokumentasi ber-tanggal).
   const highlightDokumentasi = [...useApiDaftar('/dokumentasi', dokumentasiDummy)].sort((a, b) =>
@@ -78,12 +79,15 @@ export default function Beranda() {
   // Klien dari GET /api/klien; fallback dummy FTB/CAW/Ubaya (lihat src/data/klien.ts).
   // Dikomentari bersama section Our Client di bawah — aktifkan lagi bila dibutuhkan.
   // const daftarKlien = useApiDaftar('/klien', klienDummy);
-  const daftarTestimoni = useApiDaftar('/testimoni', testimoniDummy);
+  // Testimoni tampil TEPAT 3 (urutan paling atas dari backend; item baru via
+  // admin otomatis jadi #1, yang lama turun — tersimpan semua, tidak ada yang
+  // dihapus, hanya tidak tampil di beranda bila keluar dari 3 besar).
+  const daftarTestimoni = useApiDaftar('/testimoni', testimoniDummy).slice(0, 3);
   const highlightBerita = useApiDaftar('/berita', beritaDummy);
 
   return (
     <div>
-      {/* Slide hero — GET /api/hero-slides. */}
+      {/* Slide hero — konten statis src/data/hero.ts (diedit via frontend). */}
       <HeroCarousel slides={slidesHero} />
 
       <section id="layanan" className="relative isolate scroll-mt-20 overflow-hidden bg-sky py-16">

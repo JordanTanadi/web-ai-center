@@ -1,22 +1,14 @@
 import { Link } from 'react-router-dom';
 import SectionHeading from '../components/SectionHeading.tsx';
 import { kontakDummy } from '../data/kontak.ts';
-import {
-  petakanProfilApi,
-  profilDummy,
-  type Profil,
-  type ProfilApi,
-} from '../data/profil.ts';
+import { profilDummy, type Profil } from '../data/profil.ts';
 import { useT } from '../lib/i18n.tsx';
-import { useApiObjek } from '../lib/useApiData.ts';
 
 export default function TentangKami({ profil: profilOverride }: { profil?: Profil }) {
   const t = useT();
-  // Visi/misi dari GET /api/profil (petakanProfilApi); prop `profil` eksplisit
-  // (untuk test/konteks khusus) menang atas data API.
-  const profilApi = useApiObjek<ProfilApi>('/profil', undefined);
-  const profil: Profil =
-    profilOverride ?? (profilApi !== undefined ? petakanProfilApi(profilApi) : profilDummy);
+  // Visi/misi: konten STATIS src/data/profil.ts (diedit langsung di frontend,
+  // tanpa backend); prop `profil` eksplisit (untuk test/konteks khusus) menang.
+  const profil: Profil = profilOverride ?? profilDummy;
   return (
     <div>
       {/* PROGRESS 2: tampilan dirapikan (data tetap) — hero band bg-soft, paragraf tetap center. */}
