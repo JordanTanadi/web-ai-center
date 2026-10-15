@@ -36,28 +36,11 @@ const karyaSebagaiDokumentasi: DokumentasiItem[] = portofolioDummy.map((k) => ({
   gambar: k.gambar,
 }));
 
+// Kebijakan konten (Okt 2026): hanya kegiatan yang bisa diverifikasi — TIDAK ada
+// entri karangan. Entri berikut = 6 karya portofolio asli (tanggal = terbit karya);
+// kegiatan asli (foto + tanggal) ditambahkan lewat admin.
 export const dokumentasiDummy: DokumentasiItem[] = [
-  {
-    slug: 'workshop-pengenalan-gpu-lab',
-    judul: 'Workshop Pengenalan GPU Lab',
-    deskripsi: 'Dokumentasi workshop pengenalan akses dan antrean GPU lab AI Center.',
-    tanggal: '2026-07-15',
-    kategori: 'Workshop',
-  },
-  {
-    slug: 'kunjungan-industri-semester-genap',
-    judul: 'Kunjungan Industri Semester Genap',
-    deskripsi: 'Dokumentasi kunjungan industri ke AI Center Ubaya.',
-    tanggal: '2026-06-10',
-    kategori: 'Kunjungan',
-  },
-  {
-    slug: 'demo-inference-solution-mitra',
-    judul: 'Demo Inference Solution untuk Mitra',
-    deskripsi: 'Dokumentasi sesi demo deployment model untuk mitra industri.',
-    tanggal: '2026-08-28',
-    kategori: 'Demo',
-  },
+  // Konsul PROGRESS 2: karya portofolio jadi entri dokumentasi (tanggal = terbit karya).
   ...karyaSebagaiDokumentasi,
 ];
 

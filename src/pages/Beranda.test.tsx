@@ -2,6 +2,8 @@ import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import Beranda from './Beranda.tsx';
+import { beritaDummy } from '../data/berita.ts';
+import { dokumentasiDummy } from '../data/dokumentasi.ts';
 
 function renderBeranda() {
   return render(
@@ -90,10 +92,13 @@ describe('Beranda — keputusan rapat', () => {
     expect(section?.className).not.toContain('bg-brand');
   });
 
-  it('highlight dokumentasi & berita membatasi 3 card (8 article: 2 layanan + 3 + 3; carousel klien ikut dikomentari)', () => {
+  it('highlight dokumentasi & berita membatasi 3 card per section (article: 2 layanan + min(3,dok) + min(3,berita); carousel klien ikut dikomentari)', () => {
     renderBeranda();
 
-    expect(screen.getAllByRole('article')).toHaveLength(8);
+    // Kebijakan konten Okt 2026: berita tinggal 1 entri asli, dokumentasi 6 karya.
+    const jmlDok = Math.min(3, dokumentasiDummy.length);
+    const jmlBerita = Math.min(3, beritaDummy.length);
+    expect(screen.getAllByRole('article')).toHaveLength(2 + jmlDok + jmlBerita);
     // role="group" hanya datang dari ClientCarousel — dipakai saat Our Client diaktifkan.
     expect(screen.queryAllByRole('group')).toHaveLength(0);
   });
@@ -144,11 +149,12 @@ describe('Beranda — PROGRESS 2 (konsul 2 Okt)', () => {
     const heading = screen.getByRole('heading', { name: 'Dokumentasi Kegiatan' });
     const section = heading.closest('section');
     expect(section?.querySelectorAll('article')).toHaveLength(3);
-    // Urut tanggal turun: karya X-Ray (15 Sep) → demo (28 Agu) → karya implan (20 Agu).
+    // Urut tanggal turun: karya X-Ray (15 Sep) → implan (20 Agu) → algae (28 Jul).
     expect(screen.getByText('Klasifikasi X-Ray Pneumonia')).toBeInTheDocument();
-    expect(screen.getByText('Demo Inference Solution untuk Mitra')).toBeInTheDocument();
     expect(screen.getByText('Rekomendasi Implan Gigi Otomatis')).toBeInTheDocument();
-    expect(screen.queryByText('Workshop Pengenalan GPU Lab')).not.toBeInTheDocument();
+    expect(screen.getByText('Algae Finder')).toBeInTheDocument();
+    // Karya terlama (15 Apr) tidak ikut — membatasi 3 card terbaru.
+    expect(screen.queryByText('Deteksi Kesegaran Ikan')).not.toBeInTheDocument();
   });
 
   it('transisi antar section dihaluskan (fade -z; gradasi berita menyambung footer)', () => {

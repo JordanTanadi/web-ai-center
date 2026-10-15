@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter, Route, Routes, useSearchParams } from 'react-router-dom';
 import Tim from './Tim.tsx';
@@ -9,6 +9,7 @@ import DokumentasiDetail from './DokumentasiDetail.tsx';
 import LayananDetail from './LayananDetail.tsx';
 import { beritaDummy } from '../data/berita.ts';
 import { dokumentasiDummy } from '../data/dokumentasi.ts';
+import * as modulDokumentasi from '../data/dokumentasi.ts';
 import { timDummy } from '../data/tim.ts';
 import { KEY_BAHASA, PenyediaBahasa } from '../lib/i18n.tsx';
 
@@ -134,16 +135,16 @@ describe('Dokumentasi', () => {
     expect(screen.getAllByRole('link', { name: /lihat detail/i })).toHaveLength(dokumentasiDummy.length);
     // Terbaru di urutan paling atas…
     expect(cards[0]).toHaveTextContent('Klasifikasi X-Ray Pneumonia');
-    // …termasuk entri lama — ikut tampil tanpa pencarian.
-    expect(screen.getByText('Workshop Pengenalan GPU Lab')).toBeInTheDocument();
-    expect(screen.getByText('Kunjungan Industri Semester Genap')).toBeInTheDocument();
+    // …termasuk entri lama (karya terlama) — ikut tampil tanpa pencarian.
+    expect(screen.getByText('Deteksi Kesegaran Ikan')).toBeInTheDocument();
+    expect(screen.getByText('Translator Bahasa Isyarat')).toBeInTheDocument();
   });
 
   it('filter pencarian menelusuri seluruh arsip (edge: query tanpa hasil)', () => {
     renderWithRouter(<Dokumentasi />);
-    fireEvent.change(screen.getByLabelText(/cari dokumentasi/i), { target: { value: 'workshop' } });
-    expect(screen.getByText('Workshop Pengenalan GPU Lab')).toBeInTheDocument();
-    expect(screen.queryByText('Kunjungan Industri Semester Genap')).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText(/cari dokumentasi/i), { target: { value: 'implan' } });
+    expect(screen.getByText('Rekomendasi Implan Gigi Otomatis')).toBeInTheDocument();
+    expect(screen.queryByText('Algae Finder')).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText(/cari dokumentasi/i), { target: { value: 'zz-tidak-ada-zz' } });
     expect(screen.getByText(/tidak ada dokumentasi yang cocok/i)).toBeInTheDocument();
   });
@@ -158,13 +159,15 @@ describe('Dokumentasi', () => {
 describe('DokumentasiDetail', () => {
   it('render detail valid', () => {
     render(
-      <MemoryRouter initialEntries={['/dokumentasi/workshop-pengenalan-gpu-lab']}>
+      <MemoryRouter initialEntries={['/dokumentasi/implan-gigi-otomatis']}>
         <Routes>
           <Route path="/dokumentasi/:slug" element={<DokumentasiDetail />} />
         </Routes>
       </MemoryRouter>,
     );
-    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(/Workshop Pengenalan GPU Lab/i);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      /Rekomendasi Implan Gigi Otomatis/i,
+    );
   });
 
   it('edge case: slug dokumentasi tidak dikenal', () => {
@@ -179,8 +182,18 @@ describe('DokumentasiDetail', () => {
   });
 
   it('banner visual selalu ada: foto asli bila ada, placeholder bila tidak', () => {
+    // Cabang placeholder: entri tanpa foto (mis. kegiatan asli dari admin yang
+    // belum diunggah fotonya) — data dummy berisi karya semua yang berfoto,
+    // jadi dipalsukan lewat spy untuk menguji cabang ini.
+    vi.spyOn(modulDokumentasi, 'getDokumentasiBySlug').mockReturnValue({
+      slug: 'tanpa-foto',
+      judul: 'Kegiatan Tanpa Foto',
+      deskripsi: 'Dokumentasi kegiatan tanpa foto.',
+      tanggal: '2026-01-01',
+      kategori: 'Lainnya',
+    });
     const { container, unmount } = render(
-      <MemoryRouter initialEntries={['/dokumentasi/workshop-pengenalan-gpu-lab']}>
+      <MemoryRouter initialEntries={['/dokumentasi/tanpa-foto']}>
         <Routes>
           <Route path="/dokumentasi/:slug" element={<DokumentasiDetail />} />
         </Routes>
@@ -189,6 +202,7 @@ describe('DokumentasiDetail', () => {
     expect(container.querySelector('.aspect-video')).not.toBeNull();
     expect(screen.queryByRole('img')).toBeNull();
     unmount();
+    vi.restoreAllMocks();
     render(
       <MemoryRouter initialEntries={['/dokumentasi/klasifikasi-xray-pneumonia']}>
         <Routes>

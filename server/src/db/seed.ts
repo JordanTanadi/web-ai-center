@@ -21,61 +21,23 @@ type ProfilSeed = typeof profil.$inferInsert;
 type InferenceSeed = typeof inference.$inferInsert;
 type KursusSeed = Omit<typeof kursus.$inferInsert, 'id'>;
 
+// Kebijakan konten (Okt 2026): hanya berita/kegiatan yang bisa diverifikasi dari
+// sumber resmi — TIDAK ada entri karangan. Berita = saduran siaran pers Kominfo
+// Jatim 23 Mei 2026; dokumentasi = 6 karya portofolio asli.
 export const SEED_BERITA: BeritaSeed[] = [
   {
-    slug: 'peluncuran-ai-center-ubaya',
-    judul: 'Peluncuran AI Center Universitas Surabaya',
-    ringkasan: 'AI Center Ubaya resmi diluncurkan sebagai pusat riset dan layanan AI.',
-    isi: 'AI Center Universitas Surabaya resmi diluncurkan. Fokus awal: riset terapan, pelatihan, dan solusi inference untuk industri serta sivitas akademika.',
-    tanggal: '2026-08-01',
-    penulis: 'Humas AI Center',
-    gambar: null,
-  },
-  {
-    slug: 'pelatihan-dasar-machine-learning',
-    judul: 'Pelatihan Dasar Machine Learning Angkatan 1',
-    ringkasan: 'Pelatihan dasar ML untuk mahasiswa dan umum telah dibuka.',
-    isi: 'Pelatihan mencakup Python, data preparation, regresi, klasifikasi, dan evaluasi model. Peserta mendapatkan sertifikat dan akses lab.',
-    tanggal: '2026-08-20',
-    penulis: 'Tim Pelatihan',
-    gambar: null,
-  },
-  {
-    slug: 'kolaborasi-inference-solution-untuk-mitra',
-    judul: 'Kolaborasi Inference Solution untuk Mitra',
-    ringkasan: 'AI Center mendampingi mitra mengembangkan solusi inference yang siap digunakan.',
-    isi: 'AI Center mendampingi integrasi model machine learning menjadi layanan inference untuk kebutuhan mitra industri.',
-    tanggal: '2026-09-05',
-    penulis: 'Tim Lab',
+    slug: 'ai-center-dukung-layanan-kesehatan-jatim',
+    judul: 'AI Center Ubaya Siap Dukung Layanan Kesehatan di Jawa Timur',
+    ringkasan:
+      'Rektor Ubaya bertemu Gubernur Jawa Timur di Grahadi; AI Center disiapkan sebagai pusat riset unggulan yang menjawab persoalan nyata, terutama di bidang kesehatan.',
+    isi: 'Pengembangan AI Center dibahas dalam audiensi Rektor Ubaya, Benny Lianto, dengan Gubernur Jawa Timur, Khofifah Indar Parawansa, di Gedung Negara Grahadi, Surabaya, Jumat (22/5/2026). Gubernur Khofifah menyambut positif langkah Ubaya mengembangkan teknologi AI untuk mendukung sektor kesehatan dan peningkatan kualitas sumber daya manusia. Rektor Benny Lianto menyebut AI Center diproyeksikan menjadi pusat riset unggulan di Jawa Timur yang menghasilkan inovasi berbasis AI yang aplikatif, antara lain teknologi implan gigi dan aplikasi AI untuk membantu diagnosis penyakit. Pengembangan AI kesehatan di Ubaya didukung ekosistem yang lengkap, mulai dari Fakultas Kedokteran, rumah sakit milik kampus, hingga kolaborasi dengan institusi kesehatan lain termasuk RSUD Dr. Soetomo. Artikel ini disadur dari siaran pers Dinas Komunikasi dan Informatika Provinsi Jawa Timur (23 Mei 2026).',
+    tanggal: '2026-05-22',
+    penulis: 'AI Center Ubaya',
     gambar: null,
   },
 ];
 
 export const SEED_DOKUMENTASI: DokumentasiSeed[] = [
-  {
-    slug: 'workshop-pengenalan-gpu-lab',
-    judul: 'Workshop Pengenalan GPU Lab',
-    deskripsi: 'Dokumentasi workshop pengenalan akses dan antrean GPU lab AI Center.',
-    tanggal: '2026-07-15',
-    kategori: 'Workshop',
-    gambar: null,
-  },
-  {
-    slug: 'kunjungan-industri-semester-genap',
-    judul: 'Kunjungan Industri Semester Genap',
-    deskripsi: 'Dokumentasi kunjungan industri ke AI Center Ubaya.',
-    tanggal: '2026-06-10',
-    kategori: 'Kunjungan',
-    gambar: null,
-  },
-  {
-    slug: 'demo-inference-solution-mitra',
-    judul: 'Demo Inference Solution untuk Mitra',
-    deskripsi: 'Dokumentasi sesi demo deployment model untuk mitra industri.',
-    tanggal: '2026-08-28',
-    kategori: 'Demo',
-    gambar: null,
-  },
   // Konsul PROGRESS 2: karya portofolio jadi entri dokumentasi (tanggal = terbit karya).
   {
     slug: 'klasifikasi-xray-pneumonia',
