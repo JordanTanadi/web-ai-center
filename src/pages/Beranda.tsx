@@ -95,7 +95,7 @@ export default function Beranda() {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-16"
-          style={{ background: 'linear-gradient(to bottom, #0A2240, transparent)' }}
+          style={{ background: 'linear-gradient(to bottom, var(--color-navy), transparent)' }}
         />
         <div aria-hidden="true" className="pointer-events-none absolute -right-28 -top-24 h-72 w-72 rounded-full border border-brand/15" />
         <div aria-hidden="true" className="pointer-events-none absolute -bottom-32 -left-24 h-80 w-80 rounded-full border border-brand/10" />
@@ -163,12 +163,12 @@ export default function Beranda() {
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-16"
-          style={{ background: 'linear-gradient(to bottom, #D8EBF8, transparent)' }}
+          style={{ background: 'linear-gradient(to bottom, var(--color-sky), transparent)' }}
         />
         <div
           aria-hidden="true"
           className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-16"
-          style={{ background: 'linear-gradient(to top, #FAF7F0, transparent)' }}
+          style={{ background: 'linear-gradient(to top, var(--color-soft), transparent)' }}
         />
         {/* Dekorasi gradient profesional: blob terang + aksen mint/kuning di atas navy. */}
         <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-bright opacity-50 blur-3xl" />

@@ -380,6 +380,33 @@ gambar lama), dan slide tidak boleh dikosongkan (hero beranda jadi kosong).
     server**, aksi lesson → POST 200, konsol 0 error/warning. Lighthouse
     ulang: **mobile 91 / desktop 99** (a11y/BP/SEO 100/100, CLS 0).
 
+21. **PROGRESS 4 — status permintaan user + warna situs disentralisasi ke
+    token** (17 Okt 2026): audit tiga poin briefing terhadap kode.
+    (a) Layanan/Profil/Inference/Hero "dihapus, nanti diedit via front" —
+    **sudah** sejak refactor admin: 5 tab tersisa (Dokumentasi, Berita,
+    Kursus, Tim, Testimoni), konten keempat bagian statis di `src/data/*`.
+    (b) Prinsip "tambah baru tidak menambah jumlah tampilan" — **sudah**:
+    testimoni slider tampil tepat 3 (counter `1 / 3`; item baru via admin
+    otomatis #1, lama turun, tak dihapus), dokumentasi & berita di beranda
+    selalu `slice(0, 3)` terbaru (urut tanggal desc; form admin default
+    tanggal hari ini) — dikunci test (baris "testimoni tampil tepat 3",
+    "highlight membatasi 3 card", "dokumentasi 3 terbaru").
+    (c) Font & palet Figma — font + 10 warna daftar sudah 100% (butir 19);
+    celah terakhir = 14 hex hardcoded di 6 file komponen. Dipindahkan ke
+    token `@theme` tanpa mengubah tampilan: 3 hex = nilai persis token
+    (gradien beranda kini `var(--color-navy/-sky/-soft)`), 5 hex turunan
+    navy dideklarasikan (`--color-onnavy`, `-badge`, `-body`, `-soft`,
+    `-dim`; nilai persis hex lama). Test baru: nilai tiap turunan persis
+    + kontras ≥4.5:1 vs navy + **skener nol hex hardcoded** di seluruh
+    `src/**/*.{ts,tsx}` (semua warna wajib lewat token). Gerbang: **FE 427
+    test / 40 file**, **BE 255 test**, `tsc` bersih dua sisi, build OK;
+    E2E beranda: keempat utilitas token warna terbaca persis di devtools,
+    gradien `var()` ter-render, counter testimoni `1 / 3`, konsol 0
+    error/warning. **Lighthouse ulang** (URL `/beranda`, metode sama dengan
+    15 Okt): **mobile 90 / desktop 99** (a11y, best-practices, SEO
+    100/100 di dua mode) — arsip
+    `lighthouse_report/prod-2026-10-17-*.json` (lokal/gitignored).
+
 ### Penanda TODO
 
 - `TODO_BACKEND` — bagian yang sengaja belum diintegrasikan + alasannya (lihat "Status integrasi frontend").

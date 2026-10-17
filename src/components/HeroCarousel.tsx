@@ -94,13 +94,13 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                 <div className="flex-1 flex items-center bg-gradient-to-r from-navy via-navy/80 to-navy/60">
                   <div className="relative z-10 w-full max-w-2xl px-6 py-20 md:py-24 ml-auto">
                     <div className="hero-teks">
-                      <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
+                      <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-onnavy-badge">
                         {t(current.eyebrow)}
                       </span>
                       <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold text-white md:text-5xl">
                         {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
                       </h1>
-                      <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
+                      <p className="mt-4 max-w-xl text-onnavy-body">{t(current.sub)}</p>
                     </div>
                   </div>
                 </div>
@@ -137,13 +137,13 @@ export default function HeroCarousel({ slides, intervalMs = 7000 }: { slides: He
                 {/* w-full: anak flex butuh lebar penuh agar max-w-6xl + mx-auto tetap center */}
                 <div className="relative z-10 w-full mx-auto max-w-6xl px-6 py-20 md:py-24">
                   <div className={`hero-teks ${teksKanan ? 'md:ml-auto md:max-w-2xl' : ''}`}>
-                    <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-[#ccd7ff]">
+                    <span className="inline-block rounded-full border border-white/30 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.18em] text-onnavy-badge">
                       {t(current.eyebrow)}
                     </span>
                     <h1 className="mt-4 max-w-2xl font-display text-4xl font-bold text-white md:text-5xl">
                       {t(current.judul)} <span className="text-yellow">{t(current.judulAksen)}</span>
                     </h1>
-                    <p className="mt-4 max-w-xl text-[#e8eaf6]">{t(current.sub)}</p>
+                    <p className="mt-4 max-w-xl text-onnavy-body">{t(current.sub)}</p>
                   </div>
                 </div>
               </>

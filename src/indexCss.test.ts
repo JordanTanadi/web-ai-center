@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -175,5 +175,43 @@ describe('Garis aksen kartu (.card-accent, pola situs patokan)', () => {
 describe('Navigasi device-aware (mobile = burger, desktop = navbar)', () => {
   it('memakai custom variant fine-pointer untuk membedakan desktop vs layar sentuh', () => {
     expect(css).toContain('@custom-variant fine-pointer (@media (pointer: fine))');
+  });
+});
+
+describe('Turunan warna di atas navy (PROGRESS 4 — di luar daftar Figma, kini token)', () => {
+  it('nilai token persis sama dengan hex lama di komponen (tampilan tidak berubah)', () => {
+    expect(token('--color-onnavy')).toBe('#dbe3ff'); // kicker/sub section navy
+    expect(token('--color-onnavy-badge')).toBe('#ccd7ff'); // kicker badge hero
+    expect(token('--color-onnavy-body')).toBe('#e8eaf6'); // paragraf sub hero
+    expect(token('--color-onnavy-soft')).toBe('#c9cde6'); // teks isi footer
+    expect(token('--color-onnavy-dim')).toBe('#9aa0c7'); // copyright footer
+  });
+
+  it('tiap turunan tetap lolos kontras WCAG AA (4.5:1) di atas navy', () => {
+    const navy = token('--color-navy');
+    for (const nama of [
+      '--color-onnavy',
+      '--color-onnavy-badge',
+      '--color-onnavy-body',
+      '--color-onnavy-soft',
+      '--color-onnavy-dim',
+    ]) {
+      expect(contrast(token(nama), navy)).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('tidak ada hex hardcoded di src/**/*.{ts,tsx} — semua warna wajib lewat token @theme', () => {
+    /** Rekursif: kumpulkan file .ts/.tsx selain file test. */
+    const daftarSumber = (dir: string): string[] =>
+      readdirSync(dir, { withFileTypes: true }).flatMap((entri) => {
+        const p = join(dir, entri.name);
+        if (entri.isDirectory()) return daftarSumber(p);
+        const sumber = /\.(ts|tsx)$/.test(entri.name) && !/\.test\.(ts|tsx)$/.test(entri.name);
+        return sumber ? [p] : [];
+      });
+    const pelanggar = daftarSumber(join(process.cwd(), 'src')).filter((f) =>
+      /#[0-9a-fA-F]{3,8}\b/.test(readFileSync(f, 'utf8')),
+    );
+    expect(pelanggar.map((f) => f.replace(process.cwd() + '/', ''))).toEqual([]);
   });
 });

@@ -205,7 +205,7 @@ export function Header() {
 export function Footer() {
   const t = useT();
   return (
-    <footer id="kontak" className="footer-legacy-font relative isolate scroll-mt-20 overflow-hidden bg-navy text-sm text-[#c9cde6]">
+    <footer id="kontak" className="footer-legacy-font relative isolate scroll-mt-20 overflow-hidden bg-navy text-sm text-onnavy-soft">
       {/* Glow biru dari atas (dekoratif; -z-10) — meredam potongan section terang → footer. */}
       <div
         aria-hidden="true"
@@ -320,7 +320,7 @@ export function Footer() {
           mini
         />
       </div>
-      <div className="border-t border-white/10 py-4 text-center text-xs text-[#9aa0c7]">
+      <div className="border-t border-white/10 py-4 text-center text-xs text-onnavy-dim">
         © {new Date().getFullYear()} AI Center Universitas Surabaya
       </div>
     </footer>

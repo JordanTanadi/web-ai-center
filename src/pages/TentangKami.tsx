@@ -39,7 +39,7 @@ export default function TentangKami({ profil: profilOverride }: { profil?: Profi
                 <span aria-hidden="true">// </span>{t('Visi')}
               </h3>
               <p className="mt-3 font-display text-xl font-bold">{t(profil.visi.judul)}</p>
-              <p className="mt-3 text-sm text-[#dbe3ff]">{t(profil.visi.deskripsi)}</p>
+              <p className="mt-3 text-sm text-onnavy">{t(profil.visi.deskripsi)}</p>
             </article>
 
             <article className="rounded-2xl border border-line bg-soft p-6 md:p-8">

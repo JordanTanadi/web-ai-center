@@ -20,9 +20,9 @@ export default function SectionHeading({
   level = 'h2',
 }: Props) {
   const alignCls = align === 'center' ? 'text-center mx-auto' : 'text-left';
-  const kickerCls = tone === 'dark' ? 'text-[#dbe3ff]' : 'text-brand';
+  const kickerCls = tone === 'dark' ? 'text-onnavy' : 'text-brand';
   const titleCls = tone === 'dark' ? 'text-white' : 'text-ink';
-  const subCls = tone === 'dark' ? 'text-[#dbe3ff]' : 'text-muted';
+  const subCls = tone === 'dark' ? 'text-onnavy' : 'text-muted';
   // Eyebrow ala situs patokan: label mono uppercase + dot aksen.
   const dotCls =
     tone === 'dark'

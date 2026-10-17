@@ -28,7 +28,7 @@ export default function TestimoniSlider({
   }, [items.length, paused, intervalMs]);
 
   if (items.length === 0) {
-    return <p className={`mt-8 text-center ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>{t('Belum ada testimoni.')}</p>;
+    return <p className={`mt-8 text-center ${dark ? 'text-onnavy' : 'text-muted'}`}>{t('Belum ada testimoni.')}</p>;
   }
 
   const current = items[idx % items.length];
@@ -62,7 +62,7 @@ export default function TestimoniSlider({
           >
             {t('← Sebelumnya')}
           </button>
-          <p className={`font-body text-sm tabular-nums ${dark ? 'text-[#dbe3ff]' : 'text-muted'}`}>
+          <p className={`font-body text-sm tabular-nums ${dark ? 'text-onnavy' : 'text-muted'}`}>
             {idx + 1} / {items.length}
           </p>
           <button
