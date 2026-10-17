@@ -53,6 +53,41 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
   // URL embed video modul aktif (YouTube/Vimeo); null = video menyusul/tidak dikenal.
   const sumberVideo = embedVideo(modulAktif?.video);
 
+  /** Auto-scroll ke panel lesson setelah modul dipilih (jangan sampai kelewat). */
+  const gulirKeLesson = () => {
+    requestAnimationFrame(() => {
+      document
+        .getElementById('panel-lesson')
+        ?.scrollIntoView?.({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
+  /**
+   * Aksi lesson: tombol aktif bila belum ditonton; bila sudah ditonton, jadi
+   * penanda ✓ non-klik + pengarah ke checkpoint (permintaan UX: label status
+   * jangan terlihat seperti tombol yang bisa diklik).
+   */
+  const aksiTonton = (idx: number, label: string) =>
+    state.watched[idx] ? (
+      <div className="mt-3">
+        <p className="inline-flex items-center gap-2 rounded-lg bg-sky px-4 py-2 text-sm font-bold text-brand">
+          <span aria-hidden="true">✓</span>
+          {t('Lesson ditonton')}
+        </p>
+        <p className="mt-2 text-xs text-muted">
+          {t('Selanjutnya: kerjakan checkpoint di bawah untuk menyelesaikan modul.')}
+        </p>
+      </div>
+    ) : (
+      <button
+        type="button"
+        onClick={() => onAction({ type: 'tontonLesson' })}
+        className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
+      >
+        {t(label)}
+      </button>
+    );
+
   return (
     <section
       id="learning-workspace"
@@ -106,7 +141,10 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                   <button
                     type="button"
                     disabled={terkunci}
-                    onClick={() => onAction({ type: 'pilihModul', index: i })}
+                    onClick={() => {
+                      onAction({ type: 'pilihModul', index: i });
+                      gulirKeLesson();
+                    }}
                     className={`rounded-lg px-4 py-2 text-sm font-bold disabled:cursor-not-allowed disabled:opacity-60 ${
                       selesai
                         ? 'btn-primary text-white'
@@ -118,13 +156,20 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                     {t(selesai ? 'Ulangi' : terkunci ? 'Selesaikan modul sebelumnya' : 'Mulai modul')}
                   </button>
                 </div>
+                {/* Kartu terkunci diberi alasannya supaya klik yang tidak bereaksi
+                    bisa dimengerti peserta (permintaan UX PROGRESS 4). */}
+                {terkunci ? (
+                  <p className="mt-3 text-xs text-muted">
+                    {t('Tonton lesson + lulus checkpoint modul sebelumnya untuk membuka kunci.')}
+                  </p>
+                ) : null}
               </li>
             );
           })}
         </ul>
 
         {aktif !== null && modulAktif ? (
-          <article className="mt-8 rounded-2xl border border-line bg-surface p-6">
+          <article id="panel-lesson" className="mt-8 rounded-2xl border border-line bg-surface p-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_240px]">
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
@@ -145,13 +190,7 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                       allowFullScreen
                       className="aspect-video w-full rounded-xl border border-line bg-navy"
                     />
-                    <button
-                      type="button"
-                      onClick={() => onAction({ type: 'tontonLesson' })}
-                      className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
-                    >
-                      {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Tandai lesson ditonton')}
-                    </button>
+                    {aksiTonton(aktif, 'Tandai lesson ditonton')}
                   </div>
                 ) : modulAktif.video ? (
                   <div className="mt-4 rounded-xl bg-sky p-4">
@@ -164,26 +203,14 @@ export default function LearningWorkspace({ kursus, state, onAction }: Props) {
                     >
                       {modulAktif.video}
                     </a>
-                    <button
-                      type="button"
-                      onClick={() => onAction({ type: 'tontonLesson' })}
-                      className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
-                    >
-                      {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Tandai lesson ditonton')}
-                    </button>
+                    {aksiTonton(aktif, 'Tandai lesson ditonton')}
                   </div>
                 ) : (
                   <div className="mt-4 rounded-xl bg-sky p-4">
                     <p className="font-bold">{t(modulAktif.judul)}</p>
                     <p className="mt-1 text-sm text-muted">{t('Durasi:')} {t(modulAktif.meta)}</p>
                     <p className="mt-1 text-xs text-muted">{t('Video menyusul — materi teks tetap bisa dipelajari.')}</p>
-                    <button
-                      type="button"
-                      onClick={() => onAction({ type: 'tontonLesson' })}
-                      className="btn-primary mt-3 rounded-lg px-4 py-2 text-sm font-bold text-white"
-                    >
-                      {t(state.watched[aktif] ? 'Lesson sudah ditonton' : 'Mulai lesson')}
-                    </button>
+                    {aksiTonton(aktif, 'Mulai lesson')}
                   </div>
                 )}
 

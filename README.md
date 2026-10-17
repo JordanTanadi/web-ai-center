@@ -407,6 +407,26 @@ gambar lama), dan slide tidak boleh dikosongkan (hero beranda jadi kosong).
     100/100 di dua mode) — arsip
     `lighthouse_report/prod-2026-10-17-*.json` (lokal/gitignored).
 
+22. **UX ruang belajar diperjelas (permintaan user setelah uji coba)**
+    (17 Okt 2026): user bingung saat "Mulai modul" tidak bereaksi dan label
+    "Lesson sudah ditonton" terlihat seperti tombol aktif. Tiga perbaikan
+    (nilai/aturan belajar tidak berubah — hanya kejelasan):
+    (a) kartu terkunci kini menjelaskan alasannya: "Tonton lesson + lulus
+    checkpoint modul sebelumnya untuk membuka kunci." (3 kartu terkunci);
+    (b) klik "Mulai modul"/"Ulangi" auto-scroll ke panel lesson
+    (`#panel-lesson`; dulu panel terbuka diam-diam di bawah kartu);
+    (c) setelah lesson ditonton, tombol berubah jadi penanda ✓ non-klik
+    "Lesson ditonton" + pengarah "Selanjutnya: kerjakan checkpoint di bawah
+    untuk menyelesaikan modul." (kunci i18n lama 'Lesson sudah ditonton'
+    diganti; kamus ID→EN ikut diperbarui). Test baru: hint terkunci ×3,
+    auto-scroll `Mulai modul` (spy `scrollIntoView`), status ✓ non-klik +
+    pengarah. Gerbang: **FE 429 test / 40 file**, `tsc` bersih, build OK.
+    E2E (state dibersihkan dulu — localStorage + baris cadangan backend
+    di-overwrite state kosong): enroll → scroll ke ruang belajar → hint
+    terkunci tampil 3× → "Mulai modul" → panel lesson pindah ke posisi
+    atas layar (scrollY 1801 → 2561) → "Mulai lesson" → badge ✓ muncul,
+    tombol aktif hilang, watched tersimpan → konsol 0 error/warning.
+
 ### Penanda TODO
 
 - `TODO_BACKEND` — bagian yang sengaja belum diintegrasikan + alasannya (lihat "Status integrasi frontend").

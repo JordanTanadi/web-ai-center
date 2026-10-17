@@ -32,6 +32,10 @@ describe('LearningWorkspace — grid modul', () => {
     const terkunci = screen.getAllByRole('button', { name: 'Selesaikan modul sebelumnya' });
     expect(terkunci).toHaveLength(3);
     for (const tombol of terkunci) expect(tombol).toBeDisabled();
+    // Kartu terkunci menjelaskan alasannya (klik yang tak bereaksi jadi dimengerti).
+    expect(
+      screen.getAllByText('Tonton lesson + lulus checkpoint modul sebelumnya untuk membuka kunci.'),
+    ).toHaveLength(3);
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '0');
   });
 
@@ -91,6 +95,33 @@ describe('LearningWorkspace — panel lesson & checkpoint', () => {
     expect(tombol).toBeEnabled();
     fireEvent.click(tombol);
     expect(onAction).toHaveBeenCalledWith({ type: 'toggleModulSelesai', index: 0 });
+  });
+
+  it('klik Mulai modul → panel lesson (#panel-lesson) digulir ke tampil', async () => {
+    renderWorkspace(stateProps());
+
+    const panel = document.getElementById('panel-lesson');
+    expect(panel).not.toBeNull();
+    const spy = vi.fn();
+    if (panel) panel.scrollIntoView = spy;
+
+    fireEvent.click(screen.getByRole('button', { name: 'Mulai modul' }));
+    // Gulir dibungkus requestAnimationFrame (menunggu render) — tunggu frame berikutnya.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('lesson ditonton → penanda ✓ non-klik + pengarah checkpoint (bukan tombol aktif)', () => {
+    renderWorkspace(stateProps({ watched: [true, false, false, false] }));
+
+    expect(screen.getByText('Lesson ditonton')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Lesson ditonton' })).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Selanjutnya: kerjakan checkpoint di bawah untuk menyelesaikan modul.'),
+    ).toBeInTheDocument();
+    // Tombol tandai tidak lagi tersedia setelah ditonton.
+    expect(screen.queryByRole('button', { name: 'Mulai lesson' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Tandai lesson ditonton' })).not.toBeInTheDocument();
   });
 });
 

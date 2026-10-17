@@ -418,7 +418,11 @@ export const kamusBahasa: Record<string, string> = {
   Ulangi: 'Retry',
   'Selesaikan modul sebelumnya': 'Complete the previous module',
   'Mulai modul': 'Start module',
-  'Lesson sudah ditonton': 'Lesson watched',
+  'Lesson ditonton': 'Lesson watched',
+  'Selanjutnya: kerjakan checkpoint di bawah untuk menyelesaikan modul.':
+    'Next: complete the checkpoint below to finish the module.',
+  'Tonton lesson + lulus checkpoint modul sebelumnya untuk membuka kunci.':
+    'Watch the lesson and pass the previous module checkpoint to unlock.',
   'Mulai lesson': 'Start lesson',
   'Tandai lesson ditonton': 'Mark lesson as watched',
   'Video tersedia di tautan berikut': 'Video available at the following link',
